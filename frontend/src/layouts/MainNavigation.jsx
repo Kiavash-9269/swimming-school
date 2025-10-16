@@ -3,45 +3,34 @@ import { Link } from "react-router-dom";
 
 export default function EnhancedNavbar() {
     const [isOpen, setIsOpen] = useState(false);
-    const [showNavbar, setShowNavbar] = useState(true);
-    const [lastScrollY, setLastScrollY] = useState(0);
-    const [scrolled, setScrolled] = useState(false);
 
     return (
         <header
             dir="rtl"
-            className={` relative top-0 right-0 w-full z-50 transition-all duration-500 ease-out ${showNavbar ? "translate-y-0" : "-translate-y-full"
-                } ${scrolled
-                    ? "backdrop-blur-xl bg-white/90 shadow-lg shadow-teal-500/10 border-b border-teal-200/50"
-                    : "backdrop-blur-md bg-white/70 border-b border-slate-200/60"
-                }`}
+            className="relative top-0 right-0 w-full z-50 transition-all duration-500 ease-out backdrop-blur-md bg-white/70 border-b border-slate-200/60"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
 
-                    {/* 🔹 Enhanced Logo Section */}
                     <div className="flex items-center gap-3 group cursor-pointer">
                         <div className="relative">
                             <img
                                 src="/logo.png.webp"
                                 alt="Iran Australia Swimming School Logo"
-                                className="h-12 w-12 object-contain drop-shadow-md transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
+                                className="h-12 w-12 object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-r from-teal-400/20 to-cyan-400/20 rounded-full group-hover:from-teal-400/30 group-hover:to-cyan-400/30 transition-all duration-300" />
-                        </div>
+                            </div>
                         <span className="text-lg font-bold text-slate-800 whitespace-nowrap bg-gradient-to-l from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                             مدرسه شنا ایران استرالیا
                         </span>
                     </div>
 
-                    {/* 🔹 Enhanced Desktop Menu */}
                     <nav className="hidden md:flex items-center gap-1">
-                        {[
-                            { href: "#home", label: "صفحه اصلی" },
-                            { href: "#about", label: "درباره ما" },
-                            { href: "#courses", label: "دوره‌ها" },
-                            { href: "#gallery", label: "تصاویر" },
-                            { href: "#contact", label: "ارتباط با ما" }
+                        {[{ href: "#home", label: "صفحه اصلی" },
+                          { href: "#about", label: "درباره ما" },
+                          { href: "#courses", label: "دوره‌ها" },
+                          { href: "#gallery", label: "تصاویر" },
+                          { href: "#contact", label: "ارتباط با ما" }
                         ].map((item, index) => (
                             <a
                                 key={index}
@@ -56,7 +45,6 @@ export default function EnhancedNavbar() {
                         ))}
                     </nav>
 
-                    {/* 🔹 Enhanced Buttons */}
                     <div className="hidden md:flex items-center gap-3">
                         <Link
                             to='/auth'
@@ -74,7 +62,6 @@ export default function EnhancedNavbar() {
                         </Link>
                     </div>
 
-                    {/* 🔹 Enhanced Mobile Menu Button */}
                     <button
                         onClick={() => setIsOpen(!isOpen)}
                         className="md:hidden inline-flex items-center justify-center p-2 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
@@ -97,8 +84,7 @@ export default function EnhancedNavbar() {
                     </button>
                 </div>
             </div>
-
-            {/* 🔹 Enhanced Mobile Menu Dropdown */}
+            
             <div
                 className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${isOpen
                         ? "max-h-96 opacity-100 backdrop-blur-xl bg-white/95"
@@ -106,12 +92,11 @@ export default function EnhancedNavbar() {
                     }`}
             >
                 <nav className="border-t border-slate-200/60 shadow-xl px-4 py-4 space-y-2 text-right">
-                    {[
-                        { href: "#home", label: "صفحه اصلی", icon: "🏠" },
-                        { href: "#about", label: "درباره ما", icon: "👥" },
-                        { href: "#courses", label: "دوره‌ها", icon: "🎯" },
-                        { href: "#gallery", label: "تصاویر", icon: "🖼️" },
-                        { href: "#contact", label: "ارتباط با ما", icon: "📞" }
+                    {[{ href: "#home", label: "صفحه اصلی", icon: "🏠" },
+                      { href: "#about", label: "درباره ما", icon: "👥" },
+                      { href: "#courses", label: "دوره‌ها", icon: "🎯" },
+                      { href: "#gallery", label: "تصاویر", icon: "🖼️" },
+                      { href: "#contact", label: "ارتباط با ما", icon: "📞" }
                     ].map((item, index) => (
                         <a
                             key={index}
