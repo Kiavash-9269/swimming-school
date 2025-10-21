@@ -47,7 +47,7 @@ export default function Footer() {
                                 alt="لوگو"
                                 className="h-12 w-12 transition-transform duration-300 hover:scale-110 hover:rotate-6"
                             />
-                            <h3 className="font-bold text-xl">مدرسه شنا</h3>
+                            <h3 className="font-bold text-xl"> مدرسه شنا ایران استرالیا</h3>
                         </div>
 
                         <p className="text-sm text-gray-300 leading-relaxed">
