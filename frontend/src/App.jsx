@@ -6,6 +6,7 @@ import RootLayout from './layouts/RootLayout.jsx'
 import ErrorPage from './pages/ErrorPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AuthPage from './pages/AuthPaga.jsx'
+import AboutPage from './pages/AboutPage.jsx'
 import AuthLayout from './layouts/AuthLayout.jsx'
 
 const route = createBrowserRouter([
@@ -18,6 +19,10 @@ const route = createBrowserRouter([
         path: "",
         element: <HomePage />
       },
+      {
+        path: "/about",
+        element:<AboutPage />
+      }
     ],
   },
   {
@@ -28,6 +33,9 @@ const route = createBrowserRouter([
     ],
   },
 ]);
+
+
+
 
 function App() {
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 import HomeAboutBg from "../../assets/images/iStock-625735914_swimming-lesson-kickboard-712x325@2x.jpg"
 
 export default function HomeAbout() {
@@ -72,13 +73,15 @@ export default function HomeAbout() {
           ))}
         </div>
 
-        <motion.a
-          href="#more"
-          whileHover={{ scale: 1.05 }}
-          className="inline-block mt-8 px-6 py-3 rounded-xl bg-gradient-to-l from-sky-500 to-cyan-500 text-white font-medium shadow-md hover:shadow-lg hover:from-sky-600 hover:to-cyan-600 transition-all"
-        >
-            اطلاعات بیشتر        
-        </motion.a>
+          <Link></Link>
+        <Link to="/about">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="inline-block mt-8 px-6 py-3 rounded-xl bg-gradient-to-l from-sky-500 to-cyan-500 text-white font-medium shadow-md hover:shadow-lg hover:from-sky-600 hover:to-cyan-600 transition-all cursor-pointer"
+          >
+            اطلاعات بیشتر
+          </motion.div>
+        </Link>
         </motion.div>
     </section>
   );
