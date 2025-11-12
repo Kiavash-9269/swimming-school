@@ -49,14 +49,14 @@ export default function EnhancedNavbar() {
 
                     <div className="hidden md:flex items-center gap-3">
                         <Link
-                            to='/auth'
+                            to='/auth?mode=login'
                             className="relative px-4 py-2 text-sm text-slate-700 border border-slate-300 rounded-xl hover:border-teal-300 transition-all duration-300 hover:shadow-md hover:shadow-teal-500/20 group overflow-hidden"
                         >
                             <span className="relative z-10">ورود</span>
                             <div className="absolute inset-0 bg-gradient-to-l from-teal-500/0 to-cyan-500/0 group-hover:from-teal-500/5 group-hover:to-cyan-500/5 transition-all duration-300" />
                         </Link>
                         <Link
-                            to='/auth'
+                            to='/auth?mode=signup'
                             className="relative px-4 py-2 text-sm font-medium text-white rounded-xl bg-gradient-to-l from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-md hover:shadow-lg hover:shadow-teal-500/30 transition-all duration-300 transform hover:scale-105 group overflow-hidden"
                         >
                             <span className="relative z-10">ثبت‌نام</span>

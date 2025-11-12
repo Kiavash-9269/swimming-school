@@ -5,9 +5,11 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import RootLayout from './layouts/RootLayout.jsx'
 import ErrorPage from './pages/ErrorPage.jsx'
 import HomePage from './pages/HomePage.jsx'
-import AuthPage from './pages/AuthPaga.jsx'
+import AuthPage from './pages/AuthPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import AuthLayout from './layouts/AuthLayout.jsx'
+import CoursesPage from './pages/CoursesPage.jsx'
+import ContactUsPage from './pages/ContactUsPage.jsx'
 
 const route = createBrowserRouter([
   {
@@ -22,6 +24,14 @@ const route = createBrowserRouter([
       {
         path: "/about",
         element:<AboutPage />
+      },
+      {
+        path: "/courses",
+        element:<CoursesPage />
+      },
+      {
+        path:"/contact",
+        element:<ContactUsPage/>
       }
     ],
   },
