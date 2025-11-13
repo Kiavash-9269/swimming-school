@@ -32,7 +32,8 @@ export default function EnhancedNavbar() {
                         { href: "/about", label: "درباره ما" },
                         { href: "/courses", label: "دوره‌ها" },
                         { href: "/gallery", label: "تصاویر" },
-                        { href: "/contact", label: "ارتباط با ما" }
+                        { href: "/contact", label: "ارتباط با ما" },
+                        { href: "/record", label:"رکورد گیری" }
                         ].map((item, index) => (
                             <Link
                                 to={item.href}

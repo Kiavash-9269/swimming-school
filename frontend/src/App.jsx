@@ -10,6 +10,7 @@ import AboutPage from './pages/AboutPage.jsx'
 import AuthLayout from './layouts/AuthLayout.jsx'
 import CoursesPage from './pages/CoursesPage.jsx'
 import ContactUsPage from './pages/ContactUsPage.jsx'
+import RecordPage from './pages/RecordPage.jsx'
 
 const route = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ const route = createBrowserRouter([
       {
         path:"/contact",
         element:<ContactUsPage/>
+      },
+      {
+        path:"/record",
+        element:<RecordPage/>
       }
     ],
   },

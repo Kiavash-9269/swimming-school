@@ -20,6 +20,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.4",
     "react-swiper": "^0.1.5",
+    "recharts": "^3.4.1",
     "swiper": "^12.0.2",
     "tailwindcss": "^4.1.14"
   },
