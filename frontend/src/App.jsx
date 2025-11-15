@@ -11,6 +11,7 @@ import AuthLayout from './layouts/AuthLayout.jsx'
 import CoursesPage from './pages/CoursesPage.jsx'
 import ContactUsPage from './pages/ContactUsPage.jsx'
 import RecordPage from './pages/RecordPage.jsx'
+import GalleryPage from './pages/GalleryPage.jsx'
 
 const route = createBrowserRouter([
   {
@@ -37,6 +38,10 @@ const route = createBrowserRouter([
       {
         path:"/record",
         element:<RecordPage/>
+      },
+      {
+        path:"/gallery",
+        element:<GalleryPage/>
       }
     ],
   },

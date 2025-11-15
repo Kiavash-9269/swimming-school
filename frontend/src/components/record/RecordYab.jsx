@@ -2,6 +2,8 @@ import { useState, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { FiClock, FiInfo, FiAward, FiTrendingUp, FiTarget, FiLoader } from "react-icons/fi";
 import { FaSwimmer,FaGlobe } from "react-icons/fa";
+import { motion } from "framer-motion";
+
 
 export default function SwimmingPerformancePro() {
   const [selectedDiscipline, setSelectedDiscipline] = useState("");
@@ -14,9 +16,9 @@ export default function SwimmingPerformancePro() {
   const [error, setError] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // همه رکوردها
+
   const records = [
-    // آزاد - رکوردهای جهانی
+    
     { event: "50m آزاد", time: 20.91, distance: 50, holder: "Cesar Cielo", type: "خارجی", discipline: "آزاد" },
     { event: "100m آزاد", time: 46.40, distance: 100, holder: "Pan Zhanle", type: "خارجی", discipline: "آزاد" },
     { event: "200m آزاد", time: 102.00, distance: 200, holder: "Paul Biedermann", type: "خارجی", discipline: "آزاد" },
@@ -24,7 +26,6 @@ export default function SwimmingPerformancePro() {
     { event: "800m آزاد", time: 452.12, distance: 800, holder: "Zhang Lin", type: "خارجی", discipline: "آزاد" },
     { event: "1500m آزاد", time: 870.67, distance: 1500, holder: "Bobby Finke", type: "خارجی", discipline: "آزاد" },
 
-    // آزاد - رکوردهای ملی ایران
     { event: "50m آزاد ایران", time: 22.41, distance: 50, holder: "سامیار عبدلی", type: "داخلی", discipline: "آزاد" },
     { event: "100m آزاد ایران", time: 50.34, distance: 100, holder: "سامیار عبدلی", type: "داخلی", discipline: "آزاد" },
     { event: "200m آزاد ایران", time: 110.30, distance: 200, holder: "محمد قاسمی", type: "داخلی", discipline: "آزاد" },
@@ -32,37 +33,30 @@ export default function SwimmingPerformancePro() {
     { event: "800m آزاد ایران", time: 491.83, distance: 800, holder: "محمد قاسمی", type: "داخلی", discipline: "آزاد" },
     { event: "1500m آزاد ایران", time: 966.66, distance: 1500, holder: "علی جعفری", type: "داخلی", discipline: "آزاد" },
 
-    // پروانه - رکوردهای جهانی
     { event: "50m پروانه", time: 22.27, distance: 50, holder: "Andriy Govorov", type: "خارجی", discipline: "پروانه" },
     { event: "100m پروانه", time: 49.45, distance: 100, holder: "Caeleb Dressel", type: "خارجی", discipline: "پروانه" },
     { event: "200m پروانه", time: 110.34, distance: 200, holder: "Kristóf Milák", type: "خارجی", discipline: "پروانه" },
 
-    // پروانه - رکوردهای ملی ایران
     { event: "50m پروانه ایران", time: 24.15, distance: 50, holder: "مهردشاد افقری", type: "داخلی", discipline: "پروانه" },
     { event: "100m پروانه ایران", time: 53.32, distance: 100, holder: "مهردشاد افقری", type: "داخلی", discipline: "پروانه" },
     { event: "200m پروانه ایران", time: 119.97, distance: 200, holder: "متین بالسینی", type: "داخلی", discipline: "پروانه" },
 
-    // کرال پشت - رکوردهای جهانی
     { event: "50m کرال پشت", time: 23.55, distance: 50, holder: "Kliment Kolesnikov", type: "خارجی", discipline: "کرال پشت" },
     { event: "100m کرال پشت", time: 51.60, distance: 100, holder: "Thomas Ceccon", type: "خارجی", discipline: "کرال پشت" },
     { event: "200m کرال پشت", time: 111.92, distance: 200, holder: "Aaron Peirsol", type: "خارجی", discipline: "کرال پشت" },
 
-    // کرال پشت - رکوردهای ملی ایران
     { event: "50m کرال پشت ایران", time: 25.90, distance: 50, holder: "هومر عباسی", type: "داخلی", discipline: "کرال پشت" },
     { event: "100m کرال پشت ایران", time: 56.36, distance: 100, holder: "ابوالفضل سام", type: "داخلی", discipline: "کرال پشت" },
     { event: "200m کرال پشت ایران", time: 124.67, distance: 200, holder: "ابوالفضل سام", type: "داخلی", discipline: "کرال پشت" },
 
-    // غورباقه - رکوردهای جهانی
     { event: "50m غورباقه", time: 25.95, distance: 50, holder: "Adam Peaty", type: "خارجی", discipline: "غورباقه" },
     { event: "100m غورباقه", time: 56.88, distance: 100, holder: "Adam Peaty", type: "خارجی", discipline: "غورباقه" },
     { event: "200m غورباقه", time: 126.00, distance: 200, holder: "Anton Chupkov", type: "خارجی", discipline: "غورباقه" },
 
-    // غورباقه - رکوردهای ملی ایران
     { event: "50m غورباقه ایران", time: 27.95, distance: 50, holder: "محمد علیرضایی دریزچه", type: "داخلی", discipline: "غورباقه" },
     { event: "100m غورباقه ایران", time: 62.12, distance: 100, holder: "امیر مطاعی", type: "داخلی", discipline: "غورباقه" },
     { event: "200m غورباقه ایران", time: 137.67, distance: 200, holder: "علیرضا عرب", type: "داخلی", discipline: "غورباقه" },
 
-    // مختلط انفرادی - رکوردهای ملی ایران
     { event: "200m مختلط ایران", time: 125.87, distance: 200, holder: "متین سهران", type: "داخلی", discipline: "مختلط" },
     { event: "400m مختلط ایران", time: 275.34, distance: 400, holder: "محمد قاسمی", type: "داخلی", discipline: "مختلط" }
   ];
@@ -240,16 +234,21 @@ export default function SwimmingPerformancePro() {
   return (
     <div dir="rtl" className="min-h-screen bg-sky-950 p-4 md:p-8 flex flex-col items-center">
       <div className="w-full max-w-7xl">
-        {/* هدر */}
-        <header className="text-center mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2"> محاسبه عملکرد شناگر</h1>
+        <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="px-4 pt-8 max-w-7xl mx-auto text-center"
+        > 
+          <header className="text-center mb-4 md:mb-12">
+          <h1 className="text-3xl md:text-4xl font-medium text-white mb-4"> محاسبه عملکرد شناگر</h1>
+          <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-auto mb-4"></div>
           <p className="text-gray-300 max-w-2xl mx-auto">
             مقایسه عملکرد خود با رکوردهای جهانی و داخلی در رشته‌های مختلف شنا
           </p>
         </header>
-
-        {/* تب‌ها */}
-        <div className="flex justify-center mb-6 md:mb-8">
+        </motion.div>
+       
+        <div className="flex justify-center  md:mb-8 ">
           <div className="bg-white rounded-2xl shadow-md p-1 flex gap-2">
             {["calculator", "records"].map((tab) => (
               <button
@@ -271,7 +270,7 @@ export default function SwimmingPerformancePro() {
           </div>
         </div>
 
-        {/* نمایش خطا */}
+        
         {error && (
           <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-xl text-center">
             {error}
@@ -279,11 +278,11 @@ export default function SwimmingPerformancePro() {
         )}
 
         {activeTab === "calculator" ? (
-          <div className="bg-sky-100 rounded-3xl shadow-xl overflow-hidden">
+          <div className="bg-sky-100 rounded-3xl shadow-xl overflow-hidden mb-8">
             <div className="p-6 md:p-8">
               <h2 className="text-2xl font-bold text-blue-500 mb-6 text-center">محاسبه عملکرد</h2>
 
-              {/* انتخاب ماده و نوع رکورد */}
+              
               <div className="bg-white/70 backdrop-blur-lg border border-gray-200 shadow-sm rounded-2xl p-5 mb-6 transition-all duration-300 hover:shadow-md">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2 ">
                   <svg
@@ -300,7 +299,7 @@ export default function SwimmingPerformancePro() {
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* فیلتر ماده */}
+                 
                   <div className="flex flex-col">
                     <label className="flex items-center text-gray-600 mb-2 font-medium tracking-wide  right">
                       <FaSwimmer className="ml-2 text-blue-500" />
@@ -326,7 +325,6 @@ export default function SwimmingPerformancePro() {
                     </select>
                   </div>
 
-                  {/* فیلتر نوع رکورد */}
                   <div className="flex flex-col">
                     <label className=" text-gray-600 mb-2 font-medium tracking-wide text-right flex items-center  gap-2">
                           <FaGlobe className="text-blue-500" />
@@ -353,7 +351,6 @@ export default function SwimmingPerformancePro() {
                 </div>
               </div>
 
-              {/* کارت رکوردها */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-700 mb-3 text-right">انتخاب رکورد:</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
@@ -374,7 +371,6 @@ export default function SwimmingPerformancePro() {
                 </div>
               </div>
 
-              {/* رکورد انتخاب شده */}
               {selectedEvent && (
                 <div className="bg-gradient-to-r from-blue-200 to-sky-600 rounded-2xl p-6 mb-8 border border-blue-200 shadow-lg flex flex-col items-center gap-4 text-center transform transition-all duration-300 hover:shadow-xl">
                   <div className="text-2xl font-bold text-sky-950 text-shadow-2xs flex items-center gap-3">
@@ -387,7 +383,7 @@ export default function SwimmingPerformancePro() {
                   <div className="flex flex-wrap justify-center gap-6 text-gray-800">
                     <div className="flex flex-col items-center bg-white/70 px-4 py-3 rounded-xl shadow-sm min-w-[120px]">
                       <span className="text-sm text-gray-600 mb-1">ماده</span>
-                      <span className="font-semibold text-lg">{selectedEvent}</span>
+                      <span className="font-normal text-lg">{selectedEvent}</span>
                     </div>
                     
                     <div className="flex flex-col items-center bg-white/70 px-4 py-3 rounded-xl shadow-sm min-w-[120px]">
@@ -395,14 +391,14 @@ export default function SwimmingPerformancePro() {
                         <FiClock className="text-blue-500" />
                         زمان
                       </span>
-                      <span className="font-semibold text-lg text-blue-700">
+                      <span className="font-normal text-lg text-blue-700">
                         {records.find((r) => r.event === selectedEvent).time} ثانیه
                       </span>
                     </div>
                     
                     <div className="flex flex-col items-center bg-white/70 px-4 py-3 rounded-xl shadow-sm min-w-[120px]">
                       <span className="text-sm text-gray-600 mb-1">رکورددار</span>
-                      <span className="font-semibold text-lg ">
+                      <span className="font-normal text-lg ">
                         {records.find((r) => r.event === selectedEvent).holder}
                       </span>
                     </div>
@@ -410,7 +406,6 @@ export default function SwimmingPerformancePro() {
                 </div>
               )}
 
-              {/* زمان شناگر */}
               <div className="mb-6 relative">
                 <label className=" text-black font-bold flex items-center text-right gap-2 mb-4">
                   <svg
@@ -444,7 +439,6 @@ export default function SwimmingPerformancePro() {
                 </div>
               </div>
 
-              {/* دکمه محاسبه */}
               <button
                 onClick={calculate}
                 disabled={!selectedEvent || !swimmerTime || isCalculating}
@@ -464,12 +458,11 @@ export default function SwimmingPerformancePro() {
                 )}
               </button>
 
-              {/* نتایج */}
               {results && (
                 <div className="mt-8 space-y-6">
-                  {/* پیام‌های هوشمند */}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* پیام جهانی */}
+                    
                     <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm border border-blue-200 text-right">
                       <h4 className="font-semibold text-sky-800 mb-3 flex items-center gap-2 ">
                         <FaGlobe className="text-blue-500" />
@@ -504,7 +497,7 @@ export default function SwimmingPerformancePro() {
                       )}
                     </div>
 
-                    {/* پیام داخلی */}
+                    
                     <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 shadow-sm border border-green-200 text-right">
                       <h4 className="font-semibold text-sky-950 mb-3 flex items-center gap-2 ">
                         <div className="flex items-center text-xl ">
@@ -540,9 +533,9 @@ export default function SwimmingPerformancePro() {
                     </div>
                   </div>
 
-                  {/* نمودارها و جزئیات عددی */}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* نمودار جهانی */}
+                    
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 flex flex-col items-center shadow-sm border border-blue-200 text-right">
                       <h3 className="text-lg font-semibold text-sky-900 mb-4 flex items-center gap-2">
                         <FiTrendingUp className="text-sky-600" />
@@ -581,7 +574,7 @@ export default function SwimmingPerformancePro() {
                       </div>
                     </div>
 
-                    {/* نمودار داخلی */}
+                    
                     <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 flex flex-col items-center shadow-sm border border-green-200 text-right">
                       <h3 className="text-lg font-semibold text-sky-950 mb-4 flex items-center gap-2">
                         <FiTrendingUp className="text-green-800" />
@@ -621,7 +614,7 @@ export default function SwimmingPerformancePro() {
                     </div>
                   </div>
 
-                  {/* جدول خلاصه عددی */}
+                  
                   <div className="bg-gradient-to-bl from-blue-100 to-sky-800 rounded-2xl p-6 space-y-4 shadow-sm border border-blue-200 text-right">
                     <h3 className="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2 ">
                       <FiTarget className="text-blue-600" />
@@ -685,7 +678,7 @@ export default function SwimmingPerformancePro() {
                       </div>
                     </div>
                     
-                    {/* فینا پوینت در خلاصه نتایج */}
+                   
                     {results.world.exists && (
                       <div className="p-4 bg-white rounded-xl shadow-sm border border-blue-100">
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-right">
@@ -711,7 +704,7 @@ export default function SwimmingPerformancePro() {
                     )}
                   </div>
 
-                  {/* توضیح فینا پوینت */}
+                  
                   {showFinaInfo && (
                     <div className="mt-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-300 rounded-2xl p-6 shadow-sm text-right">
                       <h4 className="text-lg font-bold text-yellow-800 mb-4 flex items-center gap-2 ">
@@ -755,12 +748,12 @@ export default function SwimmingPerformancePro() {
             </div>
           </div>
         ) : (
-          // تب جدول رکوردها
+          
           <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
             <div className="p-6 md:p-8 bg-sky-100">
               <h2 className="text-2xl font-bold text-blue-500 text-shadow-2xs mb-6 text-center">جدول رکوردهای شنا</h2>
 
-              {/* فیلتر جدول */}
+              
               <div className="flex flex-wrap justify-center gap-3 mb-6">
                 {["همه", "داخلی", "خارجی"].map((t) => (
                   <button
@@ -777,7 +770,7 @@ export default function SwimmingPerformancePro() {
                 ))}
               </div>
 
-              {/* جدول */}
+              
               <div className=" bg-white overflow-x-auto rounded-xl border border-gray-200 shadow-2xs">
                 <table className="w-full border-collapse">
                   <thead className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
