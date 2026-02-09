@@ -49,7 +49,6 @@ export default function AuthCard() {
         window.location.href = "/"; 
     };
 
-    // تابع برای تغییر حالت بین ورود و ثبت‌نام
     const switchMode = (mode) => {
         setIsLogin(mode === 'login');
         setSearchParams({ mode });
@@ -148,7 +147,7 @@ export default function AuthCard() {
             const result = await apiSignup(fullName, email, password);
             if (result.success) {
                 alert("ثبت‌نام موفق!");
-                switchMode('login'); // برو به صفحه لاگین
+                switchMode('login'); 
             } else {
                 setErrors({ general: result.message });
             }
@@ -444,7 +443,7 @@ export default function AuthCard() {
                 )}
             </AnimatePresence>
 
-            {/* DECORATIVE BUBBLES */}
+          
             <div className="absolute -z-10">
                 <div className="absolute w-24 h-24 bg-sky-300/40 rounded-full blur-2xl top-0 left-0 animate-pulse"></div>
                 <div className="absolute w-32 h-32 bg-blue-400/40 rounded-full blur-2xl bottom-10 right-5 animate-pulse delay-300"></div>

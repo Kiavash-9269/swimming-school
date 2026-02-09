@@ -1,9 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { FiClock, FiInfo, FiAward, FiTrendingUp, FiTarget, FiLoader } from "react-icons/fi";
-import { FaSwimmer,FaGlobe } from "react-icons/fa";
+import { FaSwimmer, FaGlobe } from "react-icons/fa";
 import { motion } from "framer-motion";
-
 
 export default function SwimmingPerformancePro() {
   const [selectedDiscipline, setSelectedDiscipline] = useState("");
@@ -16,9 +15,7 @@ export default function SwimmingPerformancePro() {
   const [error, setError] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
 
-
   const records = [
-    
     { event: "50m آزاد", time: 20.91, distance: 50, holder: "Cesar Cielo", type: "خارجی", discipline: "آزاد" },
     { event: "100m آزاد", time: 46.40, distance: 100, holder: "Pan Zhanle", type: "خارجی", discipline: "آزاد" },
     { event: "200m آزاد", time: 102.00, distance: 200, holder: "Paul Biedermann", type: "خارجی", discipline: "آزاد" },
@@ -206,8 +203,6 @@ export default function SwimmingPerformancePro() {
   const COLORS = ["#3B82F6", "#E5E7EB"];
   const COLORS_NAT = ["#10B981", "#FEEBC8"];
 
-
-
   const chartDataFor = (perf) =>
     perf != null
       ? [
@@ -232,28 +227,28 @@ export default function SwimmingPerformancePro() {
   );
 
   return (
-    <div dir="rtl" className="min-h-screen bg-sky-950 p-4 md:p-8 flex flex-col items-center">
+    <div dir="rtl" className="min-h-screen bg-sky-950 p-3 sm:p-6 flex flex-col items-center">
       <div className="w-full max-w-7xl">
         <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="px-4 pt-8 max-w-7xl mx-auto text-center"
-        > 
-          <header className="text-center mb-4 md:mb-12">
-          <h1 className="text-3xl md:text-4xl font-medium text-white mb-4"> محاسبه عملکرد شناگر</h1>
-          <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-auto mb-4"></div>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-            مقایسه عملکرد خود با رکوردهای جهانی و داخلی در رشته‌های مختلف شنا
-          </p>
-        </header>
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-2 sm:px-4 pt-6 sm:pt-8 max-w-7xl mx-auto text-center"
+        >
+          <header className="text-center mt-4 sm:mt-8 mb-6 sm:mb-12">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3 sm:mb-4">محاسبه عملکرد شناگر</h1>
+            <div className="w-12 sm:w-16 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-auto mb-3 sm:mb-4"></div>
+            <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto px-2">
+              مقایسه عملکرد خود با رکوردهای جهانی و داخلی در رشته‌های مختلف شنا
+            </p>
+          </header>
         </motion.div>
-       
-        <div className="flex justify-center  md:mb-8 ">
-          <div className="bg-white rounded-2xl shadow-md p-1 flex gap-2">
+
+        <div className="flex justify-center mb-4 sm:mb-6 md:mb-8">
+          <div className="bg-white rounded-2xl shadow-sm sm:shadow-md p-1 flex gap-1 sm:gap-2">
             {["calculator", "records"].map((tab) => (
               <button
                 key={tab}
-                className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-xl font-medium transition-all ${
                   activeTab === tab ? "bg-sky-700 text-white shadow" : "text-gray-700 hover:bg-blue-50"
                 }`}
                 onClick={() => {
@@ -264,30 +259,29 @@ export default function SwimmingPerformancePro() {
                   setError("");
                 }}
               >
-                {tab === "calculator" ? " محاسبه رکورد" : "جدول رکوردها"}
+                {tab === "calculator" ? "محاسبه رکورد" : "جدول رکوردها"}
               </button>
             ))}
           </div>
         </div>
 
-        
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-xl text-center">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-100 border border-red-300 text-red-700 rounded-xl text-center text-sm sm:text-base">
             {error}
           </div>
         )}
 
         {activeTab === "calculator" ? (
-          <div className="bg-sky-100 rounded-3xl shadow-xl overflow-hidden mb-8">
-            <div className="p-6 md:p-8">
-              <h2 className="text-2xl font-bold text-blue-500 mb-6 text-center">محاسبه عملکرد</h2>
+          <div className="bg-sky-100 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden mb-6 sm:mb-8">
+            <div className="p-4 sm:p-6 md:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-500 mb-4 sm:mb-6 text-center">محاسبه عملکرد</h2>
 
-              
-              <div className="bg-white/70 backdrop-blur-lg border border-gray-200 shadow-sm rounded-2xl p-5 mb-6 transition-all duration-300 hover:shadow-md">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2 ">
+              {/* فیلتر رکوردها */}
+              <div className="bg-white/70 backdrop-blur-lg border border-gray-200 shadow-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6 transition-all duration-300 hover:shadow-md">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="w-5 h-5 text-blue-500"
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -298,15 +292,14 @@ export default function SwimmingPerformancePro() {
                   فیلتر رکوردها
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="flex flex-col">
-                    <label className="flex items-center text-gray-600 mb-2 font-medium tracking-wide  right">
+                    <label className="flex items-center text-gray-600 mb-2 font-medium tracking-wide text-sm sm:text-base">
                       <FaSwimmer className="ml-2 text-blue-500" />
                       انتخاب ماده:
                     </label>
                     <select
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all hover:bg-white text-right"
+                      className="w-full p-2 sm:p-3 bg-gray-50 border border-gray-200 rounded-xl sm:rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all hover:bg-white text-right text-sm sm:text-base"
                       value={selectedDiscipline}
                       onChange={(e) => {
                         setSelectedDiscipline(e.target.value);
@@ -326,12 +319,12 @@ export default function SwimmingPerformancePro() {
                   </div>
 
                   <div className="flex flex-col">
-                    <label className=" text-gray-600 mb-2 font-medium tracking-wide text-right flex items-center  gap-2">
-                          <FaGlobe className="text-blue-500" />
-                          نوع رکورد:
-                        </label>
+                    <label className="text-gray-600 mb-2 font-medium tracking-wide text-right flex items-center gap-2 text-sm sm:text-base">
+                      <FaGlobe className="text-blue-500" />
+                      نوع رکورد:
+                    </label>
                     <select
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all hover:bg-white text-right"
+                      className="w-full p-2 sm:p-3 bg-gray-50 border border-gray-200 rounded-xl sm:rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all hover:bg-white text-right text-sm sm:text-base"
                       value={filterType}
                       onChange={(e) => {
                         setFilterType(e.target.value);
@@ -351,13 +344,14 @@ export default function SwimmingPerformancePro() {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-3 text-right">انتخاب رکورد:</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
+              {/* انتخاب رکورد */}
+              <div className="mb-4 sm:mb-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-3 text-right">انتخاب رکورد:</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 max-h-64 sm:max-h-80 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
                   {selectableRecords.map((r) => (
                     <button
                       key={r.event}
-                      className={`p-4 rounded-xl shadow-sm border transition-transform duration-200 transform text-center font-medium ${
+                      className={`p-3 sm:p-4 rounded-xl shadow-sm border transition-transform duration-200 transform text-center font-medium text-sm sm:text-base ${
                         selectedEvent === r.event
                           ? "bg-blue-600 text-white border-blue-600 shadow-md scale-105"
                           : "bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300"
@@ -371,34 +365,35 @@ export default function SwimmingPerformancePro() {
                 </div>
               </div>
 
+              {/* رکورد انتخاب شده */}
               {selectedEvent && (
-                <div className="bg-gradient-to-r from-blue-200 to-sky-600 rounded-2xl p-6 mb-8 border border-blue-200 shadow-lg flex flex-col items-center gap-4 text-center transform transition-all duration-300 hover:shadow-xl">
-                  <div className="text-2xl font-bold text-sky-950 text-shadow-2xs flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <FiTarget className="text-red-600 text-xl" />
+                <div className="bg-gradient-to-r from-blue-200 to-sky-600 rounded-2xl p-4 sm:p-6 mb-6 border border-blue-200 shadow-lg flex flex-col items-center gap-3 sm:gap-4 text-center transform transition-all duration-300 hover:shadow-xl">
+                  <div className="text-lg sm:text-2xl font-bold text-sky-950 flex items-center gap-2 sm:gap-3">
+                    <div className="p-1 sm:p-2 bg-blue-100 rounded-full">
+                      <FiTarget className="text-red-600 text-lg sm:text-xl" />
                     </div>
                     <span>رکورد انتخاب شده</span>
                   </div>
                   
-                  <div className="flex flex-wrap justify-center gap-6 text-gray-800">
-                    <div className="flex flex-col items-center bg-white/70 px-4 py-3 rounded-xl shadow-sm min-w-[120px]">
-                      <span className="text-sm text-gray-600 mb-1">ماده</span>
-                      <span className="font-normal text-lg">{selectedEvent}</span>
+                  <div className="flex flex-wrap justify-center gap-3 sm:gap-6 text-gray-800">
+                    <div className="flex flex-col items-center bg-white/70 px-3 py-2 sm:px-4 sm:py-3 rounded-xl shadow-sm min-w-[100px] sm:min-w-[120px]">
+                      <span className="text-xs sm:text-sm text-gray-600 mb-1">ماده</span>
+                      <span className="font-normal text-base sm:text-lg">{selectedEvent}</span>
                     </div>
                     
-                    <div className="flex flex-col items-center bg-white/70 px-4 py-3 rounded-xl shadow-sm min-w-[120px]">
-                      <span className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                    <div className="flex flex-col items-center bg-white/70 px-3 py-2 sm:px-4 sm:py-3 rounded-xl shadow-sm min-w-[100px] sm:min-w-[120px]">
+                      <span className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center gap-1">
                         <FiClock className="text-blue-500" />
                         زمان
                       </span>
-                      <span className="font-normal text-lg text-blue-700">
+                      <span className="font-normal text-base sm:text-lg text-blue-700">
                         {records.find((r) => r.event === selectedEvent).time} ثانیه
                       </span>
                     </div>
                     
-                    <div className="flex flex-col items-center bg-white/70 px-4 py-3 rounded-xl shadow-sm min-w-[120px]">
-                      <span className="text-sm text-gray-600 mb-1">رکورددار</span>
-                      <span className="font-normal text-lg ">
+                    <div className="flex flex-col items-center bg-white/70 px-3 py-2 sm:px-4 sm:py-3 rounded-xl shadow-sm min-w-[100px] sm:min-w-[120px]">
+                      <span className="text-xs sm:text-sm text-gray-600 mb-1">رکورددار</span>
+                      <span className="font-normal text-base sm:text-lg">
                         {records.find((r) => r.event === selectedEvent).holder}
                       </span>
                     </div>
@@ -406,11 +401,12 @@ export default function SwimmingPerformancePro() {
                 </div>
               )}
 
-              <div className="mb-6 relative">
-                <label className=" text-black font-bold flex items-center text-right gap-2 mb-4">
+              {/* زمان شناگر */}
+              <div className="mb-4 sm:mb-6 relative">
+                <label className="text-black font-bold flex items-center text-right gap-2 mb-3 text-sm sm:text-base">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="w-5 h-5 text-blue-500"
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -420,7 +416,7 @@ export default function SwimmingPerformancePro() {
                   </svg>
                   زمان شناگر (ثانیه):
                 </label>
-                <div className="relative bg">
+                <div className="relative">
                   <input
                     type="number"
                     step="0.01"
@@ -430,19 +426,20 @@ export default function SwimmingPerformancePro() {
                       setSwimmerTime(e.target.value);
                       setError("");
                     }}
-                    className="w-full p-3 pr-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition shadow-sm hover:shadow-md text-right dir-ltr"
+                    className="w-full p-2 sm:p-3 pr-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition shadow-sm hover:shadow-md text-right dir-ltr text-sm sm:text-base"
                     dir="ltr"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <FiClock className="text-blue-500 h-5 w-5" />
+                    <FiClock className="text-blue-500 h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                 </div>
               </div>
 
+              {/* دکمه محاسبه */}
               <button
                 onClick={calculate}
                 disabled={!selectedEvent || !swimmerTime || isCalculating}
-                className={`w-full py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                className={`w-full py-3 sm:py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-sm sm:text-base ${
                   selectedEvent && swimmerTime && !isCalculating
                     ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -458,90 +455,91 @@ export default function SwimmingPerformancePro() {
                 )}
               </button>
 
+              {/* نتایج */}
               {results && (
-                <div className="mt-8 space-y-6">
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm border border-blue-200 text-right">
-                      <h4 className="font-semibold text-sky-800 mb-3 flex items-center gap-2 ">
+                <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
+                  {/* مقایسه رکوردها */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    {/* رکورد جهانی */}
+                    <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm border border-blue-200 text-right">
+                      <h4 className="font-semibold text-sky-800 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
                         <FaGlobe className="text-blue-500" />
                         مقایسه با رکورد جهانی
                       </h4>
                       {results.world.exists ? (
                         <>
-                          <div className="text-sm text-gray-700 mb-4 leading-relaxed text-justify">
+                          <div className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4 leading-relaxed text-justify">
                             {results.world.message}
                           </div>
-                          <div className="flex flex-wrap gap-2 text-sm text-gray-600 ">
-                            <div className="bg-white px-3 py-2 rounded-lg border border-blue-100">
+                          <div className="flex flex-wrap gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
+                            <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-blue-100">
                               <span className="text-blue-600 font-medium">رکورددار: </span>
                               <span>{results.world.holder}</span>
                             </div>
-                            <div className="bg-white px-3 py-2 rounded-lg border border-blue-100">
+                            <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-blue-100">
                               <span className="text-blue-600 font-medium">زمان رکورد: </span>
                               <span>{results.world.time} ثانیه</span>
                             </div>
-                            <div className="bg-white px-3 py-2 rounded-lg border border-blue-100">
+                            <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-blue-100">
                               <span className="text-blue-600 font-medium">سرعت شما: </span>
                               <span>{results.world.speed} متر/ثانیه</span>
                             </div>
-                            <div className="bg-yellow-400 px-3 py-2 rounded-lg border border-blue-100 shadow-2xl ">
-                              <span className="text-gray-800 font-medium ">امتیاز فینا: </span>
+                            <div className="bg-yellow-400 px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-blue-100 shadow-sm">
+                              <span className="text-gray-800 font-medium">امتیاز فینا: </span>
                               <span className="font-bold text-black">{results.world.fina}</span>
                             </div>
                           </div>
                         </>
                       ) : (
-                        <div className="text-sm text-gray-600 text-justify">{results.world.message}</div>
+                        <div className="text-xs sm:text-sm text-gray-600 text-justify">{results.world.message}</div>
                       )}
                     </div>
 
-                    
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 shadow-sm border border-green-200 text-right">
-                      <h4 className="font-semibold text-sky-950 mb-3 flex items-center gap-2 ">
-                        <div className="flex items-center text-xl ">
+                    {/* رکورد داخلی */}
+                    <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 shadow-sm border border-green-200 text-right">
+                      <h4 className="font-semibold text-sky-950 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+                        <div className="flex items-center text-base sm:text-xl">
                           <span className="text-green-500">●</span>
-                          <span className="text-white ">●</span>
+                          <span className="text-white mx-1">●</span>
                           <span className="text-red-500">●</span>
-                        </div> 
+                        </div>
                         مقایسه با رکورد داخلی
                       </h4>
                       {results.national.exists ? (
                         <>
-                          <div className="text-sm text-gray-700 mb-4 leading-relaxed text-justify">
+                          <div className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4 leading-relaxed text-justify">
                             {results.national.message}
                           </div>
-                          <div className="flex flex-wrap gap-2 text-sm text-gray-600 ">
-                            <div className="bg-white px-3 py-2 rounded-lg border border-green-200">
+                          <div className="flex flex-wrap gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
+                            <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-green-200">
                               <span className="text-green-700 font-medium">رکورددار: </span>
                               <span>{results.national.holder}</span>
                             </div>
-                            <div className="bg-white px-3 py-2 rounded-lg border border-green-200">
+                            <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-green-200">
                               <span className="text-green-700 font-medium">زمان رکورد: </span>
                               <span>{results.national.time} ثانیه</span>
                             </div>
-                            <div className="bg-white px-3 py-2 rounded-lg border border-green-200">
+                            <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-green-200">
                               <span className="text-green-800 font-medium">عملکرد: </span>
                               <span>{results.national.performance}%</span>
                             </div>
                           </div>
                         </>
                       ) : (
-                        <div className="text-sm text-gray-600 text-justify">{results.national.message}</div>
+                        <div className="text-xs sm:text-sm text-gray-600 text-justify">{results.national.message}</div>
                       )}
                     </div>
                   </div>
 
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 flex flex-col items-center shadow-sm border border-blue-200 text-right">
-                      <h3 className="text-lg font-semibold text-sky-900 mb-4 flex items-center gap-2">
+                  {/* نمودارها */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    {/* نمودار جهانی */}
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col items-center shadow-sm border border-blue-200 text-right">
+                      <h3 className="text-base sm:text-lg font-semibold text-sky-900 mb-3 sm:mb-4 flex items-center gap-2">
                         <FiTrendingUp className="text-sky-600" />
                         عملکرد نسبت به رکورد جهانی
                       </h3>
-                      <div className="relative h-56 w-full max-w-xs">
+                      <div className="relative h-40 sm:h-56 w-full max-w-xs">
                         {results.world.exists ? (
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -561,26 +559,26 @@ export default function SwimmingPerformancePro() {
                             </PieChart>
                           </ResponsiveContainer>
                         ) : (
-                          <div className="text-sm text-gray-600 flex items-center justify-center h-full">
+                          <div className="text-xs sm:text-sm text-gray-600 flex items-center justify-center h-full">
                             رکورد جهانی موجود نیست
                           </div>
                         )}
                         {results.world.exists && (
                           <div className="absolute inset-0 flex items-center justify-center flex-col">
-                            <span className="text-3xl font-bold text-blue-700">{results.world.performance}%</span>
-                            <span className="text-sm text-gray-600 mt-1">عملکرد نسبت به جهانی</span>
+                            <span className="text-2xl sm:text-3xl font-bold text-blue-700">{results.world.performance}%</span>
+                            <span className="text-xs sm:text-sm text-gray-600 mt-1">عملکرد نسبت به جهانی</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 flex flex-col items-center shadow-sm border border-green-200 text-right">
-                      <h3 className="text-lg font-semibold text-sky-950 mb-4 flex items-center gap-2">
+                    {/* نمودار داخلی */}
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col items-center shadow-sm border border-green-200 text-right">
+                      <h3 className="text-base sm:text-lg font-semibold text-sky-950 mb-3 sm:mb-4 flex items-center gap-2">
                         <FiTrendingUp className="text-green-800" />
                         عملکرد نسبت به رکورد داخلی
                       </h3>
-                      <div className="relative h-56 w-full max-w-xs">
+                      <div className="relative h-40 sm:h-56 w-full max-w-xs">
                         {results.national.exists ? (
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -600,52 +598,52 @@ export default function SwimmingPerformancePro() {
                             </PieChart>
                           </ResponsiveContainer>
                         ) : (
-                          <div className="text-sm text-gray-600 flex items-center justify-center h-full">
+                          <div className="text-xs sm:text-sm text-gray-600 flex items-center justify-center h-full">
                             رکورد داخلی موجود نیست
                           </div>
                         )}
                         {results.national.exists && (
                           <div className="absolute inset-0 flex items-center justify-center flex-col">
-                            <span className="text-3xl font-bold text-gray-800">{results.national.performance}%</span>
-                            <span className="text-sm text-gray-600 mt-1">عملکرد نسبت به داخلی</span>
+                            <span className="text-2xl sm:text-3xl font-bold text-gray-800">{results.national.performance}%</span>
+                            <span className="text-xs sm:text-sm text-gray-600 mt-1">عملکرد نسبت به داخلی</span>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  
-                  <div className="bg-gradient-to-bl from-blue-100 to-sky-800 rounded-2xl p-6 space-y-4 shadow-sm border border-blue-200 text-right">
-                    <h3 className="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2 ">
+                  {/* خلاصه نتایج */}
+                  <div className="bg-gradient-to-bl from-blue-100 to-sky-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-sm border border-blue-200 text-right">
+                    <h3 className="text-base sm:text-lg font-semibold text-blue-700 mb-3 sm:mb-4 flex items-center gap-2">
                       <FiTarget className="text-blue-600" />
                       خلاصه نتایج
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="flex flex-col p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
-                        <span className="text-gray-600 text-sm mb-2">زمان شما</span>
-                        <span className="font-bold text-blue-700 text-xl">{results.swimmerTime} ثانیه</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                      <div className="flex flex-col p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
+                        <span className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2">زمان شما</span>
+                        <span className="font-bold text-blue-700 text-lg sm:text-xl">{results.swimmerTime} ثانیه</span>
                       </div>
 
-                      <div className="flex flex-col p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
-                        <span className="text-gray-600 text-sm mb-2">عملکرد جهانی</span>
-                        <span className="font-bold text-blue-700 text-xl">
+                      <div className="flex flex-col p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
+                        <span className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2">عملکرد جهانی</span>
+                        <span className="font-bold text-blue-700 text-lg sm:text-xl">
                           {results.world.exists ? `${results.world.performance}%` : "—"}
                         </span>
                       </div>
 
-                      <div className="flex flex-col p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
-                        <span className="text-gray-600 text-sm mb-2">عملکرد داخلی</span>
-                        <span className="font-bold text-blue-700 text-xl">
+                      <div className="flex flex-col p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
+                        <span className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2">عملکرد داخلی</span>
+                        <span className="font-bold text-blue-700 text-lg sm:text-xl">
                           {results.national.exists ? `${results.national.performance}%` : "—"}
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
-                        <span className="text-gray-600 text-sm block mb-2">اختلاف با رکورد جهانی</span>
-                        <div className={`font-bold text-lg ${
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
+                        <span className="text-gray-600 text-xs sm:text-sm block mb-1 sm:mb-2">اختلاف با رکورد جهانی</span>
+                        <div className={`font-bold text-base sm:text-lg ${
                           results.world.timeDiff > 0 ? 'text-red-600' : 'text-green-600'
                         }`}>
                           {results.world.exists ? 
@@ -660,9 +658,9 @@ export default function SwimmingPerformancePro() {
                         </div>
                       </div>
 
-                      <div className="p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
-                        <span className="text-gray-600 text-sm block mb-2">اختلاف با رکورد داخلی</span>
-                        <div className={`font-bold text-lg ${
+                      <div className="p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
+                        <span className="text-gray-600 text-xs sm:text-sm block mb-1 sm:mb-2">اختلاف با رکورد داخلی</span>
+                        <div className={`font-bold text-base sm:text-lg ${
                           results.national.timeDiff > 0 ? 'text-red-600' : 'text-green-600'
                         }`}>
                           {results.national.exists ? 
@@ -678,13 +676,13 @@ export default function SwimmingPerformancePro() {
                       </div>
                     </div>
                     
-                   
+                    {/* امتیاز فینا */}
                     {results.world.exists && (
-                      <div className="p-4 bg-white rounded-xl shadow-sm border border-blue-100">
-                        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-right">
+                      <div className="p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100">
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 text-right">
                           <div className="text-center sm:text-right">
-                            <span className="text-gray-600 text-sm block mb-1">امتیاز فینا</span>
-                            <div className="font-bold text-blue-700 text-lg">{results.world.fina}</div>
+                            <span className="text-gray-600 text-xs sm:text-sm block mb-1">امتیاز فینا</span>
+                            <div className="font-bold text-blue-700 text-base sm:text-lg">{results.world.fina}</div>
                             <div className="text-xs text-gray-500 mt-1">
                               {results.world.fina >= 900 ? 'سطح جهانی' : 
                               results.world.fina >= 800 ? 'سطح قهرمانی' :
@@ -694,9 +692,9 @@ export default function SwimmingPerformancePro() {
                           </div>
                           <button 
                             onClick={() => setShowFinaInfo(!showFinaInfo)}
-                            className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                            className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors mt-2 sm:mt-0"
                           >
-                            <FiInfo className="w-4 h-4" />
+                            <FiInfo className="w-3 h-3 sm:w-4 sm:h-4" />
                             اطلاعات بیشتر
                           </button>
                         </div>
@@ -704,30 +702,30 @@ export default function SwimmingPerformancePro() {
                     )}
                   </div>
 
-                  
+                  {/* اطلاعات فینا */}
                   {showFinaInfo && (
-                    <div className="mt-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-300 rounded-2xl p-6 shadow-sm text-right">
-                      <h4 className="text-lg font-bold text-yellow-800 mb-4 flex items-center gap-2 ">
-                        <FiInfo className="w-5 h-5 text-yellow-600" />
+                    <div className="mt-4 sm:mt-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-300 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm text-right">
+                      <h4 className="text-base sm:text-lg font-bold text-yellow-800 mb-3 sm:mb-4 flex items-center gap-2">
+                        <FiInfo className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
                         سیستم امتیازدهی فینا (FINA Points)
                       </h4>
 
-                      <div className="text-yellow-800 space-y-4 text-sm leading-relaxed">
+                      <div className="text-yellow-800 space-y-3 sm:space-y-4 text-xs sm:text-sm leading-relaxed">
                         <div>
-                          <p className="font-bold text-yellow-900 mb-2">امتیاز فینا چیست؟</p>
+                          <p className="font-bold text-yellow-900 mb-1 sm:mb-2">امتیاز فینا چیست؟</p>
                           <p className="text-justify">
                             این سیستم توسط فدراسیون جهانی شنا (World Aquatics) طراحی شده تا عملکرد شناگران را در مواد مختلف به‌صورت
                             عادلانه مقایسه کند.
                           </p>
                         </div>
 
-                        <div className="bg-yellow-200/40 border border-yellow-300 rounded-xl p-4 text-center text-yellow-900 font-bold text-lg">
+                        <div className="bg-yellow-200/40 border border-yellow-300 rounded-xl p-3 sm:p-4 text-center text-yellow-900 font-bold text-base sm:text-lg">
                           امتیاز فینا = 1000 × (رکورد جهانی ÷ زمان شناگر)³
                         </div>
 
                         <div>
-                          <p className="font-bold text-yellow-900 mb-3">تفسیر امتیازها:</p>
-                          <ul className="list-disc list-inside space-y-2 pr-4 text-justify">
+                          <p className="font-bold text-yellow-900 mb-2 sm:mb-3">تفسیر امتیازها:</p>
+                          <ul className="list-disc list-inside space-y-1 sm:space-y-2 pr-3 sm:pr-4 text-justify">
                             <li><strong className="ml-1">1000 امتیاز:</strong> برابر با رکورد جهانی</li>
                             <li><strong className="ml-1">900 امتیاز و بالاتر:</strong> عملکرد در سطح جهانی</li>
                             <li><strong className="ml-1">800-899 امتیاز:</strong> عملکرد در سطح قهرمانی</li>
@@ -737,7 +735,7 @@ export default function SwimmingPerformancePro() {
                           </ul>
                         </div>
 
-                        <p className="text-xs mt-4 text-yellow-700 bg-yellow-100 border border-yellow-200 rounded-lg p-3 text-center">
+                        <p className="text-xs mt-3 sm:mt-4 text-yellow-700 bg-yellow-100 border border-yellow-200 rounded-lg p-2 sm:p-3 text-center">
                           این سیستم کمک می‌کند عملکرد شناگران در رشته‌ها و مسافت‌های متفاوت به‌صورت منصفانه مقایسه شود.
                         </p>
                       </div>
@@ -748,17 +746,17 @@ export default function SwimmingPerformancePro() {
             </div>
           </div>
         ) : (
-          
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-            <div className="p-6 md:p-8 bg-sky-100">
-              <h2 className="text-2xl font-bold text-blue-500 text-shadow-2xs mb-6 text-center">جدول رکوردهای شنا</h2>
+          /* جدول رکوردها */
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden mb-6 sm:mb-8">
+            <div className="p-4 sm:p-6 md:p-8 bg-sky-100">
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-500 mb-4 sm:mb-6 text-center">جدول رکوردهای شنا</h2>
 
-              
-              <div className="flex flex-wrap justify-center gap-3 mb-6">
+              {/* فیلترها */}
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
                 {["همه", "داخلی", "خارجی"].map((t) => (
                   <button
                     key={t}
-                    className={`px-4 py-2 rounded-xl border transition-all ${
+                    className={`px-3 sm:px-4 py-2 rounded-xl border transition-all text-sm sm:text-base ${
                       filterType === t
                         ? "bg-sky-600 text-white border-blue-600 shadow"
                         : "bg-white text-gray-700 border-gray-300 hover:bg-blue-100"
@@ -770,32 +768,32 @@ export default function SwimmingPerformancePro() {
                 ))}
               </div>
 
-              
-              <div className=" bg-white overflow-x-auto rounded-xl border border-gray-200 shadow-2xs">
-                <table className="w-full border-collapse">
+              {/* جدول */}
+              <div className="bg-white overflow-x-auto rounded-xl border border-gray-200 shadow-xs sm:shadow-2xs">
+                <table className="w-full border-collapse min-w-[640px]">
                   <thead className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                     <tr>
-                      <th className="border-b p-3 text-center font-semibold">رشته</th>
-                      <th className="border-b p-3 text-center font-semibold">رکورد (ثانیه)</th>
-                      <th className="border-b p-3 text-center font-semibold">نام رکورددار</th>
-                      <th className="border-b p-3 text-center font-semibold">نوع رکورد</th>
-                      <th className="border-b p-3 text-center font-semibold">ماده</th>
+                      <th className="border-b p-2 sm:p-3 text-center font-semibold text-xs sm:text-sm">رشته</th>
+                      <th className="border-b p-2 sm:p-3 text-center font-semibold text-xs sm:text-sm">رکورد (ثانیه)</th>
+                      <th className="border-b p-2 sm:p-3 text-center font-semibold text-xs sm:text-sm">نام رکورددار</th>
+                      <th className="border-b p-2 sm:p-3 text-center font-semibold text-xs sm:text-sm">نوع رکورد</th>
+                      <th className="border-b p-2 sm:p-3 text-center font-semibold text-xs sm:text-sm">ماده</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredRecords.map((r) => (
                       <tr
                         key={r.event}
-                        className="text-center hover:bg-blue-50 transition cursor-pointer"
+                        className="text-center hover:bg-blue-50 transition cursor-pointer text-xs sm:text-sm"
                         onClick={() => {
                           setActiveTab("calculator");
                           handleEventChange(r.event);
                         }}
                       >
-                        <td className="border-b p-3 font-medium">{r.event}</td>
-                        <td className="border-b p-3">{r.time}</td>
-                        <td className="border-b p-3">{r.holder}</td>
-                        <td className="border-b p-3">
+                        <td className="border-b p-2 sm:p-3 font-medium">{r.event}</td>
+                        <td className="border-b p-2 sm:p-3">{r.time}</td>
+                        <td className="border-b p-2 sm:p-3">{r.holder}</td>
+                        <td className="border-b p-2 sm:p-3">
                           <span
                             className={`px-2 py-1 rounded-full text-xs ${
                               r.type === "خارجی" ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
@@ -804,7 +802,7 @@ export default function SwimmingPerformancePro() {
                             {r.type}
                           </span>
                         </td>
-                        <td className="border-b p-3">{r.discipline}</td>
+                        <td className="border-b p-2 sm:p-3">{r.discipline}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -118,7 +118,7 @@ const HomeSwimmer = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 py-12 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-blue-900/95"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-sky-950 via-sky-900 to-sky-950"></div>
       <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-2xl"></div>
       <div className="absolute bottom-1/4 right-1/4 w-90 h-90 bg-blue-400/10 rounded-full blur-2xl"></div>
 

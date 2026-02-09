@@ -55,10 +55,10 @@ export default function HomeHero() {
 
           {/* CTA Buttons */}
           <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-700 transform ${isVisible(5) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}`}>
-  <button className="w-48 h-14 bg-cyan-500 text-white rounded-2xl font-bold text-lg shadow-md transition-all duration-300 transform hover:bg-[#00bcd4] hover:shadow-lg hover:-translate-y-0.5">
+  <button className="w-48 h-14 bg-sky-500 text-white rounded-2xl font-bold text-lg shadow-md transition-all duration-300 transform hover:bg-[#00bcd4] hover:shadow-lg hover:-translate-y-0.5">
     شروع دوره آموزشی
   </button>
-  <button className="w-48 h-14 border-2 border-white/40 text-white rounded-2xl font-bold text-lg backdrop-blur-sm transition-all duration-300 transform hover:bg-[#00bcd4] hover:border-[#00bcd4] hover:-translate-y-0.5">
+  <button className="w-48 h-14 border-2 border-white/40 text-white rounded-2xl font-bold text-lg backdrop-blur-sm transition-all duration-300 transform hover:bg-[#48def1] hover:border-[#00bcd4] hover:-translate-y-0.5">
     <i className="fas fa-phone-alt ml-2"></i>
     تماس با ما
   </button>

@@ -150,7 +150,7 @@ export default function GallerySection() {
         animate={{ opacity: 1, y: 0 }}
         className="px-4 py-16 max-w-7xl mx-auto text-center"
       >
-        <h1 className="text-4xl font-medium text-white mb-4">گالری آموزشگاه شنا</h1>
+        <h1 className="text-4xl mt-8 font-medium text-white mb-4">گالری آموزشگاه شنا</h1>
         <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-auto mb-4"></div>
         <p className="text-gray-300 max-w-2xl mx-auto">
           ثبت بهترین لحظات آموزشی در مدرسه شنا ایران استرالیا
@@ -312,16 +312,16 @@ export default function GallerySection() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.6 }}
-        className="bg-white py-16 mt-16"
+        className="bg-sky-600 py-16 mt-16"
       >
         <div className="max-w-md mx-auto text-center px-4 space-y-4">
-          <h3 className="text-xl font-medium text-gray-800">آماده شروع هستید؟</h3>
-          <p className="text-gray-500 text-sm">همین امروز به خانواده ما بپیوندید</p>
+          <h3 className="text-xl font-medium text-white">آماده شروع هستید؟</h3>
+          <p className="text-gray-300 text-sm">همین امروز به خانواده ما بپیوندید</p>
           <div className="flex gap-3 justify-center pt-2">
-            <button className="bg-sky-700 text-white text-sm px-8 py-3 rounded-xl hover:bg-sky-800 transition-colors duration-300 shadow-sm hover:shadow-md">
+            <button className="bg-sky-900 text-white text-sm px-8 py-3 rounded-xl hover:bg-sky-800 transition-colors duration-300 shadow-sm hover:shadow-md">
               ثبت‌نام در دوره‌ها
             </button>
-            <button className="border border-gray-300 text-gray-600 text-sm px-8 py-3 rounded-xl hover:border-gray-400 hover:text-gray-800 transition-all duration-300">
+            <button className="border border-gray-300 text-white text-sm px-8 py-3 rounded-xl hover:border-gray-400 hover:text-gray-800 transition-all duration-300">
               دریافت مشاوره
             </button>
           </div>

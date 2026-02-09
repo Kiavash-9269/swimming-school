@@ -3,7 +3,7 @@ import logo from "../../public/logo.png.webp";
 
 const socialIcons = [
     {
-        href: "#",
+        href: "https://www.linkedin.com/yourprofile",
         svg: (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -27,7 +27,7 @@ const socialIcons = [
         ),
     },
     {
-        href: "#",
+        href: "https://t.me/yourchannel",
         svg: (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +47,7 @@ const socialIcons = [
         ),
     },
     {
-        href: "#",
+        href: "https://instagram.com/yourprofile",
         svg: (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -94,32 +94,39 @@ const linkGroups = [
 
 export default function Footer() {
     return (
-        <footer className="bg-[#D6E8F1] py-16 flex justify-center" dir="rtl">
-            <div className="w-full max-w-[1280px] px-6 flex flex-col items-center lg:flex-row gap-10">
+        <footer className="bg-[#D6E8F1] py-8 md:py-16 flex justify-center" dir="rtl">
+            <div className="w-full max-w-[1280px] px-4 md:px-6 flex flex-col items-center lg:flex-row gap-6 md:gap-10">
                 {/* ----- Logo & Info ----- */}
-                <div className="relative lg:flex-1 text-center w-full md:max-w-[500px] h-[150px]">
-                    <div className="absolute left-1/2 -top-30 -translate-x-1/2 bg-[#132238] text-white p-10 py-12 w-full rounded-lg shadow-lg">
-                        <div className="flex justify-center items-center gap-2 mb-4">
+                <div className="relative w-full lg:flex-1">
+                    <div className="bg-[#132238] text-white p-6 md:p-10 md:py-12 w-full rounded-lg shadow-lg -mt-16 md:-mt-20 mb-4 md:mb-0">
+                        <div className="flex flex-col md:flex-row justify-center md:justify-start items-center gap-3 md:gap-4 mb-4">
                             <img
                                 src={logo}
                                 alt="لوگو"
-                                className="h-12 w-12 transition-transform duration-300 hover:scale-110 hover:rotate-6"
+                                className="h-10 w-10 md:h-12 md:w-12 transition-transform duration-300 hover:scale-110 hover:rotate-6"
                             />
-                            <h3 className="font-bold text-xl"> مدرسه شنا ایران استرالیا</h3>
+                            <h3 className="font-bold text-lg md:text-xl text-center md:text-right">
+                                مدرسه شنا ایران استرالیا
+                            </h3>
                         </div>
 
-                        <p className="text-sm text-gray-300 leading-relaxed">
+                        <p className="text-xs md:text-sm text-gray-300 leading-relaxed text-center md:text-right">
                             لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ است.
                         </p>
 
-                        <div className="flex justify-center gap-3 mt-5">
+                        <div className="flex justify-center gap-2 md:gap-3 mt-4 md:mt-5">
                             {socialIcons.map((icon, i) => (
                                 <a
                                     key={i}
                                     href={icon.href}
-                                    className="p-3 border border-sky-900 rounded-md hover:bg-blue-500 transition"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 md:p-3 border border-sky-900 rounded-md hover:bg-blue-500 transition"
+                                    aria-label="لینک شبکه اجتماعی"
                                 >
-                                    {icon.svg}
+                                    <div className="w-5 h-5 md:w-6 md:h-6">
+                                        {icon.svg}
+                                    </div>
                                 </a>
                             ))}
                         </div>
@@ -127,29 +134,32 @@ export default function Footer() {
                 </div>
 
                 {/* ----- Links & Newsletter ----- */}
-                <div className="flex flex-col md:flex-row gap-5">
+                <div className="flex flex-col w-full md:flex-row gap-6 md:gap-5">
                     {/* ----- Link Groups ----- */}
-                    <div className="flex flex-col md:flex-row md:w-1/2 md:justify-center gap-12">
+                    <div className="flex flex-col sm:flex-row w-full md:w-1/2 gap-6 md:gap-12">
                         {linkGroups.map((group, i) => (
-                            <div key={i}>
-                                <h3 className="text-lg font-bold mb-5">{group.title}</h3>
-                                <ul className="space-y-3 text-gray-600 text-sm">
+                            <div key={i} className="flex-1">
+                                <h3 className="text-base md:text-lg font-bold mb-4 text-center sm:text-right">
+                                    {group.title}
+                                </h3>
+                                <ul className="space-y-2 md:space-y-3 text-gray-600 text-sm">
                                     {group.links.map((link, j) => (
                                         <li key={j}>
                                             <Link
                                                 to={link.href}
-                                                className="flex items-center gap-2 hover:text-teal-600 transition"
+                                                className="flex items-center gap-2 hover:text-teal-600 transition justify-center sm:justify-start"
                                             >
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
-                                                    width="15"
-                                                    height="15"
+                                                    width="12"
+                                                    height="12"
+                                                    className="w-3 h-3 md:w-4 md:h-4"
                                                     fill="#04b8b8"
                                                     viewBox="0 0 24 24"
                                                 >
                                                     <path d="M17.17,24a1,1,0,0,1-.71-.29L8.29,15.54a5,5,0,0,1,0-7.08L16.46.29a1,1,0,1,1,1.42,1.42L9.71,9.88a3,3,0,0,0,0,4.24l8.17,8.17a1,1,0,0,1,0,1.42A1,1,0,0,1,17.17,24Z" />
                                                 </svg>
-                                                {link.label}
+                                                <span className="text-xs md:text-sm">{link.label}</span>
                                             </Link>
                                         </li>
                                     ))}
@@ -159,21 +169,23 @@ export default function Footer() {
                     </div>
 
                     {/* ----- Newsletter ----- */}
-                    <div className="md:w-1/2">
-                        <h3 className="text-lg font-bold mb-5">عضویت در خبرنامه</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                    <div className="w-full md:w-1/2">
+                        <h3 className="text-base md:text-lg font-bold mb-4 text-center md:text-right">
+                            عضویت در خبرنامه
+                        </h3>
+                        <p className="text-gray-600 text-xs md:text-sm leading-relaxed mb-4 text-center md:text-right">
                             با عضویت در خبرنامه، از جدیدترین تخفیف‌ها و دوره‌های آموزشی مطلع شوید.
                         </p>
-                        <form className="flex bg-white rounded-full overflow-hidden shadow-sm">
+                        <form className="flex flex-col sm:flex-row bg-white rounded-full overflow-hidden shadow-sm">
                             <input
                                 type="email"
                                 placeholder="ایمیلتان را وارد کنید"
-                                className="flex-1 px-4 py-4 text-sm text-gray-600 focus:outline-none"
+                                className="flex-1 px-4 py-3 md:py-4 text-xs md:text-sm text-gray-600 focus:outline-none text-center sm:text-right"
                                 required
                             />
                             <button
                                 type="submit"
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-6 text-sm font-medium transition"
+                                className="bg-blue-500 hover:bg-blue-600 text-white py-3 md:py-4 px-4 md:px-6 text-xs md:text-sm font-medium transition whitespace-nowrap"
                             >
                                 عضویت
                             </button>

@@ -5,8 +5,11 @@
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+}
+  body {
   font-family: "yekan", sans-serif;
 }
+
 
 html {
   scroll-behavior: smooth;
@@ -28,7 +31,7 @@ html {
 
 @font-face {
   font-family: "yekan";
-  font-style: bold;
+  font-style: normal;
   font-weight: 700;
   src: url(./assets/fonts/iran-yekan-x-bold.woff2) format("woff2");
 }

@@ -1,138 +1,198 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function EnhancedNavbar() {
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-        <header
-            dir="rtl"
-            className="relative top-0 right-0 w-full z-50 transition-all duration-500 ease-out backdrop-blur-md bg-white/70 border-b border-slate-200/60"
-        >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+  const menuItems = [
+    { href: "/", label: "صفحه اصلی", icon: HomeIcon },
+    { href: "/about", label: "درباره ما", icon: UsersIcon },
+    { href: "/courses", label: "دوره‌ها", icon: AcademicCapIcon },
+    { href: "/gallery", label: "گالری", icon: PhotoIcon },
+    { href: "/contact", label: "تماس با ما", icon: PhoneIcon },
+    { href: "/record", label: "رکوردها", icon: TrophyIcon }
+  ];
 
-                    <Link to='/'>
-                        <div className="flex items-center gap-3 group cursor-pointer">
-                            <div className="relative">
-                                <img
-                                    src="/logo.png.webp"
-                                    alt="Iran Australia Swimming School Logo"
-                                    className="h-12 w-12 object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
-                                />
-                            </div>
-                            <span className="text-lg font-bold text-slate-800 whitespace-nowrap bg-gradient-to-l from-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                                مدرسه شنا ایران استرالیا
-                            </span>
-                        </div>
-                    </Link>
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "auto";
+    return () => (document.body.style.overflow = "auto");
+  }, [isOpen]);
 
-                    <nav className="hidden md:flex items-center gap-1">
-                        {[{ href: "/", label: "صفحه اصلی" },
-                        { href: "/about", label: "درباره ما" },
-                        { href: "/courses", label: "دوره‌ها" },
-                        { href: "/gallery", label: "تصاویر" },
-                        { href: "/contact", label: "ارتباط با ما" },
-                        { href: "/record", label:"رکورد گیری" }
-                        ].map((item, index) => (
-                            <Link
-                                to={item.href}
-                                key={index}
-                                className="relative px-4 py-2 text-slate-700 font-medium group"
-                            >
-                                <span className="relative z-10 transition-colors duration-300 group-hover:text-teal-600">
-                                    {item.label}
-                                </span>
-                                <div className="absolute bottom-0 right-0 w-0 h-0.5 bg-gradient-to-l from-teal-500 to-cyan-500 transition-all duration-300 group-hover:w-full" />
-                            </Link>
-                        ))}
-                    </nav>
+  return (
+    <>
+      {/* HEADER */}
+      <header
+        dir="rtl"
+        className="fixed top-0 inset-x-0 z-50 bg-white border-b border-slate-200 shadow-sm"
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="h-16 flex items-center justify-between">
 
-                    <div className="hidden md:flex items-center gap-3">
-                        <Link
-                            to='/auth?mode=login'
-                            className="relative px-4 py-2 text-sm text-slate-700 border border-slate-300 rounded-xl hover:border-teal-300 transition-all duration-300 hover:shadow-md hover:shadow-teal-500/20 group overflow-hidden"
-                        >
-                            <span className="relative z-10">ورود</span>
-                            <div className="absolute inset-0 bg-gradient-to-l from-teal-500/0 to-cyan-500/0 group-hover:from-teal-500/5 group-hover:to-cyan-500/5 transition-all duration-300" />
-                        </Link>
-                        <Link
-                            to='/auth?mode=signup'
-                            className="relative px-4 py-2 text-sm font-medium text-white rounded-xl bg-gradient-to-l from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-md hover:shadow-lg hover:shadow-teal-500/30 transition-all duration-300 transform hover:scale-105 group overflow-hidden"
-                        >
-                            <span className="relative z-10">ثبت‌نام</span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/0 to-white/0 group-hover:from-white/10 group-hover:via-white/5 group-hover:to-white/0 transition-all duration-500" />
-                        </Link>
-                    </div>
+            {/* LOGO */}
+            <Link to="/" className="flex items-center gap-3">
+              <img
+                src="/logo.png.webp"
+                alt="Logo"
+                className="h-11 w-11 object-contain"
+              />
+              <span className="font-bold text-sky-600 text-lg">
+                مدرسه شنا ایران استرالیا
+              </span>
+            </Link>
 
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="md:hidden inline-flex items-center justify-center p-2 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
-                        aria-label="منو"
-                    >
-                        <div className="relative w-6 h-6">
-                            <span
-                                className={`absolute right-0 w-6 h-0.5 bg-slate-700 transition-all duration-300 ${isOpen ? "rotate-45 top-3" : "top-1"
-                                    }`}
-                            />
-                            <span
-                                className={`absolute right-0 w-6 h-0.5 bg-slate-700 transition-all duration-300 ${isOpen ? "opacity-0" : "top-3 opacity-100"
-                                    }`}
-                            />
-                            <span
-                                className={`absolute right-0 w-6 h-0.5 bg-slate-700 transition-all duration-300 ${isOpen ? "-rotate-45 top-3" : "top-5"
-                                    }`}
-                            />
-                        </div>
-                    </button>
-                </div>
+            {/* DESKTOP MENU */}
+            <nav className="hidden md:flex gap-7">
+              {menuItems.map((item, i) => (
+                <Link
+                  key={i}
+                  to={item.href}
+                  className="text-slate-800 font-medium hover:text-sky-600 transition"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* DESKTOP AUTH */}
+            <div className="hidden md:flex gap-3">
+              <Link
+                to="/auth?mode=login"
+                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-sky-400 transition"
+              >
+                ورود
+              </Link>
+              <Link
+                to="/auth?mode=signup"
+                className="px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition"
+              >
+                ثبت‌نام
+              </Link>
             </div>
 
-            <div
-                className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${isOpen
-                    ? "max-h-96 opacity-100 backdrop-blur-xl bg-white/95"
-                    : "max-h-0 opacity-0"
-                    }`}
+            {/* MOBILE BUTTON */}
+            <button
+              onClick={() => setIsOpen(true)}
+              className="md:hidden p-2 rounded-xl hover:bg-slate-100 transition"
+              aria-label="open menu"
             >
-                <nav className="border-t border-slate-200/60 shadow-xl px-4 py-4 space-y-2 text-right">
-                    {[{ href: "#home", label: "صفحه اصلی", icon: "🏠" },
-                    { href: "#about", label: "درباره ما", icon: "👥" },
-                    { href: "#courses", label: "دوره‌ها", icon: "🎯" },
-                    { href: "#gallery", label: "تصاویر", icon: "🖼️" },
-                    { href: "#contact", label: "ارتباط با ما", icon: "📞" }
-                    ].map((item, index) => (
-                        <a
-                            key={index}
-                            href={item.href}
-                            className="flex items-center justify-end gap-3 px-4 py-3 text-slate-700 font-medium rounded-xl hover:bg-gradient-to-l hover:from-teal-50 hover:to-cyan-50 hover:text-teal-600 transition-all duration-300 group"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            <span>{item.label}</span>
-                            <span className="text-lg opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
-                                {item.icon}
-                            </span>
-                        </a>
-                    ))}
+              <div className="space-y-1.5">
+                <span className="block w-6 h-0.5 bg-slate-800" />
+                <span className="block w-6 h-0.5 bg-slate-800" />
+                <span className="block w-6 h-0.5 bg-slate-800" />
+              </div>
+            </button>
 
-                    <div className="pt-4 border-t border-slate-300/60 flex flex-col gap-3">
-                        <a
-                            href="#login"
-                            className="px-4 py-3 text-center border border-slate-300 rounded-xl hover:border-teal-300 hover:bg-slate-50 transition-all duration-300 font-medium"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            ورود به حساب کاربری
-                        </a>
-                        <a
-                            href="#signup"
-                            className="px-4 py-3 text-center text-white rounded-xl bg-gradient-to-l from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-md hover:shadow-lg transition-all duration-300 font-medium transform hover:scale-105"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            ثبت‌نام جدید
-                        </a>
-                    </div>
-                </nav>
-            </div>
+          </div>
+        </div>
+      </header>
 
-        </header>
-    );
+      {/* OVERLAY */}
+      <div
+        onClick={() => setIsOpen(false)}
+        className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity
+        ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+      />
+
+      {/* MOBILE BOTTOM SHEET */}
+      <aside
+        className={`fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl
+        border-t border-slate-200 shadow-2xl
+        transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)]
+        ${isOpen ? "translate-y-0" : "translate-y-full pointer-events-none"}`}
+      >
+        <nav className="px-4 py-6 space-y-3">
+          {menuItems.map((item, i) => (
+            <Link
+              key={i}
+              to={item.href}
+              onClick={() => setIsOpen(false)}
+              className="group flex items-center justify-between
+              px-5 py-4 rounded-2xl hover:bg-slate-100
+              active:scale-[0.97] transition"
+            >
+              <span className="font-medium text-slate-900">
+                {item.label}
+              </span>
+              <item.icon />
+            </Link>
+          ))}
+
+          {/* AUTH */}
+          <div className="pt-5 mt-5 border-t border-slate-200 space-y-3">
+            <Link
+              to="/auth?mode=login"
+              onClick={() => setIsOpen(false)}
+              className="block text-center py-3 rounded-2xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition"
+            >
+              ورود
+            </Link>
+            <Link
+              to="/auth?mode=signup"
+              onClick={() => setIsOpen(false)}
+              className="block text-center py-3 rounded-2xl bg-sky-500 text-white hover:bg-sky-600 transition"
+            >
+              ثبت‌نام
+            </Link>
+          </div>
+        </nav>
+      </aside>
+    </>
+  );
 }
+
+/* ================= ICON SYSTEM ================= */
+
+function Icon({ children }) {
+  return (
+    <svg
+      className="w-6 h-6 text-sky-500 group-hover:text-sky-600 transition"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      viewBox="0 0 24 24"
+    >
+      {children}
+    </svg>
+  );
+}
+
+const HomeIcon = () => (
+  <Icon>
+    <path d="M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" />
+  </Icon>
+);
+
+const UsersIcon = () => (
+  <Icon>
+    <circle cx="9" cy="7" r="4" />
+    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+  </Icon>
+);
+
+const AcademicCapIcon = () => (
+  <Icon>
+    <path d="M12 3l9 5-9 5-9-5 9-5z" />
+    <path d="M5 10v4c0 1.5 3.5 3 7 3s7-1.5 7-3v-4" />
+  </Icon>
+);
+
+const PhotoIcon = () => (
+  <Icon>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M21 15l-5-5L5 21" />
+  </Icon>
+);
+
+const PhoneIcon = () => (
+  <Icon>
+    <path d="M22 16.9V21a1 1 0 01-1 1A19 19 0 013 5a1 1 0 011-1h4" />
+  </Icon>
+);
+
+const TrophyIcon = () => (
+  <Icon>
+    <path d="M6 4h12v3a6 6 0 01-12 0V4z" />
+    <path d="M12 17v4" />
+    <path d="M8 21h8" />
+  </Icon>
+);
