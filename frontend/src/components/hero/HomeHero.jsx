@@ -20,7 +20,7 @@ export default function HomeHero() {
         setVisibleIds(prev => [...prev, el.id]);
       }, index * 400);
     });
-  }, []);پ
+  }, []);
 
   const isVisible = (id) => visibleIds.includes(id);
   return (
