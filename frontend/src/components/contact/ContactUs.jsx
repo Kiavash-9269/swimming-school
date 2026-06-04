@@ -36,8 +36,10 @@ const POOLS = [
       menFree: "شنبه تا چهارشنبه: ۲۰ تا ۲۲",
       womenFree: "شنبه تا چهارشنبه: ۱۰ تا ۱۳",
     },
-    directionLink: "https://nshn.ir/?lat=36.32169739434071&lng=59.546124377183524",
-    mapSrc: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d803.6532840000618!2d59.545977754768!3d36.32168724330435!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3f6c9213c3c8a575%3A0xb16f3f211b9dffe8!2z2KfYs9iq2K7YsSDYs9is2KfYrw!5e0!3m2!1sen!2s!4v1762856992257!5e0!3m2!1sen!2s"
+    directionLink:
+      "https://nshn.ir/?lat=36.32169739434071&lng=59.546124377183524",
+    mapSrc:
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d803.6532840000618!2d59.545977754768!3d36.32168724330435!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3f6c9213c3c8a575%3A0xb16f3f211b9dffe8!2z2KfYs9iq2K7YsSDYs9is2KfYrw!5e0!3m2!1sen!2s!4v1762856992257!5e0!3m2!1sen!2s",
   },
   {
     id: 2,
@@ -51,9 +53,11 @@ const POOLS = [
       menFree: "شنبه تا چهارشنبه: ۲۱ تا ۲۳",
       womenFree: "شنبه تا چهارشنبه: ۱۱ تا ۱۴",
     },
-    directionLink: "https://nshn.ir/?lat=36.36444112135125&lng=59.52572420239248",
-    mapSrc: "https://www.google.com/maps?q=36.36444112135125,59.52572420239248&z=16&output=embed"
-  }
+    directionLink:
+      "https://nshn.ir/?lat=36.36444112135125&lng=59.52572420239248",
+    mapSrc:
+      "https://www.google.com/maps?q=36.36444112135125,59.52572420239248&z=16&output=embed",
+  },
 ];
 
 const MANAGER_CONTACT = {
@@ -121,7 +125,6 @@ const ManagerCard = memo(() => (
     <div className="absolute -right-10 -top-10 w-32 h-32 sm:w-40 sm:h-40 bg-white/5 rounded-full" />
 
     <div className="relative flex items-center gap-3 sm:gap-4">
-      
       <div
         className="
           w-12 h-12 sm:w-14 sm:h-14
@@ -219,30 +222,37 @@ const PoolCard = memo(({ pool }) => (
         </div>
       </div>
 
-      
       <div className="mb-3 sm:mb-4 space-y-1.5 sm:space-y-2">
         <div className="text-xs sm:text-sm w-full space-y-1.5 sm:space-y-2">
           {/* مدرسه شنا آقایان */}
           <div className="bg-blue-50 rounded-lg sm:rounded-xl p-1.5 sm:p-2">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
               <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600" />
-              <span className="text-[10px] sm:text-xs font-bold text-blue-700">مدرسه شنا (آقایان)</span>
+              <span className="text-[10px] sm:text-xs font-bold text-blue-700">
+                مدرسه شنا (آقایان)
+              </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-gray-600">
               <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="text-[10px] sm:text-xs">{pool.schedules.menSchool}</span>
+              <span className="text-[10px] sm:text-xs">
+                {pool.schedules.menSchool}
+              </span>
             </div>
           </div>
-          
+
           {/* مدرسه شنا بانوان */}
           <div className="bg-pink-50 rounded-lg sm:rounded-xl p-1.5 sm:p-2">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
               <Flower2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-600" />
-              <span className="text-[10px] sm:text-xs font-bold text-pink-700">مدرسه شنا (بانوان)</span>
+              <span className="text-[10px] sm:text-xs font-bold text-pink-700">
+                مدرسه شنا (بانوان)
+              </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-gray-600">
               <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="text-[10px] sm:text-xs">{pool.schedules.womenSchool}</span>
+              <span className="text-[10px] sm:text-xs">
+                {pool.schedules.womenSchool}
+              </span>
             </div>
           </div>
 
@@ -250,23 +260,31 @@ const PoolCard = memo(({ pool }) => (
           <div className="bg-blue-50 rounded-lg sm:rounded-xl p-1.5 sm:p-2">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
               <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600" />
-              <span className="text-[10px] sm:text-xs font-bold text-blue-700">سانس آزاد (آقایان)</span>
+              <span className="text-[10px] sm:text-xs font-bold text-blue-700">
+                سانس آزاد (آقایان)
+              </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-gray-600">
               <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="text-[10px] sm:text-xs">{pool.schedules.menFree}</span>
+              <span className="text-[10px] sm:text-xs">
+                {pool.schedules.menFree}
+              </span>
             </div>
           </div>
-          
+
           {/* سانس آزاد بانوان */}
           <div className="bg-pink-50 rounded-lg sm:rounded-xl p-1.5 sm:p-2">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
               <Flower2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-600" />
-              <span className="text-[10px] sm:text-xs font-bold text-pink-700">سانس آزاد (بانوان)</span>
+              <span className="text-[10px] sm:text-xs font-bold text-pink-700">
+                سانس آزاد (بانوان)
+              </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-gray-600">
               <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="text-[10px] sm:text-xs">{pool.schedules.womenFree}</span>
+              <span className="text-[10px] sm:text-xs">
+                {pool.schedules.womenFree}
+              </span>
             </div>
           </div>
         </div>
@@ -456,7 +474,7 @@ export default function ContactUs() {
         ...prev,
         openFAQ: prev.openFAQ === idx ? null : idx,
       })),
-    []
+    [],
   );
 
   return (
@@ -471,7 +489,6 @@ export default function ContactUs() {
       "
     >
       <div className="w-full max-w-7xl mx-auto">
-
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -490,11 +507,8 @@ export default function ContactUs() {
           </header>
         </motion.div>
 
-        
         <div className="grid lg:grid-cols-12 gap-4 sm:gap-6">
-
           <div className="lg:col-span-7 space-y-4 sm:space-y-5 order-2 lg:order-1">
-
             <div>
               <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-sky-400" />
@@ -516,18 +530,13 @@ export default function ContactUs() {
 
               <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
                 {POOLS.map((pool) => (
-                  <PoolCard
-                    key={pool.id}
-                    pool={pool}
-                  />
+                  <PoolCard key={pool.id} pool={pool} />
                 ))}
               </div>
             </div>
-
           </div>
 
           <div className="lg:col-span-5 order-1 lg:order-2">
-
             <div
               className="
                 bg-white
@@ -607,10 +616,7 @@ export default function ContactUs() {
 
                 <div className="flex justify-center gap-2 sm:gap-3">
                   {SOCIAL_MEDIA.map((item, i) => (
-                    <SocialButton
-                      key={i}
-                      {...item}
-                    />
+                    <SocialButton key={i} {...item} />
                   ))}
                 </div>
               </div>
@@ -646,16 +652,10 @@ export default function ContactUs() {
                 </div>
               </div>
             </div>
-
           </div>
-
         </div>
 
-        <FAQSection
-          openFAQ={uiState.openFAQ}
-          toggleFAQ={toggleFAQ}
-        />
-
+        <FAQSection openFAQ={uiState.openFAQ} toggleFAQ={toggleFAQ} />
       </div>
     </div>
   );

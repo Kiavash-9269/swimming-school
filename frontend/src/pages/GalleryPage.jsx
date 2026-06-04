@@ -1,9 +1,9 @@
-import GallerySection from"../components/gallery/GallerySection"
+import GallerySection from "../components/gallery/GallerySection";
 
 export default function GalleryPage() {
-    return (
-        <div>
-            <GallerySection />
-        </div>
-    );
+  return (
+    <div>
+      <GallerySection />
+    </div>
+  );
 }

@@ -1,9 +1,9 @@
-import RecordYab from"../components/record/RecordYab"
+import RecordYab from "../components/record/RecordYab";
 
 export default function RecordPage() {
-    return (
-        <div>
-            <RecordYab />
-        </div>
-    );
+  return (
+    <div>
+      <RecordYab />
+    </div>
+  );
 }

@@ -1,14 +1,3 @@
-
-
-
-
-
 export default function HomePage() {
-
-    
-    return (
-        <>
-            404
-        </>
-    )
+  return <>404</>;
 }

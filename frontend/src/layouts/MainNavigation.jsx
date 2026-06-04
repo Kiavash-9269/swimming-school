@@ -42,7 +42,6 @@ export default function EnhancedNavbar() {
       >
         <div className="max-w-7xl mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
-
             {/* LOGO */}
             <Link to="/" className="flex items-center gap-3">
               <img
@@ -104,100 +103,95 @@ export default function EnhancedNavbar() {
                 <span className="block w-6 h-0.5 bg-white" />
               </div>
             </button>
-
           </div>
         </div>
       </header>
 
-{/* OVERLAY */}
-<div
-  onClick={() => setIsOpen(false)}
-  className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition
+      {/* OVERLAY */}
+      <div
+        onClick={() => setIsOpen(false)}
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition
   ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-/>
+      />
 
-{/* MOBILE MENU (PRO VERSION) */}
-<aside
-  className={`fixed bottom-0 inset-x-0 z-50
+      {/* MOBILE MENU (PRO VERSION) */}
+      <aside
+        className={`fixed bottom-0 inset-x-0 z-50
   bg-white/70 backdrop-blur-2xl
   rounded-t-[2.5rem] shadow-2xl
   border-t border-white/30
   transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)]
   ${isOpen ? "translate-y-0" : "translate-y-full"}`}
->
-  
-  {/* HANDLE BAR */}
-  <div className="flex justify-center pt-3 pb-2">
-    <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-  </div>
+      >
+        {/* HANDLE BAR */}
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        </div>
 
-  {/* HEADER */}
-  <div className="px-5 pb-3 flex items-center justify-between">
-    <h3 className="font-bold text-slate-800">منو</h3>
+        {/* HEADER */}
+        <div className="px-5 pb-3 flex items-center justify-between">
+          <h3 className="font-bold text-slate-800">منو</h3>
 
-    <button
-      onClick={() => setIsOpen(false)}
-      className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
-    >
-      ✕
-    </button>
-  </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+          >
+            ✕
+          </button>
+        </div>
 
-  {/* MENU ITEMS */}
-  <nav className="px-4 pb-6 space-y-2">
-
-    {menuItems.map((item, i) => (
-      <Link
-        key={i}
-        to={item.href}
-        onClick={() => setIsOpen(false)}
-        className="group flex items-center justify-between
+        {/* MENU ITEMS */}
+        <nav className="px-4 pb-6 space-y-2">
+          {menuItems.map((item, i) => (
+            <Link
+              key={i}
+              to={item.href}
+              onClick={() => setIsOpen(false)}
+              className="group flex items-center justify-between
         px-4 py-4 rounded-2xl
         bg-white/40 hover:bg-cyan-50
         border border-white/40
         shadow-sm active:scale-[0.98]
         transition-all duration-200"
-      >
-        {/* LABEL */}
-        <span className="font-medium text-slate-800 group-hover:text-cyan-600 transition">
-          {item.label}
-        </span>
+            >
+              {/* LABEL */}
+              <span className="font-medium text-slate-800 group-hover:text-cyan-600 transition">
+                {item.label}
+              </span>
 
-        {/* ICON */}
-        <div className="text-cyan-500 group-hover:scale-110 transition">
-          <item.icon />
-        </div>
-      </Link>
-    ))}
+              {/* ICON */}
+              <div className="text-cyan-500 group-hover:scale-110 transition">
+                <item.icon />
+              </div>
+            </Link>
+          ))}
 
-    {/* AUTH SECTION */}
-    <div className="pt-5 mt-3 border-t border-white/40 space-y-3">
-
-      <Link
-        to="/auth?mode=login"
-        onClick={() => setIsOpen(false)}
-        className="block text-center py-3 rounded-2xl
+          {/* AUTH SECTION */}
+          <div className="pt-5 mt-3 border-t border-white/40 space-y-3">
+            <Link
+              to="/auth?mode=login"
+              onClick={() => setIsOpen(false)}
+              className="block text-center py-3 rounded-2xl
         bg-white/60 border border-white/40
         text-slate-800 font-medium
         hover:bg-white transition"
-      >
-        ورود
-      </Link>
+            >
+              ورود
+            </Link>
 
-      <Link
-        to="/auth?mode=signup"
-        onClick={() => setIsOpen(false)}
-        className="block text-center py-3 rounded-2xl
+            <Link
+              to="/auth?mode=signup"
+              onClick={() => setIsOpen(false)}
+              className="block text-center py-3 rounded-2xl
         bg-gradient-to-r from-cyan-500 to-blue-500
         text-white font-semibold shadow-lg
         hover:scale-[1.02] transition"
-      >
-        ثبت‌نام
-      </Link>
-
-    </div>
-  </nav>
-</aside>
+            >
+              ثبت‌نام
+            </Link>
+          </div>
+        </nav>
+      </aside>
     </>
   );
 }

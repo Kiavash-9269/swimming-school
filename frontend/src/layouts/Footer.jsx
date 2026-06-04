@@ -61,12 +61,14 @@ const addresses = [
   {
     title: "استخر سجاد",
     address: "مشهد، بلوار سجاد، حامد شمالی، امین ۹، مجموعه ورزشی سجاد",
-    directionLink: "https://nshn.ir/?lat=36.32169739434071&lng=59.546124377183524",
+    directionLink:
+      "https://nshn.ir/?lat=36.32169739434071&lng=59.546124377183524",
   },
   {
     title: "استخر کوثر",
     address: "مشهد، بلوار اندیشه، اندیشه ۴۸، مجموعه ورزشی کوثر",
-    directionLink: "https://nshn.ir/?lat=36.36444112135125&lng=59.52572420239248",
+    directionLink:
+      "https://nshn.ir/?lat=36.36444112135125&lng=59.52572420239248",
   },
 ];
 
@@ -90,16 +92,15 @@ const landlines = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#071826] pt-10 pb-6 px-4 md:px-6 text-white" dir="rtl">
-
+    <footer
+      className="bg-[#071826] pt-10 pb-6 px-4 md:px-6 text-white"
+      dir="rtl"
+    >
       {/* container */}
       <div className="max-w-7xl mx-auto">
-
         {/* glass card */}
         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl p-6 md:p-10">
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-
             {/* Logo */}
             <div>
               <div className="flex items-center gap-3 mb-4">
@@ -136,9 +137,7 @@ export default function Footer() {
             <div className="flex gap-10">
               {linkGroups.map((group, i) => (
                 <div key={i}>
-                  <h3 className="font-bold mb-4 text-sky-300">
-                    {group.title}
-                  </h3>
+                  <h3 className="font-bold mb-4 text-sky-300">{group.title}</h3>
 
                   <ul className="space-y-3">
                     {group.links.map((link, j) => (
@@ -159,9 +158,7 @@ export default function Footer() {
 
             {/* Addresses with direction link */}
             <div>
-              <h3 className="font-bold mb-4 text-sky-300">
-                آدرس استخرها
-              </h3>
+              <h3 className="font-bold mb-4 text-sky-300">آدرس استخرها</h3>
 
               <div className="space-y-4">
                 {addresses.map((item, i) => (
@@ -172,9 +169,7 @@ export default function Footer() {
                     <FaMapMarkerAlt className="text-sky-400 text-xl flex-shrink-0" />
 
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-sm">
-                        {item.title}
-                      </h4>
+                      <h4 className="font-bold text-sm">{item.title}</h4>
                       <p className="text-sm text-gray-300 break-words">
                         {item.address}
                       </p>
@@ -209,9 +204,7 @@ export default function Footer() {
 
             {/* Contact */}
             <div>
-              <h3 className="font-bold mb-4 text-sky-300">
-                تماس با ما
-              </h3>
+              <h3 className="font-bold mb-4 text-sky-300">تماس با ما</h3>
 
               {/* موبایل */}
               <div className="space-y-3 mb-4">
@@ -224,12 +217,8 @@ export default function Footer() {
                     <FaPhone className="text-sky-400 text-xl flex-shrink-0" />
 
                     <div>
-                      <p className="text-xs text-gray-400">
-                        {item.label}
-                      </p>
-                      <p className="text-sm text-white">
-                        {item.number}
-                      </p>
+                      <p className="text-xs text-gray-400">{item.label}</p>
+                      <p className="text-sm text-white">{item.number}</p>
                     </div>
                   </a>
                 ))}
@@ -240,7 +229,9 @@ export default function Footer() {
 
               {/* تلفن‌های ثابت استخرها */}
               <div className="space-y-3">
-                <p className="text-xs text-sky-400 mb-2">تلفن‌های ثابت استخرها</p>
+                <p className="text-xs text-sky-400 mb-2">
+                  تلفن‌های ثابت استخرها
+                </p>
                 {landlines.map((item, i) => (
                   <a
                     key={i}
@@ -250,18 +241,13 @@ export default function Footer() {
                     <FaPhone className="text-sky-400 text-xl flex-shrink-0" />
 
                     <div>
-                      <p className="text-xs text-gray-400">
-                        {item.label}
-                      </p>
-                      <p className="text-sm text-white">
-                        {item.number}
-                      </p>
+                      <p className="text-xs text-gray-400">{item.label}</p>
+                      <p className="text-sm text-white">{item.number}</p>
                     </div>
                   </a>
                 ))}
               </div>
             </div>
-
           </div>
 
           {/* bottom */}
@@ -270,7 +256,6 @@ export default function Footer() {
               © تمامی حقوق برای مدرسه شنا ایران استرالیا محفوظ است
             </p>
           </div>
-
         </div>
       </div>
     </footer>

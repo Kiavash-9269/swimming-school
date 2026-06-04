@@ -65,20 +65,18 @@ const HomeSwimmer = () => {
         image: swimerBg7,
       },
     ],
-    []
+    [],
   );
 
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
     <section className="relative bg-[#071826] py-20 overflow-hidden" dir="rtl">
-
       {/* glow background */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-sky-500/10 blur-[120px]" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-400/10 blur-[120px]" />
 
       <div className="max-w-6xl mx-auto px-4 relative z-10">
-
         {/* title */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-white">
@@ -114,40 +112,29 @@ const HomeSwimmer = () => {
         >
           {profileData.map((p, i) => (
             <SwiperSlide key={i} className="!h-[460px]">
-
               <div
                 className={`relative h-full rounded-2xl overflow-hidden transition-all duration-500
                 ${i === activeIndex ? "scale-100" : "scale-90 opacity-60"}`}
               >
-
                 {/* image */}
-                <img
-                  src={p.image}
-                  className="w-full h-full object-cover"
-                />
+                <img src={p.image} className="w-full h-full object-cover" />
 
                 {/* dark overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                 {/* content */}
                 <div className="absolute bottom-0 w-full p-5 text-white">
-
                   <h3 className="text-lg font-bold">{p.name}</h3>
 
                   <p className="text-sky-300 text-sm">{p.role}</p>
 
-                  <p className="text-xs text-gray-300 mt-1">
-                    {p.age}
-                  </p>
+                  <p className="text-xs text-gray-300 mt-1">{p.age}</p>
 
                   <p className="text-sm text-gray-200 mt-2 leading-6">
                     {p.description}
                   </p>
-
                 </div>
-
               </div>
-
             </SwiperSlide>
           ))}
         </Swiper>

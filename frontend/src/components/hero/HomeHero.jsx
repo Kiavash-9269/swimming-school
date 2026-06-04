@@ -21,7 +21,7 @@ export default function HomeHero() {
     const timers = elements.map((el, index) =>
       setTimeout(() => {
         setVisibleIds((prev) => [...prev, el.id]);
-      }, index * 350)
+      }, index * 350),
     );
 
     return () => timers.forEach(clearTimeout);
@@ -84,9 +84,7 @@ export default function HomeHero() {
           >
             <i className="fas fa-star text-amber-400"></i>
 
-            <span className="font-medium">
-              برترین مدرسه شنا در خراسان رضوی
-            </span>
+            <span className="font-medium">برترین مدرسه شنا در خراسان رضوی</span>
           </div>
 
           {/* Title */}
@@ -157,9 +155,9 @@ export default function HomeHero() {
                 text-right
               "
             >
-              در مدرسه شنا ایران استرالیا، با روش‌های مدرن و ایمن
-              هنر شنا را در محیطی دوستانه، حرفه‌ای و مطابق با
-              استانداردهای بین‌المللی فرا بگیرید
+              در مدرسه شنا ایران استرالیا، با روش‌های مدرن و ایمن هنر شنا را در
+              محیطی دوستانه، حرفه‌ای و مطابق با استانداردهای بین‌المللی فرا
+              بگیرید
             </p>
           </div>
 

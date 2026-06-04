@@ -8,14 +8,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-import {
-  Award,
-  Target,
-  Heart,
-  Shield,
-  Globe,
-  UserCheck,
-} from "lucide-react";
+import { Award, Target, Heart, Shield, Globe, UserCheck } from "lucide-react";
 
 import HamidrezaImage from "../../assets/images/IMG_5297.jpeg";
 import HamedImage from "../../assets/images/BBC0FE2F-5758-462E-B5C9-EF4BD61CC2BE.jpeg";
@@ -68,7 +61,9 @@ export default function AboutUs() {
   };
 
   const prevLeader = () => {
-    setCurrentLeaderIndex((prev) => (prev - 1 + leaders.length) % leaders.length);
+    setCurrentLeaderIndex(
+      (prev) => (prev - 1 + leaders.length) % leaders.length,
+    );
   };
 
   const pools = [
@@ -88,29 +83,35 @@ export default function AboutUs() {
     {
       icon: <Shield className="w-8 h-8" />,
       title: "امنیت و ایمنی",
-      description: "اولویت نخست ما، حفظ ایمنی هنرجویان با رعایت استانداردهای حرفه‌ای و اصول آموزشی روز است.",
+      description:
+        "اولویت نخست ما، حفظ ایمنی هنرجویان با رعایت استانداردهای حرفه‌ای و اصول آموزشی روز است.",
     },
     {
       icon: <Heart className="w-8 h-8" />,
       title: "علاقه و اشتیاق",
-      description: "با عشق به آموزش و ورزش، محیطی پویا و انگیزه‌بخش برای یادگیری شنا فراهم کرده‌ایم.",
+      description:
+        "با عشق به آموزش و ورزش، محیطی پویا و انگیزه‌بخش برای یادگیری شنا فراهم کرده‌ایم.",
     },
     {
       icon: <Target className="w-8 h-8" />,
       title: "تخصص و کیفیت",
-      description: "آموزش بر پایه متدهای نوین، دانش تخصصی و تجربه عملی مربیان مجموعه انجام می‌شود.",
+      description:
+        "آموزش بر پایه متدهای نوین، دانش تخصصی و تجربه عملی مربیان مجموعه انجام می‌شود.",
     },
     {
       icon: <Award className="w-8 h-8" />,
       title: "پیشرفت مستمر",
-      description: "همراه هنرجویان هستیم تا از مراحل ابتدایی تا سطوح پیشرفته، مسیر رشد را اصولی طی کنند.",
+      description:
+        "همراه هنرجویان هستیم تا از مراحل ابتدایی تا سطوح پیشرفته، مسیر رشد را اصولی طی کنند.",
     },
   ];
 
   return (
-    <div dir="rtl" className="min-h-screen bg-sky-950 p-4 md:p-8 flex flex-col items-center">
+    <div
+      dir="rtl"
+      className="min-h-screen bg-sky-950 p-4 md:p-8 flex flex-col items-center"
+    >
       <div className="w-full max-w-7xl">
-        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -123,7 +124,8 @@ export default function AboutUs() {
             </h1>
             <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-auto mb-4"></div>
             <p className="text-gray-300 max-w-4xl mx-auto text-sm md:text-base leading-relaxed">
-              ترکیبی از تجربه، تخصص و استانداردهای روز دنیا برای ارائه آموزش حرفه‌ای شنا در محیطی اصولی، ایمن و الهام‌بخش
+              ترکیبی از تجربه، تخصص و استانداردهای روز دنیا برای ارائه آموزش
+              حرفه‌ای شنا در محیطی اصولی، ایمن و الهام‌بخش
             </p>
           </header>
         </motion.div>
@@ -140,7 +142,11 @@ export default function AboutUs() {
               مسیر ما در آموزش حرفه‌ای شنا
             </h2>
             <p className="text-sky-100 leading-8 text-sm md:text-base">
-              مدرسه شنای ایران استرالیا با تکیه بر تجربه عملی، ساختار آموزشی اصولی و استفاده از متدهای نوین، بستری حرفه‌ای برای آموزش شنا فراهم کرده است. هدف ما تنها آموزش مهارت‌های پایه نیست؛ بلکه تلاش می‌کنیم هنرجویان در فضایی استاندارد، ایمن و انگیزه‌بخش، شنا را به‌صورت اصولی و ماندگار یاد بگیرند.
+              مدرسه شنای ایران استرالیا با تکیه بر تجربه عملی، ساختار آموزشی
+              اصولی و استفاده از متدهای نوین، بستری حرفه‌ای برای آموزش شنا فراهم
+              کرده است. هدف ما تنها آموزش مهارت‌های پایه نیست؛ بلکه تلاش می‌کنیم
+              هنرجویان در فضایی استاندارد، ایمن و انگیزه‌بخش، شنا را به‌صورت
+              اصولی و ماندگار یاد بگیرند.
             </p>
           </div>
         </motion.div>
@@ -157,7 +163,8 @@ export default function AboutUs() {
               مدیریت و راهبری مجموعه
             </h2>
             <p className="text-sky-200 text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
-              پشتوانه علمی، فنی و اجرایی مدرسه شنای ایران استرالیا بر پایه تجربه، تخصص و نگاه حرفه‌ای به آموزش بنا شده است.
+              پشتوانه علمی، فنی و اجرایی مدرسه شنای ایران استرالیا بر پایه
+              تجربه، تخصص و نگاه حرفه‌ای به آموزش بنا شده است.
             </p>
           </div>
 
@@ -257,7 +264,8 @@ export default function AboutUs() {
               ارزش‌های ما
             </h2>
             <p className="text-sky-200 text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
-              آنچه هویت آموزشی ایران استرالیا را می‌سازد، مجموعه‌ای از ارزش‌های حرفه‌ای، انسانی و تخصصی است.
+              آنچه هویت آموزشی ایران استرالیا را می‌سازد، مجموعه‌ای از ارزش‌های
+              حرفه‌ای، انسانی و تخصصی است.
             </p>
           </div>
 
@@ -273,8 +281,12 @@ export default function AboutUs() {
                 <div className="text-sky-300 flex justify-center mb-4">
                   {value.icon}
                 </div>
-                <h3 className="text-white text-lg font-bold mb-3">{value.title}</h3>
-                <p className="text-sky-100 text-sm leading-7">{value.description}</p>
+                <h3 className="text-white text-lg font-bold mb-3">
+                  {value.title}
+                </h3>
+                <p className="text-sky-100 text-sm leading-7">
+                  {value.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -334,7 +346,6 @@ export default function AboutUs() {
             ))}
           </div>
         </motion.section>
-
       </div>
     </div>
   );

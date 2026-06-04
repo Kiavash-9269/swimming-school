@@ -1,17 +1,17 @@
 // import { useEffect } from "react";
 // import { useSelector } from "react-redux";
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import RootLayout from './layouts/RootLayout.jsx'
-import ErrorPage from './pages/ErrorPage.jsx'
-import HomePage from './pages/HomePage.jsx'
-import AuthPage from './pages/AuthPage.jsx'
-import AboutPage from './pages/AboutPage.jsx'
-import AuthLayout from './layouts/AuthLayout.jsx'
-import CoursesPage from './pages/CoursesPage.jsx'
-import ContactUsPage from './pages/ContactUsPage.jsx'
-import RecordPage from './pages/RecordPage.jsx'
-import GalleryPage from './pages/GalleryPage.jsx'
+import RootLayout from "./layouts/RootLayout.jsx";
+import ErrorPage from "./pages/ErrorPage.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import AuthPage from "./pages/AuthPage.jsx";
+import AboutPage from "./pages/AboutPage.jsx";
+import AuthLayout from "./layouts/AuthLayout.jsx";
+import CoursesPage from "./pages/CoursesPage.jsx";
+import ContactUsPage from "./pages/ContactUsPage.jsx";
+import RecordPage from "./pages/RecordPage.jsx";
+import GalleryPage from "./pages/GalleryPage.jsx";
 
 const route = createBrowserRouter([
   {
@@ -21,47 +21,42 @@ const route = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <HomePage />
+        element: <HomePage />,
       },
       {
         path: "/about",
-        element:<AboutPage />
+        element: <AboutPage />,
       },
       {
         path: "/courses",
-        element:<CoursesPage />
+        element: <CoursesPage />,
       },
       {
-        path:"/contact",
-        element:<ContactUsPage/>
+        path: "/contact",
+        element: <ContactUsPage />,
       },
       {
-        path:"/record",
-        element:<RecordPage/>
+        path: "/record",
+        element: <RecordPage />,
       },
       {
-        path:"/gallery",
-        element:<GalleryPage/>
-      }
+        path: "/gallery",
+        element: <GalleryPage />,
+      },
     ],
   },
   {
     path: "/auth",
     element: <AuthLayout />,
-    children: [
-      { path: "", element: <AuthPage /> },
-    ],
+    children: [{ path: "", element: <AuthPage /> }],
   },
 ]);
 
-
-
-
 function App() {
+  // Dark mode
 
-  // Dark mode 
-
-  {/* const theme = useSelector((state) => state.theme.mode);
+  {
+    /* const theme = useSelector((state) => state.theme.mode);
 
   useEffect(() => {
     if (theme === "dark") {
@@ -71,14 +66,14 @@ function App() {
     }
   }, [theme]);
 
-  */}
-
+  */
+  }
 
   return (
     <>
       <RouterProvider router={route} />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
