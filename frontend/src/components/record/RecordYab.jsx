@@ -232,9 +232,9 @@ export default function SwimmingPerformancePro() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-2 sm:px-4 pt-6 sm:pt-8 max-w-7xl mx-auto text-center"
+          className="px-2 sm:px-4 pt-12 sm:pt-8 md:pt-8 max-w-7xl mx-auto text-center"
         >
-          <header className="text-center mt-4 sm:mt-8 mb-6 sm:mb-12">
+          <header className="text-center mt-8 sm:mt-12 md:mt-10 mb-6 sm:mb-12">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3 sm:mb-4">محاسبه عملکرد شناگر</h1>
             <div className="w-12 sm:w-16 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-auto mb-3 sm:mb-4"></div>
             <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto px-2">
@@ -720,18 +720,18 @@ export default function SwimmingPerformancePro() {
                         </div>
 
                         <div className="bg-yellow-200/40 border border-yellow-300 rounded-xl p-3 sm:p-4 text-center text-yellow-900 font-bold text-base sm:text-lg">
-                          امتیاز فینا = 1000 × (رکورد جهانی ÷ زمان شناگر)³
+                          امتیاز فینا = ۱۰۰۰ × (رکورد جهانی ÷ زمان شناگر)³
                         </div>
 
                         <div>
                           <p className="font-bold text-yellow-900 mb-2 sm:mb-3">تفسیر امتیازها:</p>
                           <ul className="list-disc list-inside space-y-1 sm:space-y-2 pr-3 sm:pr-4 text-justify">
-                            <li><strong className="ml-1">1000 امتیاز:</strong> برابر با رکورد جهانی</li>
-                            <li><strong className="ml-1">900 امتیاز و بالاتر:</strong> عملکرد در سطح جهانی</li>
-                            <li><strong className="ml-1">800-899 امتیاز:</strong> عملکرد در سطح قهرمانی</li>
-                            <li><strong className="ml-1">700-799 امتیاز:</strong> عملکرد خوب</li>
-                            <li><strong className="ml-1">600-699 امتیاز:</strong> عملکرد متوسط</li>
-                            <li><strong className="ml-1">زیر 600 امتیاز:</strong> نیاز به بهبود عملکرد</li>
+                            <li><strong className="ml-1">۱۰۰۰ امتیاز:</strong> برابر با رکورد جهانی</li>
+                            <li><strong className="ml-1">۹۰۰ امتیاز و بالاتر:</strong> عملکرد در سطح جهانی</li>
+                            <li><strong className="ml-1">۸۰۰-۸۹۹ امتیاز:</strong> عملکرد در سطح قهرمانی</li>
+                            <li><strong className="ml-1">۷۰۰-۷۹۹ امتیاز:</strong> عملکرد خوب</li>
+                            <li><strong className="ml-1">۶۰۰-۶۹۹ امتیاز:</strong> عملکرد متوسط</li>
+                            <li><strong className="ml-1">زیر ۶۰۰ امتیاز:</strong> نیاز به بهبود عملکرد</li>
                           </ul>
                         </div>
 
@@ -807,6 +807,11 @@ export default function SwimmingPerformancePro() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              
+              {/* آخرین بروزرسانی */}
+              <div className="text-center mt-6 text-gray-500 text-xs sm:text-sm">
+                آخرین بروزرسانی: بهمن ۱۴۰۴
               </div>
             </div>
           </div>

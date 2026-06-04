@@ -5,6 +5,8 @@ import { useSearchParams } from "react-router-dom";
 import {
     FaEnvelope,
     FaLock,
+    FaTimes,
+    FaTools,
     FaUser,
     FaEye,
     FaEyeSlash,
@@ -15,6 +17,7 @@ import {
 } from "react-icons/fa";
 
 export default function AuthCard() {
+    const [showDevModal, setShowDevModal] = useState(true);
     const [searchParams, setSearchParams] = useSearchParams();
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
@@ -26,6 +29,7 @@ export default function AuthCard() {
     const [showRecovery, setShowRecovery] = useState(false);
     const [recoverySent, setRecoverySent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    
 
     // بررسی پارامتر URL هنگام لود کامپوننت
     useEffect(() => {
@@ -186,6 +190,7 @@ export default function AuthCard() {
     };
 
     return (
+        
         <div className="relative w-[370px] min-h-[520px] bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-xl border border-white/30 shadow-2xl rounded-2xl flex justify-center items-center overflow-hidden p-4">
             
             <button 
@@ -440,14 +445,58 @@ export default function AuthCard() {
                             </button>
                         </p>
                     </motion.form>
+                    
                 )}
             </AnimatePresence>
+                <AnimatePresence>
+    {showDevModal && (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-md"
+        >
+            <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 120 }}
+                className="w-[340px] bg-white/20 backdrop-blur-2xl border border-white/30 rounded-2xl shadow-2xl p-6 text-center text-white relative"
+            >
+                <button
+                    onClick={() => setShowDevModal(false)}
+                    className="absolute top-3 left-3 text-white/80 hover:text-white"
+                >
+                    <FaTimes />
+                </button>
 
+                <div className="flex justify-center mb-4">
+                    <div className="w-14 h-14 rounded-full bg-sky-400/20 flex items-center justify-center">
+                        <FaTools className="text-sky-200 text-2xl animate-pulse" />
+                    </div>
+                </div>
+
+                <h2 className="text-lg font-bold mb-2">
+                    این بخش در حال توسعه است
+                </h2>
+
+                <p className="text-sm text-white/80 leading-relaxed">
+                    امکانات ورود و ثبت‌نام به‌زودی فعال خواهد شد.
+                </p>
+
+                <div className="mt-4 flex justify-center">
+                    <FaCheckCircle className="text-green-300 text-xl animate-bounce" />
+                </div>
+            </motion.div>
+        </motion.div>
+    )}
+</AnimatePresence>
           
             <div className="absolute -z-10">
                 <div className="absolute w-24 h-24 bg-sky-300/40 rounded-full blur-2xl top-0 left-0 animate-pulse"></div>
                 <div className="absolute w-32 h-32 bg-blue-400/40 rounded-full blur-2xl bottom-10 right-5 animate-pulse delay-300"></div>
             </div>
+            
         </div>
     );
 }

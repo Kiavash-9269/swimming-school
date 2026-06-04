@@ -1,104 +1,102 @@
 import React from "react";
 import { motion } from "framer-motion";
-import reason1 from "../../assets/images/file-20211202-19-26j0je.avif";
-// import reason1 from "../../assets/images/file-20211202-19-26j0je.avif";
-// import reason1 from "../../assets/images/file-20211202-19-26j0je.avif";
-// import reason1 from "../../assets/images/file-20211202-19-26j0je.avif";
+import reason1 from "../../assets/images/IMG_7073.jpeg";
+import logo from "/logo.png.webp";
 
 const HomeWhyChooseUs = () => {
   const reasons = [
     {
-      id: 1,
-      title: "تجربه استثنایی",
-      text: "با سال‌ها تخصص در صنعت، راه‌حل‌های نوآورانه و مؤثری برای نیازهای شما ارائه می‌دهیم.",
-      img: reason1,
+      title: "آموزش حرفه‌ای و اصولی",
+      text: "مسیر یادگیری شما بر پایه تجربه واقعی و استانداردهای بین‌المللی طراحی شده؛ ساده، دقیق و نتیجه‌محور.",
     },
     {
-      id: 2,
-      title: "پشتیبانی تمام وقت",
-      text: "تیم پشتیبانی ما 24/7 در کنار شماست تا بهترین تجربه کاربری را داشته باشید.",
-      img: reason1,
+      title: "پشتیبانی واقعی در تمام مسیر",
+      text: "هر لحظه که نیاز داشته باشید، یک تیم همراه دارید که واقعاً پاسخگوست، نه فقط در ظاهر.",
     },
     {
-      id: 3,
-      title: "تکنولوژی پیشرفته",
-      text: "از آخرین فناوری‌های روز دنیا برای ارائه خدمات باکیفیت استفاده می‌کنیم.",
-      img: reason1,
+      title: "متدهای مدرن آموزشی",
+      text: "از جدیدترین روش‌های یادگیری استفاده می‌کنیم تا پیشرفت شما سریع‌تر و اصولی‌تر باشد.",
     },
     {
-      id: 4,
-      title: "راهکارهای سفارشی",
-      text: "راه‌حل‌هایی متناسب با نیازهای خاص کسب‌وکار شما طراحی و پیاده‌سازی می‌کنیم.",
-      img: reason1,
+      title: "برنامه اختصاصی برای هر فرد",
+      text: "هیچ دو هنرجویی یک مسیر یکسان ندارند؛ همه چیز دقیقاً بر اساس سطح و هدف شما تنظیم می‌شود.",
     },
   ];
 
-
-  const container = {
-    hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { staggerChildren: 0.2, duration: 0.6 },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-    hover: { scale: 1.05, boxShadow: "0px 20px 30px rgba(0,0,0,0.2)" },
-  };
-
   return (
     <section
-      className="relative w-full bg-gradient-to-r from-sky-950 via-sky-900 to-sky-950 text-white py-16 px-6 md:px-12 overflow-hidden"
+      className="relative w-full bg-[#071826] text-white py-20 md:py-24 px-6 md:px-16 overflow-hidden"
       dir="rtl"
     >
-      <div className="text-center mb-12 px-4">
-        <h2 className="text-3xl md:text-4xl font-bold mb-3">
+      {/* background glow */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-sky-500/10 blur-[120px]" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-400/10 blur-[120px]" />
+
+      {/* header */}
+      <div className="text-center mb-14 md:mb-20">
+        <h2 className="text-2xl md:text-4xl font-bold mb-3">
           چرا ما را انتخاب کنید؟
         </h2>
-        <p className="text-sky-200 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-          با ترکیبی از تخصص، فناوری و تعهد، تجربه‌ای منحصر به فرد برای شما خلق می‌کنیم
+        <p className="text-sky-200 max-w-xl mx-auto text-xs md:text-sm leading-6">
+          تجربه‌ای متفاوت از آموزش شنا با محیطی امن، حرفه‌ای و استانداردهای روز دنیا
         </p>
       </div>
 
-      <motion.div
-        className="flex flex-wrap justify-center gap-8 md:gap-10"
-        variants={container}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-      >
-        {reasons.map((reason) => (
-          <motion.div
-            key={reason.id}
-            className="relative bg-[#D6E8F1] w-[260px] h-[460px] rounded-[8rem] shadow-md border border-sky-200 flex flex-col items-center pt-8 pb-6 px-4 text-center cursor-pointer"
-            variants={item}
-            whileHover="hover"
-          >
-            <div className="relative w-47 h-47 rounded-full overflow-hidden border-4 border-sky-500 shadow-md bg-white mb-6">
-              <img
-                src={reason.img}
-                alt={reason.title}
-                className="object-cover w-full h-full transition-transform duration-500 hover:scale-110"
-              />
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-sky-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold border-4 border-white shadow-md">
-                {reason.id}
+      {/* layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+
+        {/* TEXT */}
+        <div className="lg:col-span-5 space-y-8 order-2 lg:order-1">
+
+          {reasons.map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: 25 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.35, delay: i * 0.08 }}
+              className="border-r border-sky-400 pr-5"
+            >
+              <h3 className="text-base md:text-lg font-semibold mb-1 text-white/95">
+                {item.title}
+              </h3>
+
+              <p className="text-gray-300 leading-6 text-xs md:text-sm">
+                {item.text}
+              </p>
+            </motion.div>
+          ))}
+
+        </div>
+
+        {/* IMAGE */}
+        <div className="lg:col-span-7 order-1 lg:order-2">
+
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[360px] md:h-[520px]">
+
+            <img
+              src={reason1}
+              alt="swimming"
+              className="w-full h-full object-cover"
+            />
+
+            {/* overlay */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/70 via-black/20 to-transparent" />
+
+            {/* logo glass */}
+            <div className="absolute bottom-4 right-4">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-3 py-2 rounded-xl">
+                <img src={logo} className="w-5 h-5" />
+                <span className="text-[11px] text-sky-100">
+                  ایران استرالیا
+                </span>
               </div>
             </div>
 
-            <div className="mt-5">
-              <h3 className="text-lg md:text-xl font-bold text-sky-950 mb-2">
-                {reason.title}
-              </h3>
-              <p className="text-gray-700 text-sm md:text-base leading-relaxed">
-                {reason.text}
-              </p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+          </div>
+        </div>
+
+      </div>
     </section>
   );
 };

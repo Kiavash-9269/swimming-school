@@ -7,9 +7,9 @@ import HomeAboutBg from "../../assets/images/iStock-625735914_swimming-lesson-ki
 export default function HomeAbout() {
   return (
     <section
-      dir="rtl"
-      className="relative w-full bg-gradient-to-r from-sky-950 via-sky-900 to-sky-950 text-white py-16 px-6 md:px-12 flex flex-col md:flex-row items-center justify-center gap-10 overflow-hidden"
-    >
+  dir="rtl"
+  className="relative w-full bg-[#071826] text-white py-16 px-6 md:px-12 flex flex-col md:flex-row items-center justify-center gap-10 overflow-hidden"
+>
       <motion.div
         initial={{ opacity: 0, scale: 1.1 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -25,7 +25,7 @@ export default function HomeAbout() {
           transition={{ duration: 8, ease: "easeOut" }}
         />
         <div className="absolute bottom-6 right-6 bg-black/70 text-center px-6 py-4 rounded-xl backdrop-blur-md border border-sky-400/40 shadow-lg shadow-sky-500/20">
-          <h3 className="text-3xl font-bold text-white">+16</h3>
+          <h3 className="text-3xl font-bold text-white">۲۲+</h3>
           <p className="text-sm text-sky-300 mt-1 font-medium">
             سال تجربه آموزشی
           </p>
@@ -47,8 +47,8 @@ export default function HomeAbout() {
         </h2>
 
         <p className="text-slate-200 leading-relaxed text-justify">
-          مدرسه شنا ایران با بیش از ۱۶ سال تجربه در آموزش شنا برای تمامی
-          سنین، با استفاده از مربیان مجرب و امکانات استاندارد، محیطی امن و
+          مدرسه شنا ایران استرالیا با بیش از ۲۲ سال تجربه در آموزش شنا برای تمامی
+          سنین، با استفاده از مربیان شناگر و قهرمان با امکانات استاندارد، محیطی امن و
           پویا برای یادگیری و پیشرفت فراهم کرده است. هدف ما ترویج فرهنگ شنا و
           ارتقای سلامت جسمی و روحی در جامعه است.
         </p>

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export default function EnhancedNavbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   const menuItems = [
     { href: "/", label: "صفحه اصلی", icon: HomeIcon },
@@ -10,7 +12,7 @@ export default function EnhancedNavbar() {
     { href: "/courses", label: "دوره‌ها", icon: AcademicCapIcon },
     { href: "/gallery", label: "گالری", icon: PhotoIcon },
     { href: "/contact", label: "تماس با ما", icon: PhoneIcon },
-    { href: "/record", label: "رکوردها", icon: TrophyIcon }
+    { href: "/record", label: "رکوردها", icon: TrophyIcon },
   ];
 
   useEffect(() => {
@@ -18,12 +20,25 @@ export default function EnhancedNavbar() {
     return () => (document.body.style.overflow = "auto");
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isActive = (path) => location.pathname === path;
+
   return (
     <>
       {/* HEADER */}
       <header
         dir="rtl"
-        className="fixed top-0 inset-x-0 z-50 bg-white border-b border-slate-200 shadow-sm"
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 text-white
+        ${
+          scrolled
+            ? "bg-black/40 backdrop-blur-xl border-b border-white/10 shadow-lg"
+            : "bg-transparent"
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
@@ -32,10 +47,10 @@ export default function EnhancedNavbar() {
             <Link to="/" className="flex items-center gap-3">
               <img
                 src="/logo.png.webp"
-                alt="Logo"
-                className="h-11 w-11 object-contain"
+                alt="logo"
+                className="h-11 w-11 rounded-full ring-2 ring-cyan-400/30"
               />
-              <span className="font-bold text-sky-600 text-lg">
+              <span className="font-bold text-lg">
                 مدرسه شنا ایران استرالیا
               </span>
             </Link>
@@ -46,9 +61,18 @@ export default function EnhancedNavbar() {
                 <Link
                   key={i}
                   to={item.href}
-                  className="text-slate-800 font-medium hover:text-sky-600 transition"
+                  className={`relative font-medium transition px-2 py-1
+                  ${
+                    isActive(item.href)
+                      ? "text-cyan-300"
+                      : "hover:text-cyan-300"
+                  }`}
                 >
                   {item.label}
+
+                  {isActive(item.href) && (
+                    <span className="absolute -bottom-1 right-0 w-full h-[2px] bg-cyan-400 rounded-full" />
+                  )}
                 </Link>
               ))}
             </nav>
@@ -57,13 +81,13 @@ export default function EnhancedNavbar() {
             <div className="hidden md:flex gap-3">
               <Link
                 to="/auth?mode=login"
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-sky-400 transition"
+                className="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition"
               >
                 ورود
               </Link>
               <Link
                 to="/auth?mode=signup"
-                className="px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 transition"
+                className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-600 transition shadow-lg"
               >
                 ثبت‌نام
               </Link>
@@ -72,13 +96,12 @@ export default function EnhancedNavbar() {
             {/* MOBILE BUTTON */}
             <button
               onClick={() => setIsOpen(true)}
-              className="md:hidden p-2 rounded-xl hover:bg-slate-100 transition"
-              aria-label="open menu"
+              className="md:hidden p-2 rounded-xl hover:bg-white/10"
             >
               <div className="space-y-1.5">
-                <span className="block w-6 h-0.5 bg-slate-800" />
-                <span className="block w-6 h-0.5 bg-slate-800" />
-                <span className="block w-6 h-0.5 bg-slate-800" />
+                <span className="block w-6 h-0.5 bg-white" />
+                <span className="block w-6 h-0.5 bg-white" />
+                <span className="block w-6 h-0.5 bg-white" />
               </div>
             </button>
 
@@ -86,66 +109,105 @@ export default function EnhancedNavbar() {
         </div>
       </header>
 
-      {/* OVERLAY */}
-      <div
+{/* OVERLAY */}
+<div
+  onClick={() => setIsOpen(false)}
+  className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition
+  ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+/>
+
+{/* MOBILE MENU (PRO VERSION) */}
+<aside
+  className={`fixed bottom-0 inset-x-0 z-50
+  bg-white/70 backdrop-blur-2xl
+  rounded-t-[2.5rem] shadow-2xl
+  border-t border-white/30
+  transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)]
+  ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+>
+  
+  {/* HANDLE BAR */}
+  <div className="flex justify-center pt-3 pb-2">
+    <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+  </div>
+
+  {/* HEADER */}
+  <div className="px-5 pb-3 flex items-center justify-between">
+    <h3 className="font-bold text-slate-800">منو</h3>
+
+    <button
+      onClick={() => setIsOpen(false)}
+      className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+    >
+      ✕
+    </button>
+  </div>
+
+  {/* MENU ITEMS */}
+  <nav className="px-4 pb-6 space-y-2">
+
+    {menuItems.map((item, i) => (
+      <Link
+        key={i}
+        to={item.href}
         onClick={() => setIsOpen(false)}
-        className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity
-        ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-      />
-
-      {/* MOBILE BOTTOM SHEET */}
-      <aside
-        className={`fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl
-        border-t border-slate-200 shadow-2xl
-        transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)]
-        ${isOpen ? "translate-y-0" : "translate-y-full pointer-events-none"}`}
+        className="group flex items-center justify-between
+        px-4 py-4 rounded-2xl
+        bg-white/40 hover:bg-cyan-50
+        border border-white/40
+        shadow-sm active:scale-[0.98]
+        transition-all duration-200"
       >
-        <nav className="px-4 py-6 space-y-3">
-          {menuItems.map((item, i) => (
-            <Link
-              key={i}
-              to={item.href}
-              onClick={() => setIsOpen(false)}
-              className="group flex items-center justify-between
-              px-5 py-4 rounded-2xl hover:bg-slate-100
-              active:scale-[0.97] transition"
-            >
-              <span className="font-medium text-slate-900">
-                {item.label}
-              </span>
-              <item.icon />
-            </Link>
-          ))}
+        {/* LABEL */}
+        <span className="font-medium text-slate-800 group-hover:text-cyan-600 transition">
+          {item.label}
+        </span>
 
-          {/* AUTH */}
-          <div className="pt-5 mt-5 border-t border-slate-200 space-y-3">
-            <Link
-              to="/auth?mode=login"
-              onClick={() => setIsOpen(false)}
-              className="block text-center py-3 rounded-2xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition"
-            >
-              ورود
-            </Link>
-            <Link
-              to="/auth?mode=signup"
-              onClick={() => setIsOpen(false)}
-              className="block text-center py-3 rounded-2xl bg-sky-500 text-white hover:bg-sky-600 transition"
-            >
-              ثبت‌نام
-            </Link>
-          </div>
-        </nav>
-      </aside>
+        {/* ICON */}
+        <div className="text-cyan-500 group-hover:scale-110 transition">
+          <item.icon />
+        </div>
+      </Link>
+    ))}
+
+    {/* AUTH SECTION */}
+    <div className="pt-5 mt-3 border-t border-white/40 space-y-3">
+
+      <Link
+        to="/auth?mode=login"
+        onClick={() => setIsOpen(false)}
+        className="block text-center py-3 rounded-2xl
+        bg-white/60 border border-white/40
+        text-slate-800 font-medium
+        hover:bg-white transition"
+      >
+        ورود
+      </Link>
+
+      <Link
+        to="/auth?mode=signup"
+        onClick={() => setIsOpen(false)}
+        className="block text-center py-3 rounded-2xl
+        bg-gradient-to-r from-cyan-500 to-blue-500
+        text-white font-semibold shadow-lg
+        hover:scale-[1.02] transition"
+      >
+        ثبت‌نام
+      </Link>
+
+    </div>
+  </nav>
+</aside>
     </>
   );
 }
 
-/* ================= ICON SYSTEM ================= */
+/* ================= ICONS ================= */
 
 function Icon({ children }) {
   return (
     <svg
-      className="w-6 h-6 text-sky-500 group-hover:text-sky-600 transition"
+      className="w-6 h-6 text-sky-500"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.7"
