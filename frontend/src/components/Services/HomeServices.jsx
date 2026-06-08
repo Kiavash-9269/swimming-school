@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LifeBuoy, Waves, CreditCard, Goal, X } from "lucide-react";
+import { LifeBuoy, Droplets, Goal, Venus, X } from "lucide-react";
 import bgHomeServices from "../../assets/images/wp2046124.jpg";
 
 export default function ServicesSection() {
@@ -17,7 +17,7 @@ export default function ServicesSection() {
     },
     {
       id: 2,
-      icon: Waves,
+      icon: Droplets,
       title: "آب‌درمانی و تمرینات اصلاحی",
       text: "جلسات آب‌درمانی برای بهبود دردهای عضلانی و مفصلی با نظارت کارشناسان مجرب.",
       details:
@@ -27,17 +27,17 @@ export default function ServicesSection() {
       id: 3,
       icon: Goal,
       title: "واترپلو",
-      text: "زیر نظر مربیان منتخب ملی واتر پلو کشور",
+      text: "زیر نظر مربیان منتخب ملی واتر پلو کشور | تمرین با توپ حرفه‌ای",
       details:
-        "آکادمی واترپلوی ما با همکاری پیشکسوتان و مربیان تیم ملی فعالیت می‌کند. این رشته ترکیبی از شنا، سرعت، قدرت و تاکتیک‌های گروهی است. دوره‌های آموزشی در رده‌های سنی نونهالان (زیر ۱۲ سال)، نوجوانان (۱۴-۱۲ سال)، جوانان (۱۸-۱۴ سال) و بزرگسالان برگزار می‌شود. هنرجویان مستعد به تیم‌های استانی و ملی معرفی می‌شوند. تمرینات شامل تکنیک‌های شنا با توپ، شوت زنی، دریبل، دفاع و تاکتیک‌های حمله می‌باشد. مسابقات داخلی هر فصل برگزار می‌شود.",
+        "آکادمی واترپلوی ما با همکاری پیشکسوتان و مربیان تیم ملی فعالیت می‌کند. این رشته ترکیبی از شنا، سرعت، قدرت و تاکتیک‌های گروهی است. دوره‌های آموزشی در رده‌های سنی نونهالان (زیر ۱۲ سال)، نوجوانان (۱۴-۱۲ سال)، جوانان (۱۸-۱۴ سال) و بزرگسالان برگزار می‌شود. هنرجویان مستعد به تیم‌های استانی و ملی معرفی می‌شوند. تمرینات شامل تکنیک‌های شنا با توپ، شوت زنی، دریبل، دفاع و تاکتیک‌های حمله می‌باشد..",
     },
     {
       id: 4,
-      icon: CreditCard,
-      title: "ثبت‌نام و پرداختی آسان",
-      text: "امکان ثبت‌نام آنلاین و پرداخت شهریه به‌صورت حضوری و آنلاین به راحتی برای شما.",
+      icon: Venus,
+      title: "مدرسه شنا ایران استرالیا | فعال در حوزه بانوان",
+      text: "مدرسه شنا ایران استرالیا با بهره‌گیری از متدهای روز دنیا و مربیان قهرمان زن، خدمات تخصصی شنا را به بانوان عزیز ارائه می‌دهد.",
       details:
-        "شما می‌توانید به سه روش راحت ثبت‌نام کنید: ۱) از طریق وب‌سایت و پنل کاربری شخصی ۲) مراجعه حضوری به دفتر مجموعه ۳) تماس با بخش پشتیبانی. روش‌های پرداخت شامل کلیه کارت‌های بانکی عضو شتاب، درگاه امن زرین‌پال، کیف پول الکترونیکی مجموعه و پرداخت قسطی از طریق بلو و اسنپ پی است. همچنین امکان ثبت‌نام گروهی برای مدارس و شرکت‌ها با تخفیف ویژه وجود دارد. سیستم رزرو آنلاین کلاس‌ها به صورت ۲۴ ساعته فعال است و شما می‌توانید قبل از ثبت‌نام نهایی، یک جلسه رایگان آزمایشی را تجربه کنید.",
+        "مدرسه شنا ایران استرالیا یکی از فعال‌ترین آکادمی‌های شنا در حوزه بانوان است. این مجموعه با ترکیبی از دانش روز استرالیا و تجربه مربیان حرفه‌ای ایرانی، دوره‌های تخصصی شنا را از سطح مبتدی تا حرفه‌ای برگزار می‌کند. تمامی مربیان این مجموعه از بانوان قهرمان و ملی‌پوش سابق هستند .",
     },
   ];
 
@@ -124,7 +124,7 @@ export default function ServicesSection() {
         </div>
       </section>
 
-      {/* مودال - دکمه ضربدر در سمت چپ بالا */}
+      {/* مودال */}
       {modalOpen && selectedService && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/70 backdrop-blur-sm transition-all duration-300"
@@ -135,7 +135,6 @@ export default function ServicesSection() {
             className="relative bg-gradient-to-br from-sky-900 to-sky-800 rounded-2xl w-full max-w-[92%] sm:max-w-sm md:max-w-2xl lg:max-w-3xl max-h-[85dvh] overflow-y-auto shadow-2xl border border-blue-400/30"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* دکمه بستن (ضربدر) در سمت چپ بالا */}
             <button
               onClick={closeModal}
               className="absolute top-3 left-3 md:top-4 md:left-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 md:p-2.5 transition-all duration-200 z-10
@@ -145,7 +144,6 @@ export default function ServicesSection() {
               <X className="w-5 h-5 md:w-5 md:h-5" />
             </button>
 
-            {/* هدر مودال */}
             <div className="pt-10 md:pt-12 pb-4 px-4 md:px-6 border-b border-blue-400/20 flex items-center justify-start gap-3">
               <div className="bg-blue-500/20 p-2 md:p-3 rounded-full">
                 {(() => {
@@ -160,7 +158,6 @@ export default function ServicesSection() {
               </h2>
             </div>
 
-            {/* محتوای مودال */}
             <div className="p-4 md:p-6">
               <p className="text-sm md:text-base text-gray-200 leading-relaxed md:leading-8 text-justify">
                 {selectedService.details}

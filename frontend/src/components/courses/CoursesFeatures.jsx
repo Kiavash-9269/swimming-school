@@ -8,139 +8,64 @@ export default function CoursesFeatures() {
   const [activeTab, setActiveTab] = useState("men");
   const [enrollLoading, setEnrollLoading] = useState(null);
 
+  // دوره‌های آقایان - فقط ۲ کارت
   const menCourses = [
     {
       id: 1,
-      title: "ترم ۱ - آموزش کرال سینه (مقدماتی)",
-      description: "آموزش حرکات دست و پا",
+      title: "دوره‌های آموزشی آقایان | استخر سجاد",
+      description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته - استخر سجاد",
+      location: "حامد شمالی ۱۰",
+      pool: "استخر سجاد",
       schedule: [
-        { days: "زوج", time: "۱۶:۰۰ - ۱۷:۳۰", pool: "استخر سجاد" },
-        { days: "زوج", time: "۱۷:۳۰ - ۱۹:۰۰", pool: "استخر کوثر" },
-        { days: "زوج", time: "۱۹:۰۰ - ۲۰:۳۰", pool: "استخر سجاد" },
-        { days: "فرد", time: "۱۸:۰۰ - ۱۹:۳۰", pool: "استخر کوثر" },
+        { days: "روزهای زوج", time: "۰۸:۰۰ - ۱۰:۰۰" },
+        { days: "روزهای زوج", time: "۱۰:۰۰ - ۱۲:۰۰" },
+        { days: "روزهای زوج", time: "۱۲:۰۰ - ۱۴:۰۰" },
+        { days: "روزهای زوج", time: "۱۶:۰۰ - ۱۷:۳۰" },
+        { days: "روزهای زوج", time: "۱۷:۳۰ - ۱۹:۰۰" },
+        { days: "روزهای زوج", time: "۱۹:۰۰ - ۲۰:۳۰" },
       ],
     },
     {
       id: 2,
-      title: "ترم ۲ - آموزش کرال سینه و شروع کرال پشت",
-      description: "آموزش دست کرال سینه و هواگیری + شروع کرال پشت",
+      title: "دوره‌های آموزشی آقایان | استخر کوثر",
+      description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته - استخر کوثر",
+      location: "قاسم آباد، روبروی شاهد ۷۵",
+      pool: "استخر کوثر",
       schedule: [
-        { days: "زوج", time: "۱۶:۰۰ - ۱۷:۳۰", pool: "استخر کوثر" },
-        { days: "فرد", time: "۱۸:۰۰ - ۱۹:۳۰", pool: "استخر سجاد" },
-      ],
-    },
-    {
-      id: 3,
-      title: "ترم ۳ - تکمیل کرال سینه و پشت + شروع قورباغه",
-      description: "تکمیل کرال سینه و پشت + شروع آموزش قورباغه",
-      schedule: [
-        { days: "زوج", time: "۱۷:۳۰ - ۱۹:۰۰", pool: "استخر سجاد" },
-        { days: "فرد", time: "۱۸:۰۰ - ۱۹:۳۰", pool: "استخر کوثر" },
-      ],
-    },
-    {
-      id: 4,
-      title: "ترم ۴ - تکمیل آموزش‌ها + تمرینات هوازی",
-      description: "تکمیل کرال سینه، پشت و قورباغه + شروع تمرینات هوازی",
-      schedule: [
-        { days: "زوج", time: "۱۹:۰۰ - ۲۰:۳۰", pool: "استخر کوثر" },
-        { days: "فرد", time: "۱۸:۰۰ - ۱۹:۳۰", pool: "استخر سجاد" },
-      ],
-    },
-    {
-      id: 5,
-      title: "ترم ۵ - پروانه و مهارت‌های برگشت",
-      description: "شروع آموزش شنای پروانه و مهارت‌های برگشت از دیواره",
-      schedule: [
-        { days: "زوج", time: "۱۷:۳۰ - ۱۹:۰۰", pool: "استخر سجاد" },
-        { days: "فرد", time: "۱۸:۰۰ - ۱۹:۳۰", pool: "استخر کوثر" },
-      ],
-    },
-    {
-      id: 6,
-      title: "ترم ۶ - تکمیل چهار شنا + مهارت‌های مسابقه",
-      description: "تکمیل چهار شنا و شروع آموزش مهارت‌های مسابقه‌ای",
-      schedule: [
-        { days: "زوج", time: "۱۹:۰۰ - ۲۰:۳۰", pool: "استخر کوثر" },
-        { days: "فرد", time: "۱۸:۰۰ - ۱۹:۳۰", pool: "استخر سجاد" },
-      ],
-    },
-    {
-      id: 7,
-      title: "ترم ۷ - سنجش و توسعه ورزشی",
-      description: "تست‌های آنتروپومتریک، آزمون آمادگی جسمانی و شناسنامه ورزشی",
-      schedule: [
-        { days: "پنجشنبه", time: "۱۶:۰۰ - ۱۸:۰۰", pool: "استخر سجاد" },
+        { days: "روزهای فرد", time: "۱۰:۰۰ - ۱۲:۰۰" },
+        { days: "روزهای فرد", time: "۱۶:۰۰ - ۱۸:۰۰" },
+        { days: "روزهای فرد", time: "۱۸:۰۰ - ۲۰:۰۰" },
       ],
     },
   ];
 
+  // دوره‌های بانوان - فقط ۲ کارت (آب درمانی حذف شد)
   const womenCourses = [
     {
       id: 101,
-      title: "ترم ۱ - آموزش کرال سینه (مقدماتی)",
-      description: "آموزش حرکات دست و پا",
+      title: "دوره‌های آموزشی بانوان | استخر سجاد",
+      description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته - استخر سجاد",
+      location: "حامد شمالی ۱۰",
+      pool: "استخر سجاد",
       schedule: [
-        { days: "فرد", time: "۰۹:۰۰ - ۱۰:۳۰", pool: "استخر کوثر" },
-        { days: "فرد", time: "۱۰:۳۰ - ۱۲:۰۰", pool: "استخر سجاد" },
+        { days: "روزهای فرد", time: "۱۰:۰۰ - ۱۲:۰۰" },
+        { days: "روزهای فرد", time: "۱۲:۰۰ - ۱۴:۰۰" },
+        { days: "روزهای فرد", time: "۱۴:۰۰ - ۱۶:۰۰" },
+        { days: "روزهای فرد", time: "۱۶:۰۰ - ۱۸:۰۰" },
+        { days: "روزهای فرد", time: "۱۸:۰۰ - ۲۰:۰۰" },
       ],
     },
     {
       id: 102,
-      title: "ترم ۲ - آموزش کرال سینه و شروع کرال پشت",
-      description: "آموزش دست کرال سینه، هواگیری و شروع کرال پشت",
+      title: "دوره‌های آموزشی بانوان | استخر کوثر",
+      description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته - استخر کوثر",
+      location: "قاسم آباد، روبروی شاهد ۷۵",
+      pool: "استخر کوثر",
       schedule: [
-        { days: "فرد", time: "۰۹:۰۰ - ۱۰:۳۰", pool: "استخر سجاد" },
-        { days: "فرد", time: "۱۲:۰۰ - ۱۳:۳۰", pool: "استخر کوثر" },
+        { days: "روزهای زوج", time: "۱۴:۰۰ - ۱۶:۰۰" },
+        { days: "روزهای زوج", time: "۱۶:۰۰ - ۱۸:۰۰" },
+        { days: "روزهای زوج", time: "۱۸:۰۰ - ۲۰:۰۰" },
       ],
-    },
-    {
-      id: 103,
-      title: "ترم ۳ - تکمیل کرال سینه و پشت + شروع قورباغه",
-      description: "تکمیل کرال سینه و پشت و شروع آموزش قورباغه",
-      schedule: [
-        { days: "فرد", time: "۱۰:۳۰ - ۱۲:۰۰", pool: "استخر کوثر" },
-        { days: "فرد", time: "۱۲:۰۰ - ۱۳:۳۰", pool: "استخر سجاد" },
-      ],
-    },
-    {
-      id: 104,
-      title: "ترم ۴ - تکمیل آموزش‌ها + تمرینات هوازی",
-      description: "تکمیل کرال سینه، پشت و قورباغه + شروع تمرینات هوازی",
-      schedule: [
-        { days: "فرد", time: "۰۹:۰۰ - ۱۰:۳۰", pool: "استخر سجاد" },
-        { days: "فرد", time: "۱۳:۳۰ - ۱۵:۰۰", pool: "استخر کوثر" },
-      ],
-    },
-    {
-      id: 105,
-      title: "ترم ۵ - پروانه و مهارت‌های برگشت",
-      description: "شروع آموزش شنای پروانه و مهارت‌های برگشت از دیواره",
-      schedule: [
-        { days: "فرد", time: "۱۲:۰۰ - ۱۳:۳۰", pool: "استخر کوثر" },
-        { days: "فرد", time: "۱۳:۳۰ - ۱۵:۰۰", pool: "استخر سجاد" },
-      ],
-    },
-    {
-      id: 106,
-      title: "ترم ۶ - تکمیل چهار شنا + مهارت‌های مسابقه",
-      description: "تکمیل چهار شنا و شروع آموزش مهارت‌های مسابقه‌ای",
-      schedule: [{ days: "فرد", time: "۱۴:۰۰ - ۱۶:۰۰", pool: "استخر سجاد" }],
-    },
-    {
-      id: 107,
-      title: "ترم ۷ - سنجش و توسعه ورزشی",
-      description: "تست‌های آنتروپومتریک، آزمون آمادگی جسمانی و شناسنامه ورزشی",
-      schedule: [
-        { days: "پنجشنبه", time: "۱۰:۰۰ - ۱۲:۰۰", pool: "استخر کوثر" },
-      ],
-    },
-    {
-      id: 109,
-      title: "آب درمانی بانوان",
-      description: "تمرینات آب درمانی برای سلامتی و تناسب اندام",
-      type: "hydro",
-      schedule: [{ days: "فرد", time: "۱۰:۰۰ - ۱۱:۳۰", pool: "استخر کوثر" }],
     },
   ];
 
@@ -149,10 +74,13 @@ export default function CoursesFeatures() {
     {
       id: 201,
       title: "آب درمانی آقایان",
-      description:
-        "تمرینات آب درمانی برای سلامتی و تناسب اندام - زیر نظر دکتر شجاعی",
+      description: "تمرینات آب درمانی برای سلامتی و تناسب اندام - زیر نظر دکتر شجاعی",
       type: "hydro",
-      schedule: [{ days: "زوج", time: "۱۹:۰۰ - ۲۰:۳۰", pool: "استخر سجاد" }],
+      pool: "استخر سجاد",
+      location: "حامد شمالی ۱۰",
+      schedule: [
+        { days: "روزهای زوج", time: "۱۹:۰۰ - ۲۰:۳۰" },
+      ],
     },
   ];
 
@@ -162,6 +90,8 @@ export default function CoursesFeatures() {
       title: "سانس عمومی (آقایان و بانوان)",
       description: "تمرینات عمومی و آزاد برای تمام سطوح و همه سنین",
       type: "public",
+      pool: "استخر سجاد و کوثر",
+      location: "هر دو شعبه",
       schedule: [
         { days: "هر روز", time: "۲۰:۳۰ - ۲۳:۳۰", pool: "استخر سجاد" },
         { days: "جمعه", time: "۱۲:۰۰ - ۲۳:۰۰", pool: "استخر کوثر" },
@@ -178,25 +108,11 @@ export default function CoursesFeatures() {
       case "public":
         return publicCourses;
       case "hydro":
-        return [
-          ...hydroMenCourses,
-          ...womenCourses.filter((course) => course.type === "hydro"),
-        ];
+        return hydroMenCourses;
       default:
         return menCourses;
     }
   }, [activeTab]);
-
-  const progressPathCourses = useMemo(() => {
-    return currentCourses.filter((course) => {
-      if (activeTab === "men") {
-        return course.id >= 1 && course.id <= 7;
-      } else if (activeTab === "women") {
-        return course.id >= 101 && course.id <= 107;
-      }
-      return false;
-    });
-  }, [currentCourses, activeTab]);
 
   const onEnroll = async (course) => {
     setEnrollLoading(course.id);
@@ -263,65 +179,6 @@ export default function CoursesFeatures() {
           </header>
         </motion.div>
 
-        {/* مسیر یادگیری */}
-        {(activeTab === "men" || activeTab === "women") &&
-          progressPathCourses.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative mb-6 sm:mb-8 md:mb-12 bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border border-sky-200/30 mx-1 sm:mx-2 md:mx-4"
-            >
-              <h3 className="text-white text-sm sm:text-base md:text-lg font-semibold text-center mb-3 sm:mb-4 md:mb-6">
-                مسیر یادگیری شنای حرفه‌ای
-              </h3>
-
-              {/* نسخه دسکتاپ */}
-              <div className="hidden md:block relative">
-                <div className="absolute top-1/2 left-4 right-4 h-[2px] bg-sky-200/50 rounded-full transform -translate-y-1/2"></div>
-                <div className="flex justify-between items-center relative z-10">
-                  {progressPathCourses.map((course, index) => (
-                    <motion.div
-                      key={course.id}
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: index * 0.15 }}
-                      className="flex flex-col items-center text-center flex-1"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold shadow-lg border border-sky-300 text-base">
-                        {course.id > 100 ? course.id - 100 : course.id}
-                      </div>
-                      <span className="text-xs font-medium text-white leading-tight mt-2 max-w-[80px]">
-                        {course.title.split(" - ")[1]}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* نسخه موبایل */}
-              <div className="md:hidden overflow-x-auto pb-4 -mx-2 px-2">
-                <div className="flex gap-4 min-w-max">
-                  {progressPathCourses.map((course, index) => (
-                    <motion.div
-                      key={course.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex flex-col items-center text-center bg-sky-800/30 rounded-xl p-3 min-w-[100px]"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-sm">
-                        {course.id > 100 ? course.id - 100 : course.id}
-                      </div>
-                      <span className="text-[11px] font-medium text-white leading-tight mt-2">
-                        {course.title.split(" - ")[1]}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
         {/* تب‌ها */}
         <div className="flex justify-center mb-6 sm:mb-8 px-2 sm:px-4">
           <div className="bg-white rounded-xl sm:rounded-2xl p-1.5 sm:p-2 border border-sky-200 shadow-sm w-full max-w-4xl">
@@ -330,22 +187,22 @@ export default function CoursesFeatures() {
                 {
                   key: "men",
                   label: "دوره‌های آقایان",
-                  icon: <User className="w-4 h-4" />,
+                  icon: <User className="w-4 h-4 text-blue-500" />,
                 },
                 {
                   key: "women",
                   label: "دوره‌های بانوان",
-                  icon: <Users className="w-4 h-4" />,
+                  icon: <Users className="w-4 h-4 text-blue-500" />,
                 },
                 {
                   key: "public",
                   label: "سانس عمومی",
-                  icon: <Waves className="w-4 h-4" />,
+                  icon: <Waves className="w-4 h-4 text-blue-500" />,
                 },
                 {
                   key: "hydro",
                   label: "آب‌درمانی",
-                  icon: <HeartPulse className="w-4 h-4" />,
+                  icon: <HeartPulse className="w-4 h-4 text-blue-500" />,
                 },
               ].map(({ key, label, icon }) => (
                 <button
@@ -366,7 +223,7 @@ export default function CoursesFeatures() {
         </div>
 
         {/* گرید کارت‌ها */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 px-2 sm:px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6 px-2 sm:px-4">
           {currentCourses.map((course, i) => (
             <motion.div
               key={course.id}
@@ -397,43 +254,43 @@ export default function CoursesFeatures() {
 
               <div className="space-y-2 sm:space-y-3 flex-grow flex flex-col">
                 <div className="flex-grow">
-                  <h3 className="font-semibold text-sky-900 text-xs sm:text-sm leading-tight mb-1.5 sm:mb-2 line-clamp-2">
+                  <h3 className="font-semibold text-sky-900 text-sm sm:text-base leading-tight mb-1.5 sm:mb-2">
                     {course.title}
                   </h3>
-                  <p className="text-sky-700 text-[11px] sm:text-xs leading-relaxed mb-2 sm:mb-3 line-clamp-2">
+                  <p className="text-sky-700 text-xs sm:text-sm leading-relaxed mb-2 sm:mb-3">
                     {course.description}
                   </p>
+                  
+                  {/* آدرس استخر */}
+                  {course.location && (
+                    <div className="mb-2 sm:mb-3">
+                      <div className="text-[11px] sm:text-xs text-sky-600 font-medium mb-1">
+                        📍 آدرس:
+                      </div>
+                      <div className="text-[11px] sm:text-xs text-sky-700 bg-sky-50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border border-sky-100">
+                        {course.location}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mb-2 sm:mb-3">
                     <div className="text-[11px] sm:text-xs text-sky-600 font-medium mb-1.5 sm:mb-2">
                       📅 برنامه کلاس‌ها:
                     </div>
                     <div className="space-y-1">
-                      {course.schedule.slice(0, 2).map((schedule, idx) => (
+                      {course.schedule.map((schedule, idx) => (
                         <div
                           key={idx}
                           className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-[10px] sm:text-xs bg-sky-50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border border-sky-100 gap-1 sm:gap-0"
                         >
-                          <span className="truncate">
-                            روزهای {schedule.days}
+                          <span className="truncate font-medium">
+                            {schedule.days}
                           </span>
-                          <div className="flex gap-1 sm:gap-2 items-center">
-                            <span
-                              className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full border ${getPoolColor(schedule.pool)}`}
-                            >
-                              {schedule.pool}
-                            </span>
-                            <span className="font-bold text-sky-700 whitespace-nowrap">
-                              {schedule.time}
-                            </span>
-                          </div>
+                          <span className="font-bold text-sky-700 whitespace-nowrap">
+                            {schedule.time}
+                          </span>
                         </div>
                       ))}
-                      {course.schedule.length > 2 && (
-                        <div className="text-[10px] text-sky-500 text-center pt-0.5">
-                          +{course.schedule.length - 2} زمان دیگر
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -442,7 +299,7 @@ export default function CoursesFeatures() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedCourse(course)}
-                  className="w-full bg-sky-600 text-white py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium hover:bg-sky-700 transition-all duration-200 shadow-sm mt-auto"
+                  className="w-full bg-sky-600 text-white py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-sky-700 transition-all duration-200 shadow-sm mt-auto"
                 >
                   مشاهده جزئیات / ثبت‌نام
                 </motion.button>
@@ -501,6 +358,17 @@ export default function CoursesFeatures() {
                   {selectedCourse.description}
                 </p>
 
+                {selectedCourse.location && (
+                  <>
+                    <h4 className="font-bold text-sky-800 mb-1.5 sm:mb-2 text-xs sm:text-sm">
+                      📍 آدرس:
+                    </h4>
+                    <p className="text-sky-700 text-xs sm:text-sm mb-3 sm:mb-4 bg-sky-50 rounded-lg px-3 sm:px-4 py-2 border border-sky-100">
+                      {selectedCourse.location}
+                    </p>
+                  </>
+                )}
+
                 <h4 className="font-bold text-sky-800 mb-1.5 sm:mb-2 text-xs sm:text-sm">
                   📅 برنامه زمان‌بندی:
                 </h4>
@@ -510,16 +378,9 @@ export default function CoursesFeatures() {
                       key={idx}
                       className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-sky-50 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 border border-sky-100 gap-1 sm:gap-2"
                     >
-                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span className="font-medium text-xs sm:text-sm">
-                          روزهای {schedule.days}
-                        </span>
-                        <span
-                          className={`text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full border ${getPoolColor(schedule.pool)}`}
-                        >
-                          {schedule.pool}
-                        </span>
-                      </div>
+                      <span className="font-medium text-xs sm:text-sm">
+                        {schedule.days}
+                      </span>
                       <span className="bg-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg text-sky-700 font-semibold text-[11px] sm:text-sm">
                         {schedule.time}
                       </span>

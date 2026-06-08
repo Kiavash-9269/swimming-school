@@ -15,22 +15,25 @@ export default function EnhancedNavbar() {
     { href: "/record", label: "رکوردها", icon: TrophyIcon },
   ];
 
+  // Block body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
   }, [isOpen]);
 
+  // Detect scroll to change navbar style
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Check if current route is active
   const isActive = (path) => location.pathname === path;
 
   return (
     <>
-      {/* HEADER */}
+      {/* Main Navigation Header */}
       <header
         dir="rtl"
         className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 text-white
@@ -42,19 +45,24 @@ export default function EnhancedNavbar() {
       >
         <div className="max-w-7xl mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
-            {/* LOGO */}
+            {/* Logo with bilingual text (Persian & English) */}
             <Link to="/" className="flex items-center gap-3">
               <img
                 src="/logo.png.webp"
                 alt="logo"
                 className="h-11 w-11 rounded-full ring-2 ring-cyan-400/30"
               />
-              <span className="font-bold text-lg">
-                مدرسه شنا ایران استرالیا
-              </span>
+              <div>
+                <span className="font-bold text-lg block leading-tight">
+                  مدرسه شنا ایران استرالیا
+                </span>
+                <span className="text-xs text-white/70 block leading-tight">
+                  Iran Australia Swimming Academy
+                </span>
+              </div>
             </Link>
 
-            {/* DESKTOP MENU */}
+            {/* Desktop Navigation Menu - Hidden on mobile */}
             <nav className="hidden md:flex gap-7">
               {menuItems.map((item, i) => (
                 <Link
@@ -69,6 +77,7 @@ export default function EnhancedNavbar() {
                 >
                   {item.label}
 
+                  {/* Active indicator underline */}
                   {isActive(item.href) && (
                     <span className="absolute -bottom-1 right-0 w-full h-[2px] bg-cyan-400 rounded-full" />
                   )}
@@ -76,7 +85,7 @@ export default function EnhancedNavbar() {
               ))}
             </nav>
 
-            {/* DESKTOP AUTH */}
+            {/* Desktop Auth Buttons - Hidden on mobile */}
             <div className="hidden md:flex gap-3">
               <Link
                 to="/auth?mode=login"
@@ -92,7 +101,7 @@ export default function EnhancedNavbar() {
               </Link>
             </div>
 
-            {/* MOBILE BUTTON */}
+            {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setIsOpen(true)}
               className="md:hidden p-2 rounded-xl hover:bg-white/10"
@@ -107,41 +116,60 @@ export default function EnhancedNavbar() {
         </div>
       </header>
 
-      {/* OVERLAY */}
+      {/* Backdrop Overlay - Closes menu when clicked */}
       <div
         onClick={() => setIsOpen(false)}
         className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition
   ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       />
 
-      {/* MOBILE MENU (PRO VERSION) */}
+      {/* Mobile Slide-up Menu */}
       <aside
         className={`fixed bottom-0 inset-x-0 z-50
-  bg-white/70 backdrop-blur-2xl
+  bg-white/95 backdrop-blur-2xl
   rounded-t-[2.5rem] shadow-2xl
   border-t border-white/30
   transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)]
-  ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+  ${isOpen ? "translate-y-0" : "translate-y-full"}
+  md:hidden`}
       >
-        {/* HANDLE BAR */}
+        {/* Drag Handle Bar */}
         <div className="flex justify-center pt-3 pb-2">
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
-        {/* HEADER */}
-        <div className="px-5 pb-3 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800">منو</h3>
+        {/* Menu Header with Logo and Close Button */}
+        <div className="px-5 pb-4 flex items-center justify-between border-b border-gray-200/50">
+          <Link
+            to="/"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3"
+          >
+            <img
+              src="/logo.png.webp"
+              alt="logo"
+              className="h-10 w-10 rounded-full ring-2 ring-cyan-400/30"
+            />
+            <div>
+              <h3 className="font-bold text-slate-800 text-sm leading-tight">
+                مدرسه شنا ایران استرالیا
+              </h3>
+              <p className="text-xs text-slate-500 leading-tight">
+                Iran Australia Swimming Academy
+              </p>
+            </div>
+          </Link>
 
           <button
             onClick={() => setIsOpen(false)}
-            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition"
           >
             ✕
           </button>
         </div>
 
-        {/* MENU ITEMS */}
-        <nav className="px-4 pb-6 space-y-2">
+        {/* Mobile Menu Items - Persian RTL standard (text right, icon left) */}
+        <nav className="px-4 pb-6 pt-4 space-y-2">
           {menuItems.map((item, i) => (
             <Link
               key={i}
@@ -154,25 +182,25 @@ export default function EnhancedNavbar() {
         shadow-sm active:scale-[0.98]
         transition-all duration-200"
             >
-              {/* LABEL */}
-              <span className="font-medium text-slate-800 group-hover:text-cyan-600 transition">
+              {/* Text on the right (RTL standard) */}
+              <span className="font-medium text-slate-800 group-hover:text-cyan-600 transition order-1">
                 {item.label}
               </span>
 
-              {/* ICON */}
-              <div className="text-cyan-500 group-hover:scale-110 transition">
+              {/* Icon on the left (RTL standard) */}
+              <div className="text-cyan-500 group-hover:scale-110 transition order-0">
                 <item.icon />
               </div>
             </Link>
           ))}
 
-          {/* AUTH SECTION */}
-          <div className="pt-5 mt-3 border-t border-white/40 space-y-3">
+          {/* Mobile Auth Buttons Section */}
+          <div className="pt-5 mt-3 border-t border-gray-200/50 space-y-3">
             <Link
               to="/auth?mode=login"
               onClick={() => setIsOpen(false)}
               className="block text-center py-3 rounded-2xl
-        bg-white/60 border border-white/40
+        bg-white/60 border border-gray-200
         text-slate-800 font-medium
         hover:bg-white transition"
             >
@@ -196,7 +224,7 @@ export default function EnhancedNavbar() {
   );
 }
 
-/* ================= ICONS ================= */
+/* ================= SVG Icons Components ================= */
 
 function Icon({ children }) {
   return (
@@ -212,12 +240,14 @@ function Icon({ children }) {
   );
 }
 
+// Home icon
 const HomeIcon = () => (
   <Icon>
     <path d="M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" />
   </Icon>
 );
 
+// Users/About icon
 const UsersIcon = () => (
   <Icon>
     <circle cx="9" cy="7" r="4" />
@@ -225,6 +255,7 @@ const UsersIcon = () => (
   </Icon>
 );
 
+// Academic/Courses icon
 const AcademicCapIcon = () => (
   <Icon>
     <path d="M12 3l9 5-9 5-9-5 9-5z" />
@@ -232,6 +263,7 @@ const AcademicCapIcon = () => (
   </Icon>
 );
 
+// Gallery icon
 const PhotoIcon = () => (
   <Icon>
     <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -239,12 +271,14 @@ const PhotoIcon = () => (
   </Icon>
 );
 
+// Contact icon
 const PhoneIcon = () => (
   <Icon>
     <path d="M22 16.9V21a1 1 0 01-1 1A19 19 0 013 5a1 1 0 011-1h4" />
   </Icon>
 );
 
+// Records/Trophy icon
 const TrophyIcon = () => (
   <Icon>
     <path d="M6 4h12v3a6 6 0 01-12 0V4z" />
