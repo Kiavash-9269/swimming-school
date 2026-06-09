@@ -1,71 +1,37 @@
+// src/components/gallery/GallerySection.jsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 
+// CATEGORIES DATA //
 const categories = [
   {
     id: "kids",
     title: "بخش کودکان",
     description: "محیطی شاد و ایمن برای نوآموزان کوچک",
     images: [
-      {
-        src: "/gallery/kids/photo_2026-06-03_10-54-02.webp",
-        alt: "کودکان در حال آموزش شنا",
-      },
-      {
-        src: "/gallery/kids/photo_2026-06-03_11-16-20.webp",
-        alt: "کودکان در حال آموزش شنا",
-      },
-      {
-        src: "/gallery/kids/photo_2026-06-03_11-16-52.webp",
-        alt: "کودکان در حال آموزش شنا",
-      },
+      { src: "/gallery/kids/photo_2026-06-03_10-54-02.webp", alt: "کودکان در حال آموزش شنا" },
+      { src: "/gallery/kids/photo_2026-06-03_11-16-20.webp", alt: "کودکان در حال آموزش شنا" },
+      { src: "/gallery/kids/photo_2026-06-03_11-16-52.webp", alt: "کودکان در حال آموزش شنا" },
       { src: "/gallery/kids/IMG_5143.webp", alt: "کودکان در حال آموزش شنا" },
-      {
-        src: "/gallery/kids/photo_2026-06-03_11-16-16.webp",
-        alt: "کودکان در حال آموزش شنا",
-      },
-      {
-        src: "/gallery/kids/photo_2026-06-03_11-16-08.webp",
-        alt: "کودکان در حال آموزش شنا",
-      },
+      { src: "/gallery/kids/photo_2026-06-03_11-16-16.webp", alt: "کودکان در حال آموزش شنا" },
+      { src: "/gallery/kids/photo_2026-06-03_11-16-08.webp", alt: "کودکان در حال آموزش شنا" },
       { src: "/gallery/kids/IMG_5070.webp", alt: "کودکان در حال آموزش شنا" },
     ],
   },
   {
     id: "teens",
-    title: "عکس هایمان ",
-    description: " مجموعه ای از فعالیت های مدرسه شنا ایران استرالیا",
+    title: "عکس هایمان",
+    description: "مجموعه ای از فعالیت های مدرسه شنا ایران استرالیا",
     images: [
-      {
-        src: "/gallery/teens/photo_2026-06-04_11-18-55.webp",
-        alt: "نوجوانان در حال تمرین حرفه‌ای",
-      },
-      {
-        src: "/gallery/teens/photo_2026-06-04_11-18-47.webp",
-        alt: "نوجوانان در حال تمرین حرفه‌ای",
-      },
-      {
-        src: "/gallery/teens/_SAR3934.webp",
-        alt: "نوجوانان در حال تمرین حرفه‌ای",
-      },
-      {
-        src: "/gallery/teens/photo_2026-06-03_11-15-54.webp",
-        alt: "نوجوانان در حال تمرین حرفه‌ای",
-      },
-      {
-        src: "/gallery/teens/photo_2026-06-03_10-54-06.webp",
-        alt: "نوجوانان در حال تمرین حرفه‌ای",
-      },
-      {
-        src: "/gallery/teens/photo_2026-06-03_11-15-50.webp",
-        alt: "نوجوانان در حال تمرین حرفه‌ای",
-      },
-      {
-        src: "/gallery/teens/photo_2026-06-03_10-54-11.webp",
-        alt: "نوجوانان در حال تمرین حرفه‌ای",
-      },
+      { src: "/gallery/teens/photo_2026-06-04_11-18-55.webp", alt: "نوجوانان در حال تمرین حرفه‌ای" },
+      { src: "/gallery/teens/photo_2026-06-04_11-18-47.webp", alt: "نوجوانان در حال تمرین حرفه‌ای" },
+      { src: "/gallery/teens/_SAR3934.webp", alt: "نوجوانان در حال تمرین حرفه‌ای" },
+      { src: "/gallery/teens/photo_2026-06-03_11-15-54.webp", alt: "نوجوانان در حال تمرین حرفه‌ای" },
+      { src: "/gallery/teens/photo_2026-06-03_10-54-06.webp", alt: "نوجوانان در حال تمرین حرفه‌ای" },
+      { src: "/gallery/teens/photo_2026-06-03_11-15-50.webp", alt: "نوجوانان در حال تمرین حرفه‌ای" },
+      { src: "/gallery/teens/photo_2026-06-03_10-54-11.webp", alt: "نوجوانان در حال تمرین حرفه‌ای" },
     ],
   },
   {
@@ -75,24 +41,15 @@ const categories = [
     images: [
       { src: "/gallery/coaches/IMG_5420.webp", alt: "کیارش بهراد فر" },
       { src: "/gallery/coaches/IMG_7074.webp", alt: "سینا عزیزی" },
-      {
-        src: "/gallery/coaches/photo_2026-06-03_10-53-52.webp",
-        alt: "میلاد خجسته",
-      },
+      { src: "/gallery/coaches/photo_2026-06-03_10-53-52.webp", alt: "میلاد خجسته" },
       { src: "/gallery/coaches/IMG_9699.webp", alt: "کیاوش آقابیگی" },
-      {
-        src: "/gallery/coaches/photo_2026-06-03_10-50-50.webp",
-        alt: "نیما فکور",
-      },
+      { src: "/gallery/coaches/photo_2026-06-03_10-50-50.webp", alt: "نیما فکور" },
       { src: "/gallery/coaches/IMG_7470.webp", alt: "مصطفی شادکام" },
       { src: "/gallery/coaches/IMG_4655.webp", alt: "شایان حمانی" },
       { src: "/gallery/coaches/IMG_2286.webp", alt: "محمد سوری" },
       { src: "/gallery/coaches/IMG_6388.webp", alt: "عارف فرجی" },
       { src: "/gallery/coaches/IMG_4648.webp", alt: "ارشیا طاهرگلی" },
-      {
-        src: "/gallery/coaches/photo_2026-06-04_09-25-19.webp",
-        alt: "پویا حبیبی",
-      },
+      { src: "/gallery/coaches/photo_2026-06-04_09-25-19.webp", alt: "پویا حبیبی" },
     ],
   },
   {
@@ -104,33 +61,18 @@ const categories = [
       { src: "/gallery/competitions/_SAR3717.webp", alt: "مسابقات شنا" },
       { src: "/gallery/competitions/_SAR3622.webp", alt: "مسابقات شنا" },
       { src: "/gallery/competitions/_SAR3744.webp", alt: "مسابقات شنا" },
-      {
-        src: "/gallery/competitions/photo_2026-06-03_11-16-45.webp",
-        alt: "مسابقات شنا",
-      },
-      {
-        src: "/gallery/competitions/photo_2026-06-03_11-16-41.webp",
-        alt: "مسابقات شنا",
-      },
-      {
-        src: "/gallery/competitions/photo_2026-06-03_11-15-43.webp",
-        alt: "مسابقات شنا",
-      },
+      { src: "/gallery/competitions/photo_2026-06-03_11-16-45.webp", alt: "مسابقات شنا" },
+      { src: "/gallery/competitions/photo_2026-06-03_11-16-41.webp", alt: "مسابقات شنا" },
+      { src: "/gallery/competitions/photo_2026-06-03_11-15-43.webp", alt: "مسابقات شنا" },
     ],
   },
 ];
 
 const categoryMap = Object.fromEntries(categories.map((cat) => [cat.id, cat]));
 
-// کامپوننت مستقل برای اسلایدر هر دسته
-const CategorySlider = ({
-  category,
-  currentSlide,
-  visibleCount,
-  onNext,
-  onPrev,
-  onDotClick,
-}) => {
+// CATEGORY SLIDER COMPONENT //
+const CategorySlider = ({ category, currentSlide, visibleCount, onNext, onPrev, onDotClick }) => {
+  // SWIPE HANDLERS //
   const swipeHandlers = useSwipeable({
     onSwipedLeft: onNext,
     onSwipedRight: onPrev,
@@ -139,15 +81,13 @@ const CategorySlider = ({
     delta: 50,
   });
 
-  const visibleImages = category.images.slice(
-    currentSlide,
-    currentSlide + visibleCount,
-  );
+  const visibleImages = category.images.slice(currentSlide, currentSlide + visibleCount);
 
   return (
     <div className="relative">
       <div className="flex items-center gap-2 sm:gap-4" {...swipeHandlers}>
-        {/* دکمه قبلی */}
+        
+        {/* PREV BUTTON */}
         <button
           onClick={onPrev}
           disabled={currentSlide === 0}
@@ -158,33 +98,21 @@ const CategorySlider = ({
           }`}
           aria-label="تصاویر قبلی"
         >
-          <svg
-            className="w-5 h-5 sm:w-5 sm:h-5"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-5 h-5 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
           </svg>
         </button>
 
-        {/* گرید تصاویر */}
+        {/* IMAGES GRID */}
         <div className="flex-1 grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
           {visibleImages.map((image, index) => {
             const isFirstImage = currentSlide === 0 && index === 0;
             return (
-              <div
-                key={`${category.id}-${currentSlide}-${index}`}
-                className="group relative"
-              >
+              <div key={`${category.id}-${currentSlide}-${index}`} className="group relative">
                 <div className="aspect-[4/5] sm:aspect-[3/4] bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500">
                   <img
                     src={image.src}
-                    alt={
-                      image.alt ||
-                      (category.id === "coaches"
-                        ? image.alt
-                        : `گالری ${category.title}`)
-                    }
+                    alt={image.alt || (category.id === "coaches" ? image.alt : `گالری ${category.title}`)}
                     loading="lazy"
                     decoding="async"
                     fetchPriority={isFirstImage ? "high" : "low"}
@@ -194,7 +122,8 @@ const CategorySlider = ({
                     height={500}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  {/* نام مربی - با بک‌گراند آبی روشن، border-radius و فاصله از پایین */}
+                  
+                  {/* COACH NAME LABEL */}
                   {category.id === "coaches" && image.alt && (
                     <div className="absolute bottom-3 left-3 right-3 p-2 sm:p-2.5 translate-y-0 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300 bg-sky-500/90 backdrop-blur-sm rounded-lg shadow-lg">
                       <p className="text-white text-[11px] sm:text-xs font-medium text-center md:text-right">
@@ -208,7 +137,7 @@ const CategorySlider = ({
           })}
         </div>
 
-        {/* دکمه بعدی */}
+        {/* NEXT BUTTON */}
         <button
           onClick={onNext}
           disabled={currentSlide >= category.images.length - visibleCount}
@@ -219,22 +148,17 @@ const CategorySlider = ({
           }`}
           aria-label="تصاویر بعدی"
         >
-          <svg
-            className="w-5 h-5 sm:w-5 sm:h-5"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-5 h-5 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" />
           </svg>
         </button>
       </div>
 
-      {/* دات نویگیشن - با فاصله بیشتر از بالا */}
+      {/* DOT NAVIGATION */}
       <div className="flex justify-center items-center gap-2 sm:gap-3 mt-8 sm:mt-10">
         <div className="flex items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm rounded-full px-4 sm:px-5 py-2 sm:py-2.5 border border-white/20">
           {category.images.map((_, index) => {
-            const isInRange =
-              index >= currentSlide && index < currentSlide + visibleCount;
+            const isInRange = index >= currentSlide && index < currentSlide + visibleCount;
             return (
               <button
                 key={index}
@@ -254,17 +178,18 @@ const CategorySlider = ({
   );
 };
 
+// MAIN COMPONENT //
 export default function GallerySection() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [currentSlides, setCurrentSlides] = useState(
     categories.reduce((acc, cat) => {
       acc[cat.id] = 0;
       return acc;
-    }, {}),
+    }, {})
   );
-
   const [visibleCount, setVisibleCount] = useState(4);
 
+  // RESIZE HANDLER //
   useEffect(() => {
     const updateCount = () => {
       if (window.innerWidth < 640) setVisibleCount(1);
@@ -272,29 +197,25 @@ export default function GallerySection() {
       else if (window.innerWidth < 1024) setVisibleCount(3);
       else setVisibleCount(4);
     };
-
     updateCount();
     window.addEventListener("resize", updateCount);
     return () => window.removeEventListener("resize", updateCount);
   }, []);
 
-  const filtered =
-    activeCategory === "all"
-      ? categories
-      : categories.filter((c) => c.id === activeCategory);
+  // FILTERED CATEGORIES //
+  const filtered = activeCategory === "all"
+    ? categories
+    : categories.filter((c) => c.id === activeCategory);
 
-  const nextSlide = useCallback(
-    (categoryId) => {
-      const category = categoryMap[categoryId];
-      const maxSlide = Math.max(0, category.images.length - visibleCount);
-
-      setCurrentSlides((prev) => ({
-        ...prev,
-        [categoryId]: Math.min(prev[categoryId] + 1, maxSlide),
-      }));
-    },
-    [visibleCount],
-  );
+  // SLIDE HANDLERS //
+  const nextSlide = useCallback((categoryId) => {
+    const category = categoryMap[categoryId];
+    const maxSlide = Math.max(0, category.images.length - visibleCount);
+    setCurrentSlides((prev) => ({
+      ...prev,
+      [categoryId]: Math.min(prev[categoryId] + 1, maxSlide),
+    }));
+  }, [visibleCount]);
 
   const prevSlide = useCallback((categoryId) => {
     setCurrentSlides((prev) => ({
@@ -303,23 +224,20 @@ export default function GallerySection() {
     }));
   }, []);
 
-  const handleDotClick = useCallback(
-    (categoryId, index) => {
-      const category = categoryMap[categoryId];
-      const maxSlide = Math.max(0, category.images.length - visibleCount);
-      const clampedIndex = Math.min(index, maxSlide);
-
-      setCurrentSlides((prev) => ({
-        ...prev,
-        [categoryId]: clampedIndex,
-      }));
-    },
-    [visibleCount],
-  );
+  const handleDotClick = useCallback((categoryId, index) => {
+    const category = categoryMap[categoryId];
+    const maxSlide = Math.max(0, category.images.length - visibleCount);
+    const clampedIndex = Math.min(index, maxSlide);
+    setCurrentSlides((prev) => ({
+      ...prev,
+      [categoryId]: clampedIndex,
+    }));
+  }, [visibleCount]);
 
   return (
     <div className="min-h-screen bg-sky-950 select-none">
-      {/* هدر با فاصله بیشتر از نوبار */}
+      
+      {/* HEADER */}
       <div className="px-2 sm:px-4 pt-12 sm:pt-16 md:pt-16 max-w-7xl mx-auto text-center">
         <header className="text-center mt-8 sm:mt-10 md:mt-12 mb-8 sm:mb-12">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-4 sm:mb-5">
@@ -332,7 +250,7 @@ export default function GallerySection() {
         </header>
       </div>
 
-      {/* دکمه‌های دسته‌بندی اسکرولی */}
+      {/* CATEGORY TABS - SCROLLABLE */}
       <div className="flex justify-center px-4 mb-10 sm:mb-14">
         <div
           className="flex overflow-x-auto gap-1 sm:gap-1.5 bg-white rounded-2xl p-1.5 shadow-inner max-w-full scrollbar-hide"
@@ -364,6 +282,7 @@ export default function GallerySection() {
         </div>
       </div>
 
+      {/* CATEGORIES SECTION */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 space-y-12 sm:space-y-16 pb-16">
         {filtered.map((category, categoryIndex) => (
           <motion.div
@@ -394,6 +313,7 @@ export default function GallerySection() {
         ))}
       </div>
 
+      {/* CTA SECTION */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -424,6 +344,7 @@ export default function GallerySection() {
         </div>
       </motion.div>
 
+      {/* HIDE SCROLLBAR STYLES */}
       <style jsx>{`
         .scrollbar-hide {
           -ms-overflow-style: none;

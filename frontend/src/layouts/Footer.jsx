@@ -1,3 +1,4 @@
+// src/components/Footer.jsx
 import { Link } from "react-router-dom";
 import logo from "/logo.png.webp";
 import { Navigation } from "lucide-react";
@@ -11,6 +12,7 @@ import {
   FaPaperPlane,
 } from "react-icons/fa";
 
+// SOCIAL ICONS //
 const socialIcons = [
   {
     href: "https://instagram.com/iranaustraliaswimmingclub",
@@ -18,7 +20,7 @@ const socialIcons = [
     title: "اینستاگرام",
   },
   {
-    href: "https://t.me/iran_australia_swim",
+    href: "https://t.me/Hamedmobarreziaswim",
     icon: <FaTelegramPlane />,
     title: "تلگرام",
   },
@@ -34,6 +36,7 @@ const socialIcons = [
   },
 ];
 
+// NAVIGATION LINKS //
 const linkGroups = [
   {
     title: "لینک‌های کاربردی",
@@ -56,23 +59,23 @@ const linkGroups = [
   },
 ];
 
+// POOLS DATA //
 const addresses = [
   {
     title: "استخر سجاد",
     address: "مشهد، بلوار سجاد، حامد شمالی ۱۰، مجموعه ورزشی سجاد",
-    directionLink:
-      "https://nshn.ir/?lat=36.32169739434071&lng=59.546124377183524",
+    directionLink: "https://nshn.ir/?lat=36.32169739434071&lng=59.546124377183524",
     phoneNumber: "۰۵۱۳۶۰۷۶۵۵۵",
   },
   {
     title: "استخر کوثر",
     address: "مشهد، بلوار اندیشه، اندیشه ۴۸، مجموعه ورزشی کوثر",
-    directionLink:
-      "https://nshn.ir/?lat=36.36444112135125&lng=59.52572420239248",
+    directionLink: "https://nshn.ir/?lat=36.36444112135125&lng=59.52572420239248",
     phoneNumber: "۰۵۱۳۶۲۲۵۲۵۲",
   },
 ];
 
+// CONTACT PHONES //
 const phones = [
   {
     label: "موبایل",
@@ -80,27 +83,27 @@ const phones = [
   },
 ];
 
+// MAIN COMPONENT //
 export default function Footer() {
-  // Function to convert Persian numbers to English and make a call
+  // HELPER: PERSIAN TO ENGLISH NUMBER //
   const handlePhoneCall = (phoneNumber) => {
     const persianToEnglish = {
       '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
       '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9'
     };
-    
     const englishNumber = phoneNumber.replace(/[۰-۹]/g, (char) => persianToEnglish[char]);
     window.location.href = `tel:${englishNumber}`;
   };
 
   return (
-    <footer
-      className="bg-[#071826] pt-10 pb-6 px-4 md:px-6 text-white"
-      dir="rtl"
-    >
+    <footer className="bg-[#071826] pt-10 pb-6 px-4 md:px-6 text-white" dir="rtl">
       <div className="max-w-7xl mx-auto">
+        {/* GLASS CARD */}
         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl p-6 md:p-10">
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Logo Section */}
+            
+            {/* SECTION 1: LOGO + SOCIAL */}
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <img src={logo} className="w-14 h-14 rounded-full" alt="logo" />
@@ -129,7 +132,7 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Links Section */}
+            {/* SECTION 2: NAVIGATION LINKS */}
             <div className="flex gap-8">
               {linkGroups.map((group, i) => (
                 <div key={i}>
@@ -151,7 +154,7 @@ export default function Footer() {
               ))}
             </div>
 
-            {/* Addresses Section */}
+            {/* SECTION 3: POOL ADDRESSES */}
             <div>
               <h3 className="font-bold mb-4 text-sky-300 text-sm">آدرس استخرها</h3>
               <div className="space-y-3">
@@ -168,6 +171,7 @@ export default function Footer() {
                       </p>
                     </div>
                     <div className="flex gap-1 flex-shrink-0 items-center">
+                      {/* CALL */}
                       <button
                         onClick={() => handlePhoneCall(item.phoneNumber)}
                         className="w-7 h-7 rounded-lg bg-green-500/20 hover:bg-green-500 flex items-center justify-center transition-all hover:scale-105"
@@ -175,6 +179,7 @@ export default function Footer() {
                       >
                         <FaPhone className="w-3.5 h-3.5 text-green-400 hover:text-white transition" />
                       </button>
+                      {/* MAP */}
                       <a
                         href={item.directionLink}
                         target="_blank"
@@ -190,7 +195,7 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Contact Section */}
+            {/* SECTION 4: CONTACT PHONES */}
             <div>
               <h3 className="font-bold mb-4 text-sky-300 text-sm">تماس با ما</h3>
               <div className="space-y-3">
@@ -215,7 +220,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Bottom */}
+          {/* COPYRIGHT */}
           <div className="border-t border-white/10 mt-8 pt-5 text-center">
             <p className="text-xs text-gray-400">
               © تمامی حقوق برای مدرسه شنا ایران استرالیا محفوظ است
