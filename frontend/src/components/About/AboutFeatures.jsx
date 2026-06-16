@@ -15,12 +15,12 @@ import HamidrezaImage from "../../assets/images/IMG_5297.jpeg";
 import HamedImage from "../../assets/images/BBC0FE2F-5758-462E-B5C9-EF4BD61CC2BE.jpeg";
 
 // POOL GALLERY //
-import PoolSajjad1 from "../../assets/images/IMG_1207.jpeg";
-import PoolSajjad2 from "../../assets/images/IMG_1208.jpeg";
+import PoolSajjad1 from "../../assets/images/IMG_1207.webp";
+import PoolSajjad2 from "../../assets/images/IMG_1208.webp";
 import PoolSajjad3 from "../../assets/images/photo_2026-06-04_11-18-42.jpg";
-import PoolKosar1 from "../../assets/images/IMG_2352.jpeg";
-import PoolKosar2 from "../../assets/images/IMG_2357.jpeg";
-import PoolKosar3 from "../../assets/images/IMG_2361.jpeg";
+import PoolKosar1 from "../../assets/images/IMG_2352.webp";
+import PoolKosar2 from "../../assets/images/IMG_2357.webp";
+import PoolKosar3 from "../../assets/images/IMG_2361.webp";
 
 // LEADERS DATA //
 const leaders = [

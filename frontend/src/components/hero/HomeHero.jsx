@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import heroVideo from "../../assets/videos/IMG_1215.mp4";
+
 import heroPoster from "../../assets/images/swimming-pictures-2aq7n1d6lib0rt2n.jpg";
 
 export default function HomeHero() {
@@ -31,16 +31,17 @@ export default function HomeHero() {
 
   return (
     <header className="relative min-h-screen overflow-hidden rtl">
-      {/* Video Background */}
+      
       <video
         autoPlay
         muted
         loop
         playsInline
-        poster={heroPoster}
+preload="metadata"        poster={heroPoster} 
         className="absolute inset-0 w-full h-full object-cover"
       >
-        <source src={heroVideo} type="video/mp4" />
+
+        <source src="/videos/IMG_1215.mp4" type="video/mp4" />
       </video>
 
       {/* Overlay */}
