@@ -46,7 +46,7 @@ const profileData = [
   },
   {
     name: "فربد ترابی",
-    role: "قورباغه رو",
+    role: "پروانه رو",
     description: "قهرمان کشور",
     age: "۱۸ سال به بالا",
     image: swimerBg5,

@@ -1,7 +1,7 @@
 // src/components/CoursesFeatures.jsx
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Users, Waves, HeartPulse, ChevronLeft, Ticket, Clock, MapPin, Construction } from "lucide-react";
+import { User, Users, Waves, HeartPulse, ChevronLeft, Ticket, Clock, MapPin, Construction, MessageCircle } from "lucide-react";
 
 // TAB CONFIG //
 const tabConfig = {
@@ -153,6 +153,7 @@ const publicCourses = [
 export default function CoursesFeatures() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [activeTab, setActiveTab] = useState("men");
+  const [showReserveMessage, setShowReserveMessage] = useState(null);
 
   // GET CURRENT COURSES //
   const currentCourses = useMemo(() => {
@@ -168,9 +169,12 @@ export default function CoursesFeatures() {
   const currentTabConfig = tabConfig[activeTab];
   const CurrentIcon = currentTabConfig.icon;
 
-  // ENROLL (TEMPORARY - COMING SOON) //
-  const onEnroll = () => {
-    alert("🚧 ثبت‌نام آنلاین به‌زودی در دسترس قرار می‌گیرد.\nبرای اطلاعات بیشتر با مجموعه تماس بگیرید.");
+  // ENROLL - SHOW MESSAGE INSTEAD OF ALERT //
+  const onEnroll = (courseId) => {
+    setShowReserveMessage(courseId);
+    setTimeout(() => {
+      setShowReserveMessage(null);
+    }, 5000);
   };
 
   return (
@@ -183,7 +187,7 @@ export default function CoursesFeatures() {
           animate={{ opacity: 1, y: 0 }}
           className="px-2 sm:px-4 pt-4 sm:pt-8 max-w-7xl mx-auto text-center"
         >
-          <header className="text-center mt-12 sm:mt-4 mb-6 sm:mb-8 md:mb-12">
+          <header className="text-center mt-12 sm:mt-4 mb-8 sm:mb-10 md:mb-12">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3 sm:mb-4">
               دوره‌های آموزشی ما
             </h1>
@@ -195,7 +199,7 @@ export default function CoursesFeatures() {
         </motion.div>
 
         {/* TABS */}
-        <div className="flex justify-center mb-6 sm:mb-8 px-2 sm:px-4">
+        <div className="flex justify-center mb-8 sm:mb-10 px-2 sm:px-4">
           <div className="bg-white rounded-xl sm:rounded-2xl p-1.5 sm:p-2 border border-sky-200 shadow-sm w-full max-w-4xl">
             <div className="flex flex-nowrap sm:flex-wrap justify-start sm:justify-center gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0">
               {Object.values(tabConfig).map((tab) => {
@@ -220,10 +224,11 @@ export default function CoursesFeatures() {
         </div>
 
         {/* COURSES GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6 px-2 sm:px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 md:gap-7 px-2 sm:px-4">
           {currentCourses.map((course, i) => {
             const isPublic = course.type === "public";
             const isHydro = course.type === "hydro";
+            const showMessage = showReserveMessage === course.id;
 
             return (
               <motion.div
@@ -231,23 +236,23 @@ export default function CoursesFeatures() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className={`bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-r-4 ${currentTabConfig.borderColor} border border-sky-200 hover:border-sky-300 transition-all duration-300 shadow-sm hover:shadow-xl hover:-translate-y-1 flex flex-col h-full`}
+                className={`bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-r-4 ${currentTabConfig.borderColor} border border-sky-200 hover:border-sky-300 transition-all duration-300 shadow-sm hover:shadow-xl hover:-translate-y-1 flex flex-col h-full min-h-[360px]`}
               >
                 {/* CARD HEADER */}
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-sky-100">
-                  <div className={`w-14 h-14 rounded-2xl ${currentTabConfig.bg} flex items-center justify-center`}>
-                    <CurrentIcon className={`w-7 h-7 ${currentTabConfig.color}`} />
+                  <div className={`w-12 h-12 rounded-xl ${currentTabConfig.bg} flex items-center justify-center flex-shrink-0`}>
+                    <CurrentIcon className={`w-6 h-6 ${currentTabConfig.color}`} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sky-900 text-base sm:text-lg">{course.pool}</h3>
-                    <p className="text-[11px] sm:text-xs text-sky-500 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {course.location}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-sky-900 text-base sm:text-lg truncate">{course.pool}</h3>
+                    <p className="text-[11px] sm:text-xs text-sky-500 flex items-center gap-1 truncate">
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">{course.location}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-3 sm:space-y-4 flex-grow flex flex-col">
+                <div className="flex-grow flex flex-col">
                   {/* PUBLIC SECTION */}
                   {isPublic ? (
                     <>
@@ -269,7 +274,7 @@ export default function CoursesFeatures() {
                   ) : (
                     <>
                       {/* SCHEDULES */}
-                      <div>
+                      <div className="mb-3">
                         <div className="text-[11px] sm:text-xs text-sky-600 font-medium mb-2 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           📅 برنامه کلاس‌ها:
@@ -278,7 +283,7 @@ export default function CoursesFeatures() {
                           {course.schedule.map((schedule, idx) => (
                             <span
                               key={idx}
-                              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl ${currentTabConfig.badgeBg} border border-sky-100 text-[11px] sm:text-xs ${currentTabConfig.color} font-medium`}
+                              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg ${currentTabConfig.badgeBg} border border-sky-100 text-[11px] sm:text-xs ${currentTabConfig.color} font-medium`}
                             >
                               {schedule.days} • {schedule.time}
                             </span>
@@ -286,27 +291,47 @@ export default function CoursesFeatures() {
                         </div>
                       </div>
 
-                      {/* LOCATION */}
-                      <div className="text-[11px] sm:text-xs text-sky-600 flex items-start gap-1">
-                        <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                        <span>{course.location}</span>
-                      </div>
-
                       {/* DESCRIPTION */}
-                      <p className="text-sky-700 text-xs sm:text-sm leading-relaxed">
+                      <p className="text-sky-700 text-xs sm:text-sm leading-relaxed mb-3">
                         {course.description}
                       </p>
 
-                      {/* ACTION BUTTON - COMING SOON */}
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={onEnroll}
-                        className={`w-full ${currentTabConfig.buttonBg} ${currentTabConfig.buttonHover} text-white py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm mt-auto flex items-center justify-center gap-2 opacity-90`}
-                      >
-                        <Construction className="w-4 h-4" />
-                        {isHydro ? "رزرو نوبت آب‌درمانی (به‌زودی)" : "رزرو کلاس (به‌زودی)"}
-                      </motion.button>
+                      {/* ACTION BUTTON + WHATSAPP ICON */}
+                      <div className="flex flex-col gap-2 mt-auto pt-2">
+                        <div className="flex items-center gap-3">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => onEnroll(course.id)}
+                            className={`flex-1 ${currentTabConfig.buttonBg} ${currentTabConfig.buttonHover} text-white py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm flex items-center justify-center gap-2`}
+                          >
+                            <Construction className="w-4 h-4" />
+                            {isHydro ? "رزرو نوبت آب‌درمانی" : "رزرو کلاس"}
+                          </motion.button>
+                          <a
+                            href="https://wa.me/989151125252"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2.5 rounded-xl bg-green-500 hover:bg-green-600 transition-all duration-200 flex items-center justify-center shadow-sm flex-shrink-0"
+                          >
+                            <MessageCircle className="w-5 h-5 text-white" />
+                          </a>
+                        </div>
+
+                        {/* RESERVE MESSAGE */}
+                        <AnimatePresence>
+                          {showMessage && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="text-center text-xs bg-amber-50 border-r-4 border-amber-500 p-2 rounded-lg text-amber-800"
+                            >
+                              📞 برای رزرو کلاس، لطفاً از طریق آیکون واتساپ کناری با ما در ارتباط باشید.
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </>
                   )}
                 </div>
@@ -342,7 +367,7 @@ export default function CoursesFeatures() {
 
                 {/* MODAL HEADER */}
                 <div className="flex items-center gap-3 mb-4 mt-2 pt-2 pb-3 border-b border-sky-100">
-                  <div className={`w-14 h-14 rounded-2xl ${currentTabConfig.bg} flex items-center justify-center`}>
+                  <div className={`w-14 h-14 rounded-2xl ${currentTabConfig.bg} flex items-center justify-center flex-shrink-0`}>
                     <CurrentIcon className={`w-7 h-7 ${currentTabConfig.color}`} />
                   </div>
                   <div>
@@ -394,11 +419,14 @@ export default function CoursesFeatures() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onEnroll}
-                    className={`px-4 sm:px-6 py-1.5 sm:py-2 ${currentTabConfig.buttonBg} ${currentTabConfig.buttonHover} text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 shadow-sm flex items-center gap-2 opacity-90`}
+                    onClick={() => {
+                      setSelectedCourse(null);
+                      onEnroll(selectedCourse.id);
+                    }}
+                    className={`px-4 sm:px-6 py-1.5 sm:py-2 ${currentTabConfig.buttonBg} ${currentTabConfig.buttonHover} text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 shadow-sm flex items-center gap-2`}
                   >
                     <Construction className="w-4 h-4" />
-                    ثبت‌نام (به‌زودی)
+                    ثبت‌نام
                   </motion.button>
                 </div>
               </motion.div>

@@ -36,7 +36,7 @@ const categories = [
   },
   {
     id: "coaches",
-    title: "مربیان مجرب",
+    title: "مربیان ",
     description: "تیم حرفه‌ای مربیان ترکیب جوانی با تجربه",
     images: [
       { src: "/gallery/coaches/IMG_5420.webp", alt: "کیارش بهراد فر" },
