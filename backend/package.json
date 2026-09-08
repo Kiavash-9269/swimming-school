@@ -1,13 +1,48 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Swimming school API",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "argon2": "^0.45.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.5",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "jest": "^30.5.1",
+    "mongodb-memory-server": "^10.3.0",
+    "supertest": "^7.1.4"
+  },
+  "allowScripts": {
+    "argon2@0.45.1": true
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "setupFiles": [
+      "<rootDir>/tests/setupEnv.js"
+    ],
+    "verbose": true
+  }
 }

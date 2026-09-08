@@ -1,0 +1,31 @@
+process.env.NODE_ENV = "test";
+process.env.PORT = "4001";
+// Prefer memory server; optional isolated fallback URI only (must include "test").
+process.env.TEST_MONGODB_URI =
+  process.env.TEST_MONGODB_URI || "mongodb://127.0.0.1:27017/swimming-school-test";
+process.env.MONGODB_URI = process.env.TEST_MONGODB_URI;
+process.env.JWT_ACCESS_SECRET = "test-access-secret-swimming-school-32chars!!";
+process.env.JWT_REFRESH_SECRET = "test-refresh-secret-swimming-school-32chars!";
+process.env.JWT_ACCESS_EXPIRES_IN = "15m";
+process.env.JWT_REFRESH_EXPIRES_IN = "7d";
+process.env.JWT_REGISTRATION_EXPIRES_IN = "15m";
+process.env.JWT_PASSWORD_RESET_EXPIRES_IN = "15m";
+process.env.FRONTEND_URL = "http://127.0.0.1:5173";
+process.env.COOKIE_SECURE = "false";
+process.env.LOG_LEVEL = "silent";
+process.env.OTP_TTL_SECONDS = "120";
+process.env.OTP_RESEND_COOLDOWN_SECONDS = "60";
+process.env.OTP_MAX_ATTEMPTS = "5";
+process.env.OTP_CODE_LENGTH = "5";
+process.env.OTP_RATE_LIMIT_PER_PHONE = "5";
+process.env.OTP_RATE_LIMIT_WINDOW_SEC = "600";
+process.env.SMS_PROVIDER = "development";
+process.env.SMS_TIMEOUT_MS = "20000";
+process.env.SMS_WEBSERVICE_API_KEY = "";
+process.env.SMS_WEBSERVICE_SENDER = "";
+process.env.SMS_WEBSERVICE_TEMPLATE_KEY = "";
+process.env.KAVENEGAR_API_KEY = "";
+process.env.KAVENEGAR_SENDER = "";
+process.env.KAVENEGAR_TEMPLATE = "";
+process.env.APP_VERSION = "1.0.0-test";
+process.env.TEST_RATE_LIMIT = process.env.TEST_RATE_LIMIT || "0";

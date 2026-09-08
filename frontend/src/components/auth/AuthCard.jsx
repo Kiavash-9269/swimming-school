@@ -1,195 +1,293 @@
-// src/components/auth/AuthCard.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  FaEnvelope,
   FaLock,
-  FaTimes,
-  FaTools,
   FaUser,
   FaEye,
   FaEyeSlash,
   FaPhone,
   FaShieldAlt,
-  FaCheckCircle,
   FaHome,
+  FaArrowRight,
 } from "react-icons/fa";
+import { authApi } from "../../services/apiClient";
+import { useAuth } from "../../services/authContext";
+
+const STEPS = {
+  PHONE: "phone",
+  LOGIN_PASSWORD: "login_password",
+  REGISTER_OTP: "register_otp",
+  REGISTER_PROFILE: "register_profile",
+  RESET_OTP: "reset_otp",
+  RESET_PASSWORD: "reset_password",
+};
+
+function toEnglishDigits(value) {
+  const map = {
+    "۰": "0",
+    "۱": "1",
+    "۲": "2",
+    "۳": "3",
+    "۴": "4",
+    "۵": "5",
+    "۶": "6",
+    "۷": "7",
+    "۸": "8",
+    "۹": "9",
+  };
+  return String(value || "").replace(/[۰-۹]/g, (d) => map[d] || d);
+}
+
+function normalizePhoneInput(value) {
+  let phone = toEnglishDigits(value).replace(/[\s()-]/g, "");
+  if (phone.startsWith("+98")) phone = `0${phone.slice(3)}`;
+  if (phone.startsWith("98") && phone.length === 12) phone = `0${phone.slice(2)}`;
+  return phone;
+}
 
 export default function AuthCard() {
-  const [showDevModal, setShowDevModal] = useState(true);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { loginWithSession } = useAuth();
+
+  const initialMode = searchParams.get("mode") === "signup" ? "register" : "login";
+
+  const [step, setStep] = useState(STEPS.PHONE);
+  const [intent, setIntent] = useState(initialMode); // login | register | reset
   const [phone, setPhone] = useState("");
-  const [errors, setErrors] = useState({});
-  const [showRecovery, setShowRecovery] = useState(false);
-  const [recoverySent, setRecoverySent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [registrationToken, setRegistrationToken] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [devOtpHint, setDevOtpHint] = useState("");
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // بررسی پارامتر URL هنگام لود کامپوننت
   useEffect(() => {
     const mode = searchParams.get("mode");
     if (mode === "signup") {
-      setIsLogin(false);
+      setIntent("register");
+    } else if (mode === "reset") {
+      setIntent("reset");
     } else {
-      setIsLogin(true);
+      setIntent("login");
     }
   }, [searchParams]);
 
-  const togglePassword = () => setShowPassword(!showPassword);
-
-  const fadeVariant = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.95 },
-  };
-
-  const handleBackToHome = () => {
-    window.location.href = "/";
-  };
-
-  const switchMode = (mode) => {
-    setIsLogin(mode === "login");
-    setSearchParams({ mode });
-  };
-
-  const apiLogin = async (email, password) => {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-    return await response.json();
-  };
-
-  const apiSignup = async (fullName, email, password) => {
-    const response = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ fullName, email, password }),
-    });
-    return await response.json();
-  };
-
-  const apiRecovery = async (phone) => {
-    const response = await fetch("/api/auth/recovery", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ phone }),
-    });
-    return await response.json();
-  };
-
-  const validateLogin = () => {
-    const newErrors = {};
-    if (!email) newErrors.email = "ایمیل را وارد کنید";
-    else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email))
-      newErrors.email = "فرمت ایمیل معتبر نیست";
-
-    if (!password) newErrors.password = "رمز عبور را وارد کنید";
-    else if (password.length < 6)
-      newErrors.password = "رمز باید حداقل ۶ کاراکتر باشد";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateSignup = () => {
-    const newErrors = {};
-    if (!fullName) newErrors.fullName = "نام کامل را وارد کنید";
-    if (!email) newErrors.email = "ایمیل را وارد کنید";
-    else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email))
-      newErrors.email = "فرمت ایمیل معتبر نیست";
-    if (!password) newErrors.password = "رمز عبور را وارد کنید";
-    else if (password.length < 6)
-      newErrors.password = "رمز باید حداقل ۶ کاراکتر باشد";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateRecovery = () => {
-    if (!phone.trim()) return "شماره تلفن را وارد کنید";
-    if (!/^09\d{9}$/.test(phone)) return "فرمت شماره معتبر نیست";
-    return "";
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!validateLogin()) return;
-
-    setIsLoading(true);
-    try {
-      const result = await apiLogin(email, password);
-      if (result.success) {
-        localStorage.setItem("token", result.token);
-        alert("ورود موفق!");
-        window.location.href = "/dashboard";
-      } else {
-        setErrors({ general: result.message });
-      }
-    } catch (error) {
-      setErrors({ general: "خطا در ارتباط با سرور" });
-    } finally {
-      setIsLoading(false);
+  const title = useMemo(() => {
+    switch (step) {
+      case STEPS.LOGIN_PASSWORD:
+        return "ورود";
+      case STEPS.REGISTER_OTP:
+      case STEPS.RESET_OTP:
+        return "تأیید کد";
+      case STEPS.REGISTER_PROFILE:
+        return "تکمیل ثبت‌نام";
+      case STEPS.RESET_PASSWORD:
+        return "رمز جدید";
+      default:
+        return intent === "reset" ? "بازیابی رمز" : "ورود / ثبت‌نام";
     }
+  }, [step, intent]);
+
+  const resetFormSecrets = () => {
+    setPassword("");
+    setConfirmPassword("");
+    setOtp("");
+    setDevOtpHint("");
+    setError("");
+    setInfo("");
   };
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    if (!validateSignup()) return;
+  const handleBackToHome = () => navigate("/");
 
-    setIsLoading(true);
-    try {
-      const result = await apiSignup(fullName, email, password);
-      if (result.success) {
-        alert("ثبت‌نام موفق!");
-        switchMode("login");
-      } else {
-        setErrors({ general: result.message });
-      }
-    } catch (error) {
-      setErrors({ general: "خطا در ارتباط با سرور" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRecovery = async (e) => {
+  const handlePhoneContinue = async (e) => {
     e.preventDefault();
-    const error = validateRecovery();
-    if (error) {
-      setErrors({ phone: error });
+    setError("");
+    setInfo("");
+    const normalized = normalizePhoneInput(phone);
+    setPhone(normalized);
+
+    if (!/^09\d{9}$/.test(normalized)) {
+      setError("فرمت شماره موبایل معتبر نیست");
       return;
     }
 
     setIsLoading(true);
     try {
-      const result = await apiRecovery(phone);
-      if (result.success) {
-        setRecoverySent(true);
-        setTimeout(() => {
-          setRecoverySent(false);
-          setShowRecovery(false);
-        }, 3000);
-      } else {
-        setErrors({ phone: result.message });
+      if (intent === "reset") {
+        const result = await authApi.sendPasswordOtp(normalized);
+        // No existence leak via `eligible` — always continue to OTP step.
+        setDevOtpHint(import.meta.env.DEV ? result.devOtp || "" : "");
+        setInfo(result.message || "اگر حسابی با این شماره وجود داشته باشد، کد بازیابی ارسال می‌شود");
+        setStep(STEPS.RESET_OTP);
+        return;
       }
-    } catch (error) {
-      setErrors({ phone: "خطا در ارسال کد" });
+
+      const { exists } = await authApi.checkPhone(normalized);
+
+      if (exists) {
+        setIntent("login");
+        setStep(STEPS.LOGIN_PASSWORD);
+        setInfo("حساب شما پیدا شد. رمز عبور را وارد کنید.");
+        return;
+      }
+
+      const otpResult = await authApi.sendRegisterOtp(normalized);
+      setIntent("register");
+      setDevOtpHint(import.meta.env.DEV ? otpResult.devOtp || "" : "");
+      setInfo("کد تأیید ارسال شد");
+      setStep(STEPS.REGISTER_OTP);
+    } catch (err) {
+      setError(err.message || "خطا در ارتباط با سرور");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!password) {
+      setError("رمز عبور را وارد کنید");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const session = await authApi.login({ phone, password });
+      loginWithSession(session);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err.message || "ورود ناموفق بود");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyRegisterOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+    const code = toEnglishDigits(otp).trim();
+    if (!/^\d{5}$/.test(code)) {
+      setError("کد باید ۵ رقم باشد");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await authApi.verifyRegisterOtp(phone, code);
+      setRegistrationToken(result.registrationToken);
+      setStep(STEPS.REGISTER_PROFILE);
+      setInfo("شماره تأیید شد. اطلاعات حساب را تکمیل کنید.");
+    } catch (err) {
+      setError(err.message || "تأیید کد ناموفق بود");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("نام و نام خانوادگی الزامی است");
+      return;
+    }
+    if (password.length < 8) {
+      setError("رمز عبور باید حداقل ۸ کاراکتر باشد");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("رمز عبور و تکرار آن یکسان نیستند");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const session = await authApi.register({
+        registrationToken,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        password,
+        confirmPassword,
+      });
+      loginWithSession(session);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err.message || "ثبت‌نام ناموفق بود");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyResetOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+    const code = toEnglishDigits(otp).trim();
+    if (!/^\d{5}$/.test(code)) {
+      setError("کد باید ۵ رقم باشد");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await authApi.verifyPasswordOtp(phone, code);
+      setResetToken(result.resetToken);
+      setStep(STEPS.RESET_PASSWORD);
+      setInfo("کد تأیید شد. رمز جدید را وارد کنید.");
+    } catch (err) {
+      setError(err.message || "تأیید کد ناموفق بود");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (password.length < 8) {
+      setError("رمز عبور باید حداقل ۸ کاراکتر باشد");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("رمز عبور و تکرار آن یکسان نیستند");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const session = await authApi.resetPassword({
+        resetToken,
+        password,
+        confirmPassword,
+      });
+      loginWithSession(session);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err.message || "بازیابی رمز ناموفق بود");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const goToPhoneStep = (nextIntent = "login") => {
+    setIntent(nextIntent);
+    setStep(STEPS.PHONE);
+    resetFormSecrets();
+  };
+
+  const fadeVariant = {
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -8 },
   };
 
   return (
@@ -198,321 +296,292 @@ export default function AuthCard() {
         onClick={handleBackToHome}
         className="absolute top-4 left-4 z-20 bg-white/80 backdrop-blur-md border border-sky-200 text-sky-700 hover:bg-white hover:text-sky-900 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg"
         title="بازگشت به صفحه اصلی"
+        type="button"
       >
         <FaHome className="text-sm" />
       </button>
 
+      {step !== STEPS.PHONE && (
+        <button
+          type="button"
+          onClick={() => goToPhoneStep(intent === "reset" ? "reset" : "login")}
+          className="absolute top-4 right-4 z-20 bg-white/80 backdrop-blur-md border border-sky-200 text-sky-700 w-10 h-10 rounded-full flex items-center justify-center shadow-md"
+          title="بازگشت"
+        >
+          <FaArrowRight className="text-sm" />
+        </button>
+      )}
+
       <AnimatePresence mode="wait">
-        {isLogin ? (
-          <motion.form
-            key="login"
-            variants={fadeVariant}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.5 }}
-            onSubmit={handleLogin}
-            className="w-full flex flex-col items-center"
-          >
-            <h2 className="text-3xl font-bold mb-6 text-sky-900">ورود</h2>
+        <motion.form
+          key={step}
+          variants={fadeVariant}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{ duration: 0.25 }}
+          onSubmit={
+            step === STEPS.PHONE
+              ? handlePhoneContinue
+              : step === STEPS.LOGIN_PASSWORD
+                ? handleLogin
+                : step === STEPS.REGISTER_OTP
+                  ? handleVerifyRegisterOtp
+                  : step === STEPS.REGISTER_PROFILE
+                    ? handleRegister
+                    : step === STEPS.RESET_OTP
+                      ? handleVerifyResetOtp
+                      : handleResetPassword
+          }
+          className="w-full flex flex-col items-center"
+        >
+          <h2 className="text-2xl font-bold mb-2 text-sky-900">{title}</h2>
+          <p className="text-xs text-sky-700/80 mb-4 text-center px-4">
+            مدرسه شنا ایران استرالیا
+          </p>
 
-            {errors.general && (
-              <div className="w-3/4 mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
-                <p className="text-red-700 text-sm text-center">
-                  {errors.general}
+          {error && (
+            <div className="w-3/4 mb-3 p-3 bg-red-100 border border-red-300 rounded-lg">
+              <p className="text-red-700 text-sm text-center">{error}</p>
+            </div>
+          )}
+
+          {info && !error && (
+            <div className="w-3/4 mb-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+              <p className="text-sky-800 text-sm text-center">{info}</p>
+            </div>
+          )}
+
+          {import.meta.env.DEV &&
+            devOtpHint &&
+            (step === STEPS.REGISTER_OTP || step === STEPS.RESET_OTP) && (
+              <div className="w-3/4 mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-amber-800 text-xs text-center">
+                  کد توسعه (فقط محیط توسعه): {devOtpHint}
                 </p>
               </div>
             )}
 
-            <div className="relative w-3/4 mb-2">
-              <FaEnvelope className="absolute left-3 top-3 text-sky-500" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ایمیل"
-                className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="relative w-3/4 mb-1">
-              <FaLock className="absolute left-3 top-3 text-sky-500" />
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="رمز عبور"
-                className="pl-10 pr-10 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={togglePassword}
-                className="absolute right-3 top-3 text-sky-500"
-                disabled={isLoading}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
-            </div>
-
-            <div className="w-3/4 text-right mb-6 mt-4 flex items-center justify-center">
-              <motion.button
-                type="button"
-                onClick={() => setShowRecovery(!showRecovery)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="text-sm text-blue-700 hover:text-blue-900 transition-colors flex items-center gap-2 bg-blue-50/80 hover:bg-blue-100/80 px-4 py-2 rounded-xl border border-blue-200/60 backdrop-blur-sm shadow-sm"
-                disabled={isLoading}
-              >
-                <FaShieldAlt className="text-blue-600 text-base" />
-                بازیابی رمز با تلفن همراه
-              </motion.button>
-            </div>
-
-            {showRecovery && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="w-3/4 mb-4 p-4 bg-gradient-to-br from-white/60 to-blue-50/40 backdrop-blur-lg rounded-2xl border border-blue-200/50 shadow-lg"
-              >
-                {recoverySent ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-3"
-                  >
-                    <FaCheckCircle className="text-green-500 text-2xl mx-auto mb-2" />
-                    <p className="text-green-600 font-semibold text-sm">
-                      کد بازیابی ارسال شد!
-                    </p>
-                    <p className="text-sky-600 text-xs mt-1">
-                      لطفا پیامک خود را بررسی کنید
-                    </p>
-                  </motion.div>
-                ) : (
-                  <>
-                    <div className="relative mb-3">
-                      <FaPhone className="absolute left-3 top-3 text-blue-500" />
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="09xxxxxxxxx"
-                        className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/80 border border-blue-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200/50"
-                        disabled={isLoading}
-                      />
-                      {errors.phone && (
-                        <p className="text-red-500 text-xs mt-1 mr-1 flex items-center gap-1">
-                          ⚠️ {errors.phone}
-                        </p>
-                      )}
-                    </div>
-                    <motion.button
-                      type="button"
-                      onClick={handleRecovery}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          <FaShieldAlt className="text-white text-sm" />
-                          ارسال کد بازیابی
-                        </>
-                      )}
-                    </motion.button>
-                  </>
-                )}
-              </motion.div>
-            )}
-
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  در حال ورود...
-                </div>
-              ) : (
-                "ورود"
-              )}
-            </button>
-
-            <p className="text-sm text-sky-700 mt-3">
-              عضو نیستید؟{" "}
-              <button
-                onClick={() => switchMode("signup")}
-                className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200 border-b-2 border-blue-300 hover:border-blue-600 pb-0.5"
-                disabled={isLoading}
-              >
-                همین حالا ثبت‌نام کنید
-              </button>
-            </p>
-          </motion.form>
-        ) : (
-          <motion.form
-            key="signup"
-            variants={fadeVariant}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.5 }}
-            onSubmit={handleSignup}
-            className="w-full flex flex-col items-center"
-          >
-            <h2 className="text-3xl font-bold mb-6 text-sky-900">ثبت‌نام</h2>
-
-            {errors.general && (
-              <div className="w-3/4 mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
-                <p className="text-red-700 text-sm text-center">
-                  {errors.general}
-                </p>
-              </div>
-            )}
-
-            <div className="relative w-3/4 mb-2">
-              <FaUser className="absolute left-3 top-3 text-sky-500" />
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="نام کامل"
-                className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
-                disabled={isLoading}
-              />
-              {errors.fullName && (
-                <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
-              )}
-            </div>
-
-            <div className="relative w-3/4 mb-2">
-              <FaEnvelope className="absolute left-3 top-3 text-sky-500" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ایمیل"
-                className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="relative w-3/4 mb-4">
-              <FaLock className="absolute left-3 top-3 text-sky-500" />
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="رمز عبور"
-                className="pl-10 pr-10 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={togglePassword}
-                className="absolute right-3 top-3 text-sky-500"
-                disabled={isLoading}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  در حال ثبت‌نام...
-                </div>
-              ) : (
-                "ثبت‌نام"
-              )}
-            </button>
-
-            <p className="text-sm text-sky-700 mt-4">
-              از قبل عضو شده‌اید؟{" "}
-              <button
-                onClick={() => switchMode("login")}
-                className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200 border-b-2 border-blue-300 hover:border-blue-600 pb-0.5"
-                disabled={isLoading}
-              >
-                ورود به حساب
-              </button>
-            </p>
-          </motion.form>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showDevModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 120 }}
-              className="w-[340px] bg-white/20 backdrop-blur-2xl border border-white/30 rounded-2xl shadow-2xl p-6 text-center text-white relative"
-            >
-              <button
-                onClick={() => setShowDevModal(false)}
-                className="absolute top-3 left-3 text-white/80 hover:text-white"
-              >
-                <FaTimes />
-              </button>
-
-              <div className="flex justify-center mb-4">
-                <div className="w-14 h-14 rounded-full bg-sky-400/20 flex items-center justify-center">
-                  <FaTools className="text-sky-200 text-2xl animate-pulse" />
-                </div>
+          {step === STEPS.PHONE && (
+            <>
+              <div className="relative w-3/4 mb-4">
+                <FaPhone className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="09xxxxxxxxx"
+                  className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                  autoFocus
+                />
               </div>
 
-              <h2 className="text-lg font-bold mb-2">
-                این بخش در حال توسعه است
-              </h2>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? "لطفا صبر کنید..." : "ادامه"}
+              </button>
 
-              <p className="text-sm text-white/80 leading-relaxed">
-                امکانات ورود و ثبت‌نام به‌زودی فعال خواهد شد.
-              </p>
-
-              <div className="mt-4 flex justify-center">
-                <FaCheckCircle className="text-green-300 text-xl animate-bounce" />
+              <div className="flex flex-col gap-2 mt-2 text-sm text-sky-700">
+                <button
+                  type="button"
+                  className="text-blue-700 font-medium"
+                  onClick={() => {
+                    setIntent("reset");
+                    setInfo("شماره موبایل حساب خود را وارد کنید");
+                  }}
+                  disabled={isLoading}
+                >
+                  بازیابی رمز عبور
+                </button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
+            </>
+          )}
+
+          {step === STEPS.LOGIN_PASSWORD && (
+            <>
+              <p className="text-sm text-sky-800 mb-3">{phone}</p>
+              <div className="relative w-3/4 mb-4">
+                <FaLock className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="رمز عبور"
+                  className="pl-10 pr-10 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-3 text-sky-500"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? "در حال ورود..." : "ورود"}
+              </button>
+
+              <button
+                type="button"
+                className="text-sm text-blue-700"
+                onClick={() => {
+                  setIntent("reset");
+                  setStep(STEPS.PHONE);
+                  resetFormSecrets();
+                }}
+              >
+                رمز را فراموش کرده‌ام
+              </button>
+            </>
+          )}
+
+          {(step === STEPS.REGISTER_OTP || step === STEPS.RESET_OTP) && (
+            <>
+              <p className="text-sm text-sky-800 mb-3">{phone}</p>
+              <div className="relative w-3/4 mb-4">
+                <FaShieldAlt className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={5}
+                  value={otp}
+                  onChange={(e) => setOtp(toEnglishDigits(e.target.value).replace(/\D/g, "").slice(0, 5))}
+                  placeholder="کد ۵ رقمی"
+                  className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none tracking-[0.35em] text-center"
+                  disabled={isLoading}
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? "در حال تأیید..." : "تأیید کد"}
+              </button>
+            </>
+          )}
+
+          {step === STEPS.REGISTER_PROFILE && (
+            <>
+              <div className="relative w-3/4 mb-2">
+                <FaUser className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="نام"
+                  className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="relative w-3/4 mb-2">
+                <FaUser className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="نام خانوادگی"
+                  className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="relative w-3/4 mb-2">
+                <FaLock className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="رمز عبور"
+                  className="pl-10 pr-10 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-3 text-sky-500"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+              <div className="relative w-3/4 mb-4">
+                <FaLock className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="تکرار رمز عبور"
+                  className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? "در حال ثبت‌نام..." : "ثبت‌نام و ورود"}
+              </button>
+            </>
+          )}
+
+          {step === STEPS.RESET_PASSWORD && (
+            <>
+              <div className="relative w-3/4 mb-2">
+                <FaLock className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="رمز عبور جدید"
+                  className="pl-10 pr-10 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-3 text-sky-500"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+              <div className="relative w-3/4 mb-4">
+                <FaLock className="absolute left-3 top-3 text-sky-500" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="تکرار رمز عبور جدید"
+                  className="pl-10 pr-4 py-2 rounded-lg w-full bg-white/70 border border-sky-200 focus:border-sky-500 focus:outline-none"
+                  disabled={isLoading}
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? "در حال ذخیره..." : "ذخیره رمز و ورود"}
+              </button>
+            </>
+          )}
+        </motion.form>
       </AnimatePresence>
 
       <div className="absolute -z-10">
-        <div className="absolute w-24 h-24 bg-sky-300/40 rounded-full blur-2xl top-0 left-0 animate-pulse"></div>
-        <div className="absolute w-32 h-32 bg-blue-400/40 rounded-full blur-2xl bottom-10 right-5 animate-pulse delay-300"></div>
+        <div className="absolute w-24 h-24 bg-sky-300/40 rounded-full blur-2xl top-0 left-0 animate-pulse" />
+        <div className="absolute w-32 h-32 bg-blue-400/40 rounded-full blur-2xl bottom-10 right-5 animate-pulse delay-300" />
       </div>
     </div>
   );

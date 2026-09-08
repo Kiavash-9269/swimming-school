@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../services/authContext";
 
 export default function EnhancedNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, user, logout, isLoading } = useAuth();
 
   const menuItems = [
     { href: "/", label: "صفحه اصلی", icon: HomeIcon },
@@ -86,19 +88,36 @@ export default function EnhancedNavbar() {
             </nav>
 
             {/* Desktop Auth Buttons - Hidden on mobile */}
-            <div className="hidden md:flex gap-3">
-              <Link
-                to="/auth?mode=login"
-                className="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition"
-              >
-                ورود
-              </Link>
-              <Link
-                to="/auth?mode=signup"
-                className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-600 transition shadow-lg"
-              >
-                ثبت‌نام
-              </Link>
+            <div className="hidden md:flex gap-3 items-center">
+              {!isLoading && isAuthenticated ? (
+                <>
+                  <span className="text-sm text-white/80">
+                    {user?.firstName} {user?.lastName}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => logout()}
+                    className="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition"
+                  >
+                    خروج
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/auth?mode=login"
+                    className="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10 transition"
+                  >
+                    ورود
+                  </Link>
+                  <Link
+                    to="/auth?mode=signup"
+                    className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-600 transition shadow-lg"
+                  >
+                    ثبت‌نام
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Toggle Button */}
@@ -196,27 +215,42 @@ export default function EnhancedNavbar() {
 
           {/* Mobile Auth Buttons Section */}
           <div className="pt-5 mt-3 border-t border-gray-200/50 space-y-3">
-            <Link
-              to="/auth?mode=login"
-              onClick={() => setIsOpen(false)}
-              className="block text-center py-3 rounded-2xl
+            {!isLoading && isAuthenticated ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsOpen(false);
+                  await logout();
+                }}
+                className="w-full text-center py-3 rounded-2xl bg-white/60 border border-gray-200 text-slate-800 font-medium hover:bg-white transition"
+              >
+                خروج ({user?.firstName})
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/auth?mode=login"
+                  onClick={() => setIsOpen(false)}
+                  className="block text-center py-3 rounded-2xl
         bg-white/60 border border-gray-200
         text-slate-800 font-medium
         hover:bg-white transition"
-            >
-              ورود
-            </Link>
+                >
+                  ورود
+                </Link>
 
-            <Link
-              to="/auth?mode=signup"
-              onClick={() => setIsOpen(false)}
-              className="block text-center py-3 rounded-2xl
+                <Link
+                  to="/auth?mode=signup"
+                  onClick={() => setIsOpen(false)}
+                  className="block text-center py-3 rounded-2xl
         bg-gradient-to-r from-cyan-500 to-blue-500
         text-white font-semibold shadow-lg
         hover:scale-[1.02] transition"
-            >
-              ثبت‌نام
-            </Link>
+                >
+                  ثبت‌نام
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </aside>
