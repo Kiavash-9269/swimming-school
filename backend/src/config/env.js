@@ -43,6 +43,39 @@ const envSchema = z.object({
   KAVENEGAR_SENDER: z.string().optional().default(""),
   KAVENEGAR_TEMPLATE: z.string().optional().default(""),
 
+  // Course domain
+  APP_TIMEZONE: z.string().min(1).default("Asia/Tehran"),
+  RESERVATION_HOLD_SECONDS: z.coerce.number().int().positive().default(900),
+  WAITLIST_OFFER_SECONDS: z.coerce.number().int().positive().default(900),
+  PAYMENT_PROVIDER: z.enum(["mock", "zarinpal"]).default("mock"),
+  PAYMENT_CALLBACK_URL: z.string().optional().default(""),
+  PAYMENT_CALLBACK_SECRET: z.string().optional().default(""),
+  PAYMENT_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  ZARINPAL_MERCHANT_ID: z.string().optional().default(""),
+  ZARINPAL_SANDBOX: z.string().optional().default("true"),
+
+  // Notifications / scheduler (Phase 5)
+  SCHEDULER_ENABLED: z.string().optional(),
+  SCHEDULER_INTERVAL_MS: z.coerce.number().int().positive().default(15000),
+  JOB_BATCH_SIZE: z.coerce.number().int().positive().max(500).default(50),
+  NOTIFICATION_MAX_ATTEMPTS: z.coerce.number().int().positive().max(10).default(3),
+  NOTIFICATION_LEASE_SECONDS: z.coerce.number().int().positive().default(60),
+  NOTIFICATION_DEFAULT_LOCALE: z.enum(["fa", "en"]).default("fa"),
+  CLASS_REMINDER_HOURS: z.coerce.number().positive().default(24),
+  SESSION_REMINDER_HOURS: z.coerce.number().positive().default(1),
+  EMAIL_PROVIDER: z.enum(["mock", "log"]).default("mock"),
+  EXPORT_MAX_ROWS: z.coerce.number().int().positive().max(50000).default(5000),
+
+  // Document storage (Phase 7)
+  DOCUMENT_STORAGE_PROVIDER: z.enum(["local"]).default("local"),
+  DOCUMENT_STORAGE_ROOT: z.string().min(1).optional(),
+  DOCUMENT_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(20 * 1024 * 1024)
+    .default(5 * 1024 * 1024),
+
   APP_VERSION: z.string().default("1.0.0"),
 });
 
@@ -112,12 +145,58 @@ if (!SMS_PROVIDER) {
   failConfig("SMS_PROVIDER is required");
 }
 
+const schedulerRaw = data.SCHEDULER_ENABLED;
+const SCHEDULER_ENABLED =
+  schedulerRaw == null || schedulerRaw === ""
+    ? data.NODE_ENV === "production"
+    : schedulerRaw === "true" || schedulerRaw === "1";
+
+const pathMod = path;
+const defaultStorageRoot = pathMod.resolve(
+  __dirname,
+  "../../",
+  data.NODE_ENV === "test" ? ".data/test-documents" : ".data/documents",
+);
+
+const DOCUMENT_STORAGE_ROOT = data.DOCUMENT_STORAGE_ROOT
+  ? pathMod.resolve(data.DOCUMENT_STORAGE_ROOT)
+  : defaultStorageRoot;
+
+// Refuse obviously public/frontend paths
+const normalizedRoot = DOCUMENT_STORAGE_ROOT.replace(/\\/g, "/").toLowerCase();
+if (
+  normalizedRoot.includes("/frontend/") ||
+  normalizedRoot.includes("/public/") ||
+  normalizedRoot.endsWith("/public") ||
+  normalizedRoot.includes("/static/")
+) {
+  failConfig("DOCUMENT_STORAGE_ROOT must not be inside frontend/public/static directories");
+}
+
+if (data.PAYMENT_PROVIDER === "zarinpal") {
+  if (!data.ZARINPAL_MERCHANT_ID?.trim()) {
+    failConfig("ZARINPAL_MERCHANT_ID is required when PAYMENT_PROVIDER=zarinpal");
+  }
+  if (!data.PAYMENT_CALLBACK_URL?.trim()) {
+    failConfig("PAYMENT_CALLBACK_URL is required when PAYMENT_PROVIDER=zarinpal");
+  }
+  if (data.NODE_ENV === "production" && !data.PAYMENT_CALLBACK_SECRET?.trim()) {
+    failConfig("PAYMENT_CALLBACK_SECRET is required in production when PAYMENT_PROVIDER=zarinpal");
+  }
+}
+
+if (data.NODE_ENV === "production" && data.PAYMENT_PROVIDER === "mock") {
+  failConfig("PAYMENT_PROVIDER=mock is not allowed in production; use zarinpal");
+}
+
 const env = {
   ...data,
   SMS_PROVIDER,
   OTP_TTL_SECONDS,
   /** Derived for any legacy callers expecting minutes. */
   OTP_EXPIRATION_MINUTES: Math.max(1, Math.ceil(OTP_TTL_SECONDS / 60)),
+  SCHEDULER_ENABLED,
+  DOCUMENT_STORAGE_ROOT,
 };
 
 module.exports = { env };

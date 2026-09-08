@@ -88,6 +88,51 @@ class SmsWebserviceProvider {
 
     const ttlMinutes = Math.max(1, Math.ceil(this.otpTtlSeconds / 60));
     const text = `کد تایید شما: ${code}\nاعتبار کد: ${ttlMinutes} دقیقه`;
+    return this.#sendRawText({ phone, text });
+  }
+
+  /** Free-text notification SMS (reuses same provider; requires sender). */
+  async sendText({ phone, message, purpose = "notification" }) {
+    logEvent("SMS_SEND_STARTED", {
+      provider: "sms-webservice",
+      phoneMasked: maskPhone(phone),
+      purpose,
+      mode: "notification_text",
+      bodyLength: String(message || "").length,
+    });
+    try {
+      const result = await this.#sendRawText({ phone, text: String(message || "").slice(0, 900) });
+      logEvent("SMS_SEND_SUCCESS", {
+        provider: "sms-webservice",
+        phoneMasked: maskPhone(phone),
+        purpose,
+        messageId: result.messageId,
+      });
+      return {
+        delivered: true,
+        channel: "sms",
+        provider: "sms-webservice",
+        messageId: result.messageId,
+      };
+    } catch (error) {
+      logError("SMS_SEND_FAILED", error, {
+        provider: "sms-webservice",
+        phoneMasked: maskPhone(phone),
+        purpose,
+        code: error?.code,
+      });
+      throw error;
+    }
+  }
+
+  async #sendRawText({ phone, text }) {
+    if (!this.sender) {
+      throw new SmsProviderError("پیکربندی فرستنده پیامک ناقص است", {
+        code: SMS_ERROR_CODES.SMS_CONFIGURATION_ERROR,
+        statusCode: 500,
+      });
+    }
+
     const params = new URLSearchParams({
       ApiKey: this.apiKey,
       Text: text,

@@ -2,6 +2,7 @@ const { env } = require("./config/env");
 const { connectDatabase, disconnectDatabase } = require("./config/database");
 const { createApp } = require("./app");
 const { logEvent, logError, logger } = require("./services/logging");
+const { startScheduler, stopScheduler } = require("./modules/ops/scheduler");
 
 async function startServer() {
   await connectDatabase();
@@ -15,6 +16,8 @@ async function startServer() {
     });
   });
 
+  startScheduler();
+
   let shuttingDown = false;
 
   async function shutdown(signal) {
@@ -23,6 +26,12 @@ async function startServer() {
     }
     shuttingDown = true;
     logEvent("SERVER_SHUTDOWN", { signal });
+
+    try {
+      await stopScheduler({ waitForCurrent: true, timeoutMs: 8000 });
+    } catch (error) {
+      logError("UNEXPECTED_ERROR", error, { phase: "scheduler_shutdown" });
+    }
 
     server.close(async () => {
       try {

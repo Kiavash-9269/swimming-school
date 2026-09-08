@@ -96,6 +96,74 @@ class KavenegarProvider {
       throw error;
     }
   }
+
+  /** Free-text SMS via Kavenegar send endpoint when sender is configured. */
+  async sendText({ phone, message, purpose = "notification" }) {
+    if (!this.sender) {
+      throw new SmsProviderError("Kavenegar free-text requires KAVENEGAR_SENDER", {
+        code: SMS_ERROR_CODES.SMS_CONFIGURATION_ERROR,
+        statusCode: 500,
+      });
+    }
+
+    logEvent("SMS_SEND_STARTED", {
+      provider: "kavenegar",
+      phoneMasked: maskPhone(phone),
+      purpose,
+      mode: "sms_send",
+      bodyLength: String(message || "").length,
+    });
+
+    const receptor = toKavenegarReceptor(phone);
+    const url = `https://api.kavenegar.com/v1/${encodeURIComponent(this.apiKey)}/sms/send.json`;
+    const body = new URLSearchParams({
+      receptor,
+      sender: String(this.sender),
+      message: String(message || "").slice(0, 900),
+    });
+
+    try {
+      const response = await fetchWithTimeout(
+        url,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: body.toString(),
+        },
+        this.timeoutMs,
+      );
+      const payload = await readJsonSafe(response);
+      const returnStatus = payload?.return?.status;
+      if (!response.ok || returnStatus !== 200) {
+        throw new SmsProviderError("ارسال پیامک ناموفق بود", {
+          code: SMS_ERROR_CODES.SMS_DELIVERY_FAILED,
+          statusCode: 502,
+          details: { httpStatus: response.status, providerStatus: returnStatus },
+        });
+      }
+      const messageId = payload?.entries?.messageid ?? payload?.entries?.[0]?.messageid;
+      logEvent("SMS_SEND_SUCCESS", {
+        provider: "kavenegar",
+        phoneMasked: maskPhone(phone),
+        purpose,
+        messageId: messageId != null ? String(messageId) : undefined,
+      });
+      return {
+        delivered: true,
+        channel: "sms",
+        provider: "kavenegar",
+        messageId: messageId != null ? String(messageId) : undefined,
+      };
+    } catch (error) {
+      logError("SMS_SEND_FAILED", error, {
+        provider: "kavenegar",
+        phoneMasked: maskPhone(phone),
+        purpose,
+        code: error?.code,
+      });
+      throw error;
+    }
+  }
 }
 
 module.exports = {

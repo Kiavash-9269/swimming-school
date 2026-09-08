@@ -9,6 +9,9 @@ const { getDatabaseStatus } = require("./config/database");
 const { errorHandler } = require("./middleware/errorHandler");
 const { notFoundHandler } = require("./middleware/notFound");
 const authRoutes = require("./modules/auth/auth.routes");
+const coursesRoutes = require("./modules/courses/courses.routes");
+const enrollmentRoutes = require("./modules/enrollments/enrollment.routes");
+const billingRoutes = require("./modules/billing/billing.routes");
 
 function createApp() {
   const app = express();
@@ -77,6 +80,11 @@ function createApp() {
   });
 
   app.use("/api/auth", authRoutes);
+  app.use("/api/courses", coursesRoutes);
+  app.use("/api/enrollments", enrollmentRoutes);
+  app.use("/api/payments", billingRoutes);
+  app.use("/api/notifications", require("./modules/notifications/notification.routes"));
+  app.use("/api/admin/reports", require("./modules/reports/report.routes"));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
