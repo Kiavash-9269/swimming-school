@@ -37,6 +37,14 @@ async function expireHeldReservations(classId = null) {
   if (classId) filter.classId = classId;
 
   const expired = await Reservation.find(filter).limit(200);
+  const { Payment } = require("../billing/payment.model");
+  const { PAYMENT_STATUSES } = require("../courses/domain.constants");
+  const openPaymentStatuses = [
+    PAYMENT_STATUSES.CREATED,
+    PAYMENT_STATUSES.INITIATED,
+    PAYMENT_STATUSES.PENDING,
+  ];
+
   for (const reservation of expired) {
     const released = await Reservation.findOneAndUpdate(
       { _id: reservation._id, status: RESERVATION_STATUSES.HELD },
@@ -49,6 +57,46 @@ async function expireHeldReservations(classId = null) {
       { _id: reservation.classId, heldCount: { $gt: 0 } },
       { $inc: { heldCount: -1 } },
     );
+
+    // Couple hold expiry to open payments so late SUCCESS cannot race a dead hold silently.
+    const openPays = await Payment.find({
+      reservationId: reservation._id,
+      status: { $in: openPaymentStatuses },
+    }).limit(10);
+    for (const payment of openPays) {
+      await Payment.findOneAndUpdate(
+        { _id: payment._id, status: { $in: openPaymentStatuses } },
+        {
+          $set: {
+            status: PAYMENT_STATUSES.EXPIRED,
+            expiredAt: new Date(),
+            failureCode: "RESERVATION_EXPIRED",
+            failureReason: "Reservation hold expired before payment completion",
+          },
+        },
+      );
+    }
+
+    const pendingEnrollment = await Enrollment.findOneAndUpdate(
+      {
+        reservationId: reservation._id,
+        status: {
+          $in: [ENROLLMENT_STATUSES.PAYMENT_PENDING, ENROLLMENT_STATUSES.PENDING],
+        },
+      },
+      {
+        $set: {
+          status: ENROLLMENT_STATUSES.EXPIRED,
+        },
+      },
+    );
+    if (pendingEnrollment) {
+      logEvent("ENROLLMENT_EXPIRED_WITH_RESERVATION", {
+        enrollmentId: String(pendingEnrollment._id),
+        reservationId: String(reservation._id),
+      });
+    }
+
     logEvent("RESERVATION_EXPIRED", {
       reservationId: String(reservation._id),
       classId: String(reservation.classId),
@@ -466,16 +514,56 @@ async function cancelEnrollment({ userId, enrollmentId, isAdmin = false }) {
   }
 
   if (previousDoc.reservationId) {
-    const released = await Reservation.findOneAndUpdate(
+    const releasedHeld = await Reservation.findOneAndUpdate(
       { _id: previousDoc.reservationId, status: RESERVATION_STATUSES.HELD },
       { $set: { status: RESERVATION_STATUSES.RELEASED } },
       { returnDocument: "after" },
     );
-    if (released) {
+    if (releasedHeld) {
       await CourseClass.updateOne(
         { _id: previousDoc.classId, heldCount: { $gt: 0 } },
         { $inc: { heldCount: -1 } },
       );
+    } else if (
+      [ENROLLMENT_STATUSES.PAYMENT_PENDING, ENROLLMENT_STATUSES.PENDING].includes(previous)
+    ) {
+      // Seat already CONFIRMED during finalize while enrollment not yet ACTIVE —
+      // release confirmed capacity so cancel cannot leak seats.
+      const releasedConfirmed = await Reservation.findOneAndUpdate(
+        { _id: previousDoc.reservationId, status: RESERVATION_STATUSES.CONFIRMED },
+        { $set: { status: RESERVATION_STATUSES.RELEASED } },
+        { returnDocument: "after" },
+      );
+      if (releasedConfirmed) {
+        await CourseClass.updateOne(
+          { _id: previousDoc.classId, confirmedCount: { $gt: 0 } },
+          { $inc: { confirmedCount: -1 } },
+        );
+      }
+    }
+  }
+
+  // SUCCESS payment after cancel of non-activated enrollment → ops reconciliation (do not flip SUCCESS)
+  if ([ENROLLMENT_STATUSES.PAYMENT_PENDING, ENROLLMENT_STATUSES.PENDING].includes(previous)) {
+    const successPay = await Payment.findOne({
+      enrollmentId: previousDoc._id,
+      status: { $in: [PAYMENT_STATUSES.SUCCESS, PAYMENT_STATUSES.REFUND_REQUESTED] },
+    }).select("_id status");
+    if (successPay) {
+      await Payment.updateOne(
+        { _id: successPay._id },
+        {
+          $set: {
+            "metadata.reconciliationRequired": true,
+            "metadata.reconciliationReason": "ENROLLMENT_CANCELLED_AFTER_SUCCESS",
+          },
+        },
+      );
+      logEvent("PAYMENT_RECONCILIATION_REQUIRED", {
+        paymentId: String(successPay._id),
+        enrollmentId: String(previousDoc._id),
+        reason: "ENROLLMENT_CANCELLED_AFTER_SUCCESS",
+      });
     }
   }
 
@@ -498,6 +586,48 @@ async function cancelEnrollment({ userId, enrollmentId, isAdmin = false }) {
   return cancelled;
 }
 
+/** Operational teacher roster — same enrollment set attendance accepts. */
+const ROSTER_ENROLLMENT_STATUSES = [
+  ENROLLMENT_STATUSES.ACTIVE,
+  ENROLLMENT_STATUSES.PENDING_COMPLIANCE,
+  ENROLLMENT_STATUSES.COMPLETED,
+];
+
+async function listClassRoster({ user, classId }) {
+  const { assertCanAccessClass } = require("../courses/instructorAccess");
+  await assertCanAccessClass({ user, classId });
+
+  const enrollments = await Enrollment.find({
+    classId,
+    status: { $in: ROSTER_ENROLLMENT_STATUSES },
+  })
+    .sort({ createdAt: 1 })
+    .limit(500)
+    .lean();
+
+  const participantIds = [...new Set(enrollments.map((e) => String(e.participantId)))];
+  const participants = await Participant.find({ _id: { $in: participantIds } })
+    .select("firstName lastName birthDate gender")
+    .lean();
+  const partMap = new Map(participants.map((p) => [String(p._id), p]));
+
+  const items = enrollments.map((e) => {
+    const p = partMap.get(String(e.participantId));
+    return {
+      enrollmentId: String(e._id),
+      enrollmentStatus: e.status,
+      classId: String(e.classId),
+      participantId: String(e.participantId),
+      firstName: p?.firstName || null,
+      lastName: p?.lastName || null,
+      birthDate: p?.birthDate || null,
+      gender: p?.gender || null,
+    };
+  });
+
+  return { items };
+}
+
 module.exports = {
   assertParticipantOwned,
   expireHeldReservations,
@@ -510,5 +640,7 @@ module.exports = {
   confirmEnrollmentFromReservation,
   verifyPaymentAndActivate,
   cancelEnrollment,
+  listClassRoster,
   ACTIVE_ENROLLMENT_STATUSES,
+  ROSTER_ENROLLMENT_STATUSES,
 };

@@ -4,21 +4,21 @@ import { useNavigate } from "react-router-dom";
 
 import heroPoster from "../../assets/images/swimming-pictures-2aq7n1d6lib0rt2n.jpg";
 
+const HERO_ELEMENTS = [
+  { id: 1, type: "badge" },
+  { id: 2, type: "headingPart1" },
+  { id: 3, type: "headingPart2" },
+  { id: 4, type: "description" },
+  { id: 5, type: "buttons" },
+];
+
 export default function HomeHero() {
   const navigate = useNavigate();
-
-  const elements = [
-    { id: 1, type: "badge" },
-    { id: 2, type: "headingPart1" },
-    { id: 3, type: "headingPart2" },
-    { id: 4, type: "description" },
-    { id: 5, type: "buttons" },
-  ];
 
   const [visibleIds, setVisibleIds] = useState([]);
 
   useEffect(() => {
-    const timers = elements.map((el, index) =>
+    const timers = HERO_ELEMENTS.map((el, index) =>
       setTimeout(() => {
         setVisibleIds((prev) => [...prev, el.id]);
       }, index * 350),

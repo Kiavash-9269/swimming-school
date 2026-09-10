@@ -49,7 +49,7 @@ describe("Courses domain API", () => {
         level: "Beginner",
         ageMin: 7,
         ageMax: 12,
-        genderRestriction: "ANY",
+        genderRestriction: "MALE",
         requiresInsurance: false,
         requiresMedicalApproval: false,
       });

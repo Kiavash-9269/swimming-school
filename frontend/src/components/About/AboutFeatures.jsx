@@ -100,7 +100,7 @@ export default function AboutUs() {
       setCurrentLeaderIndex((prev) => (prev + 1) % leaders.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [leaders.length]);
+  }, []);
 
   // NAVIGATION //
   const nextLeader = () => {

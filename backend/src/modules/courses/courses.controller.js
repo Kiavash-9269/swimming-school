@@ -14,13 +14,16 @@ const updateTemplate = asyncHandler(async (req, res) => {
 });
 
 const getTemplate = asyncHandler(async (req, res) => {
-  const data = await coursesService.getCourseTemplate(req.params.id);
+  const data = await coursesService.getCourseTemplate(req.params.id, {
+    isAdmin: req.user?.role === "ADMIN",
+  });
   return success(res, data);
 });
 
 const listTemplates = asyncHandler(async (req, res) => {
+  const isAdmin = req.user?.role === "ADMIN";
   const data = await coursesService.listCourseTemplates({
-    activeOnly: req.query.activeOnly === "true",
+    activeOnly: isAdmin ? req.query.activeOnly === "true" : true,
   });
   return success(res, { items: data });
 });
@@ -30,8 +33,14 @@ const createInstructor = asyncHandler(async (req, res) => {
   return success(res, data, 201);
 });
 
-const listInstructors = asyncHandler(async (_req, res) => {
-  const data = await coursesService.listInstructors();
+const updateInstructor = asyncHandler(async (req, res) => {
+  const data = await coursesService.updateInstructor(req.params.id, req.body);
+  return success(res, data);
+});
+
+const listInstructors = asyncHandler(async (req, res) => {
+  const activeOnly = req.query.activeOnly === false ? false : true;
+  const data = await coursesService.listInstructors({ activeOnly });
   return success(res, { items: data });
 });
 
@@ -46,12 +55,17 @@ const updateClass = asyncHandler(async (req, res) => {
 });
 
 const getClass = asyncHandler(async (req, res) => {
-  const data = await coursesService.getClass(req.params.id);
+  const data = await coursesService.getClass(req.params.id, {
+    isAdmin: req.user?.role === "ADMIN",
+  });
   return success(res, data);
 });
 
 const listClasses = asyncHandler(async (req, res) => {
-  const data = await coursesService.listClasses(req.query);
+  const data = await coursesService.listClasses({
+    ...req.query,
+    isAdmin: req.user?.role === "ADMIN",
+  });
   return success(res, { items: data });
 });
 
@@ -75,6 +89,21 @@ const cancelClass = asyncHandler(async (req, res) => {
   return success(res, data);
 });
 
+const startClass = asyncHandler(async (req, res) => {
+  const data = await coursesService.startClass(req.params.id);
+  return success(res, data);
+});
+
+const completeClass = asyncHandler(async (req, res) => {
+  const data = await coursesService.completeClass(req.params.id);
+  return success(res, data);
+});
+
+const archiveClass = asyncHandler(async (req, res) => {
+  const data = await coursesService.archiveClass(req.params.id);
+  return success(res, data);
+});
+
 const generateSessions = asyncHandler(async (req, res) => {
   const data = await coursesService.generateSessionsForClass(req.params.id);
   return success(res, { items: data });
@@ -95,13 +124,26 @@ const getCapacity = asyncHandler(async (req, res) => {
   return success(res, data);
 });
 
+const getMyInstructor = asyncHandler(async (req, res) => {
+  const data = await coursesService.getMyInstructor(req.user._id);
+  return success(res, data);
+});
+
+const listMyClasses = asyncHandler(async (req, res) => {
+  const data = await coursesService.listMyClasses(req.user._id, { status: req.query.status });
+  return success(res, { items: data });
+});
+
 module.exports = {
   createTemplate,
   updateTemplate,
   getTemplate,
   listTemplates,
   createInstructor,
+  updateInstructor,
   listInstructors,
+  getMyInstructor,
+  listMyClasses,
   createClass,
   updateClass,
   getClass,
@@ -110,6 +152,9 @@ module.exports = {
   openRegistration,
   closeRegistration,
   cancelClass,
+  startClass,
+  completeClass,
+  archiveClass,
   generateSessions,
   listSessions,
   getSchedule,

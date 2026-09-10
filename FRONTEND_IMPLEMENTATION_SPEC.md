@@ -4,7 +4,7 @@
 > **این سند نقشه راه محصول + UX + مهندسی Frontend است.**  
 > مخاطب: توسعه‌دهنده Frontend که ممکن است Backend را باز نکرده باشد.  
 > **منبع حقیقت = کد Backend واقعی** — نه حدس، نه گزارش قدیمی، نه API اختراعی.  
-> تاریخ: ۱۴۰۴/۰۶/۱۸ — پس از Phase 9 (Production Ready with Known Limitations)
+> تاریخ: ۱۴۰۴/۰۶/۱۹ — **ممیزی Phase F1** (کد Backend + Frontend واقعی + build)
 
 | وضعیت Backend | مقدار |
 |---------------|--------|
@@ -12,12 +12,29 @@
 | Critical / High باز | 0 / 0 |
 | Security / IDOR / Concurrency / Data Integrity | PASS |
 | Verdict | PRODUCTION READY WITH KNOWN LIMITATIONS |
-| تغییر سورس Frontend در فازهای Backend | **0** |
+
+| وضعیت Frontend (F11) | مقدار |
+|---------------------|--------|
+| Foundation (F2) | آماده |
+| کشف کلاس `/app/courses` | آماده |
+| شرکت‌کنندگان USER | آماده |
+| واجدشرایطی + رزرو موقت / لیست انتظار | آماده (`/app/courses/:classId/register`) |
+| confirm / شروع پرداخت / callback | آماده |
+| مدارک / بیمه / پزشکی (USER) | آماده |
+| ثبت‌نام‌های من / جزئیات / لغو | آماده |
+| بررسی مدارک ادمین | آماده |
+| گزارش‌های ادمین | آماده (`/admin/reports`) |
+| حضور و غیاب ادمین | آماده (`/admin/attendance`) |
+| مدیریت دوره / کلاس / مربی ادمین | آماده (`/admin/courses`, `/admin/classes`, `/admin/instructors`) |
+| فضای مربی (F13) | **آماده** — داشبورد / کلاس‌های من / roster / حضور جلسه |
+| عملیات ادمین (F14) | **سخت‌شده** — مرکز عملیات واقعی + roster کلاس + UX فیلتر/تأیید |
+| مالی و شرکت‌کننده ادمین (F15) | **آماده** — پرداخت‌ها/استرداد · جستجوی شرکت‌کننده · جزئیات ثبت‌نام |
+| اعلان‌ها | هنوز نه |
 
 **استک واقعی فعلی (`frontend/package.json`):**  
-React 19 · Vite 7 · React Router 7 · Redux Toolkit · Tailwind 4 · Framer Motion · lucide-react
+React 19 · Vite 7 · React Router 7 · Redux Toolkit · Tailwind 4 · Framer Motion · lucide-react · recharts · swiper
 
-**پاکت پاسخ API همیشه:**
+**پاکت پاسخ JSON (اکثر endpointها):**
 
 ```json
 { "success": true, "data": { } }
@@ -27,9 +44,17 @@ React 19 · Vite 7 · React Router 7 · Redux Toolkit · Tailwind 4 · Framer Mo
 { "success": false, "error": { "code": "...", "message": "...", "details": null } }
 ```
 
-**احراز هویت:** `Authorization: Bearer <accessToken>`  
-برای login / refresh / logout: `credentials: "include"` (کوکی refresh روی path مربوط به auth)
+**استثناهای قرارداد (مهم برای apiClient):**
 
+| Endpoint نوع | قرارداد |
+|--------------|---------|
+| JSON عادی | envelope بالا |
+| `GET .../documents/.../content` | **binary stream** — نه JSON |
+| `GET /admin/reports/*/export` | **xlsx binary** — نه JSON |
+| Health `GET /api/health` | JSON با `success`/`data` |
+
+**احراز هویت:** `Authorization: Bearer <accessToken>` (memory)  
+`credentials: "include"` برای refresh cookie (httpOnly)  
 **پول:** عدد صحیح **ریال (IRR)** — Frontend هرگز مبلغ نهایی را تعیین نمی‌کند.
 
 ---
@@ -1314,14 +1339,58 @@ FRONTEND_URL در Backend باید origin فرانت را مجاز کند
 
 ---
 
+# ۳۲. یافته‌های ممیزی Phase F1 (کد واقعی)
+
+| ادعا / فرض | نتیجه F1 |
+|------------|----------|
+| Envelope JSON همه جا | **تقریباً** — استثنا: download مدرک و Excel export باینری‌اند |
+| `POST /enrollments/payments/callback` | **VERIFIED** در `enrollment.routes.js` |
+| نقش JWT مربی | **وجود ندارد** — فقط USER/ADMIN |
+| GET جدا برای وضعیت reservation | **وجود ندارد** — expiration سمت سرور/جاب؛ UI از پاسخ create + timer محلی بر اساس `expiresAt` اگر در پاسخ باشد |
+| `apiClient` فعلی | فقط JSON + auth؛ **multipart و blob ندارد** → باید در F2 گسترش یابد |
+| Redux store | قبلاً import شکسته به `portfolioSlice` داشت (F1 حذف شد)؛ هنوز **Provider ندارد** |
+| `RequireAuth` | نوشته شده؛ **روی هیچ routeای mount نیست** |
+| `/courses` فعلی | PLACEHOLDER محصول — داده استاتیک + واتساپ |
+
+### گسترش اجباری apiClient در F2
+
+```text
+apiRequestJson     ← موجود
+apiUploadFormData  ← لازم (documents)
+apiDownloadBlob    ← لازم (content + xlsx)
+idempotency header/body support
+```
+
+---
+
+# ۳۳. نقشه راه فازهای Frontend (پس از F1)
+
+```text
+F2  Foundation     apiClient (multipart/blob) · Provider تصمیم · toast · ErrorPage · RequireAuth mount پایه
+F3  Auth polish    deep-link redirect · نقش در UI (نه امنیت)
+F4  App shell      route tree محصول · layouts User/Admin
+F5  Courses        API list + detail + capacity/schedule/sessions
+F6  Participants   CRUD + medical-profile
+F7  Enrollment     eligibility → reservation → waitlist → confirm
+F8  Payment        result page · callback · polling · cancel refresh
+F9  Documents      multipart upload/download · admin review
+F10 Admin core     dashboard · users · 360 · classes · payments/refund/reconcile
+F11 Reports+       Excel · notifications admin · attendance
+F12 Integration    E2E دستی/خودکار روی mock payment
+F13 Production FE  audit · a11y · perf · DoD
+```
+
+**قانون محدودیت توکن:** هر فاز فقط همان حوزه را لمس کند؛ معماری را از نو ننویس.
+
+---
+
 # جمع‌بندی برای توسعه‌دهنده
 
 شما یک **محصول ثبت‌نام کامل** می‌سازید روی اسکلتی که امروز عمدتاً **بازاریابی + Auth** است.
 
-ترتیب درست:
-
 ```text
-Foundation → Courses API → Participants/Docs → Checkout/Payment → My Enrollments → Admin → Polish
+F1 ✅ Discovery
+→ F2 Foundation (شروع بعدی)
 ```
 
 هر وقت مردد شدی:
@@ -1338,4 +1407,4 @@ Server Quote · Server Verify · Server Status · UI Mirror
 
 ---
 
-*پایان راهنمای Frontend — نسخه Product + UX + Engineering Handoff پس از Phase 9.*
+*پایان راهنمای Frontend — نسخه Product + UX + Engineering پس از Phase F1.*

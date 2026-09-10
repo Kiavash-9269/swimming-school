@@ -83,7 +83,7 @@ describe("Phase 3 payment / checkout hardening", () => {
         level: "Beginner",
         ageMin: 5,
         ageMax: 18,
-        genderRestriction: "ANY",
+        genderRestriction: "MALE",
         requiresInsurance: false,
         requiresMedicalApproval: false,
       });
@@ -124,7 +124,7 @@ describe("Phase 3 payment / checkout hardening", () => {
         firstName: "فرزند",
         lastName: "پرداخت",
         birthDate: "2015-05-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -394,7 +394,7 @@ describe("Phase 3 payment / checkout hardening", () => {
           firstName: `فرزند${idx}`,
           lastName: `تخفیف${idx}`,
           birthDate: "2015-05-01",
-          gender: "FEMALE",
+          gender: "MALE",
           relation: "CHILD",
         });
       const reserve = await request(app)

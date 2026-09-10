@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../services/authContext";
+import { useAuth } from "../services/useAuth";
+import { homePathForUser } from "../services/homePath";
 
 export default function EnhancedNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const accountPath = homePathForUser(user);
 
   const menuItems = [
     { href: "/", label: "صفحه اصلی", icon: HomeIcon },
@@ -91,6 +93,12 @@ export default function EnhancedNavbar() {
             <div className="hidden md:flex gap-3 items-center">
               {!isLoading && isAuthenticated ? (
                 <>
+                  <Link
+                    to={accountPath}
+                    className="px-4 py-2 rounded-xl border border-cyan-400/40 text-cyan-200 hover:bg-white/10 transition"
+                  >
+                    {user?.role === "ADMIN" ? "پنل ادمین" : "حساب من"}
+                  </Link>
                   <span className="text-sm text-white/80">
                     {user?.firstName} {user?.lastName}
                   </span>
@@ -216,16 +224,25 @@ export default function EnhancedNavbar() {
           {/* Mobile Auth Buttons Section */}
           <div className="pt-5 mt-3 border-t border-gray-200/50 space-y-3">
             {!isLoading && isAuthenticated ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  setIsOpen(false);
-                  await logout();
-                }}
-                className="w-full text-center py-3 rounded-2xl bg-white/60 border border-gray-200 text-slate-800 font-medium hover:bg-white transition"
-              >
-                خروج ({user?.firstName})
-              </button>
+              <>
+                <Link
+                  to={accountPath}
+                  onClick={() => setIsOpen(false)}
+                  className="block text-center py-3 rounded-2xl bg-cyan-50 border border-cyan-200 text-cyan-900 font-medium hover:bg-cyan-100 transition"
+                >
+                  {user?.role === "ADMIN" ? "پنل ادمین" : "حساب من"}
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsOpen(false);
+                    await logout();
+                  }}
+                  className="w-full text-center py-3 rounded-2xl bg-white/60 border border-gray-200 text-slate-800 font-medium hover:bg-white transition"
+                >
+                  خروج ({user?.firstName})
+                </button>
+              </>
             ) : (
               <>
                 <Link

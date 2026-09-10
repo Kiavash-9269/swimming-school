@@ -92,6 +92,12 @@ class ZarinpalPaymentProvider {
       return { ok: false, reason: "MISSING_AUTHORITY", code: "INVALID_AUTHORITY" };
     }
 
+    // Bind return authority to the payment's stored authority/providerRef (same as mock).
+    const expected = payment.authority || payment.providerRef;
+    if (expected && String(auth) !== String(expected)) {
+      return { ok: false, reason: "AUTHORITY_MISMATCH", code: "INVALID_AUTHORITY" };
+    }
+
     const response = await fetch(`${this.baseUrl}/verify.json`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

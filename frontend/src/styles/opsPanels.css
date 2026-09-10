@@ -1,0 +1,103 @@
+/* Operational panel chrome + Persian date picker */
+
+.ops-shell {
+  --ops-accent: #0e7490;
+  --ops-accent-soft: #ecfeff;
+  --ops-surface: rgba(255, 255, 255, 0.86);
+  --ops-border: rgba(14, 116, 144, 0.14);
+  background:
+    radial-gradient(1200px 420px at 100% -10%, rgba(34, 211, 238, 0.18), transparent 55%),
+    radial-gradient(900px 380px at -10% 0%, rgba(45, 212, 191, 0.14), transparent 50%),
+    linear-gradient(180deg, #f0f9ff 0%, #f8fafc 42%, #f1f5f9 100%);
+}
+
+.ops-shell-teacher {
+  --ops-accent: #0f766e;
+  --ops-accent-soft: #f0fdfa;
+  --ops-border: rgba(15, 118, 110, 0.16);
+  background:
+    radial-gradient(1100px 400px at 100% -8%, rgba(45, 212, 191, 0.22), transparent 55%),
+    radial-gradient(800px 360px at -8% 5%, rgba(20, 184, 166, 0.12), transparent 50%),
+    linear-gradient(180deg, #f0fdfa 0%, #f8fafc 45%, #f1f5f9 100%);
+}
+
+.ops-header {
+  border-bottom: 1px solid var(--ops-border);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px -24px rgba(15, 23, 42, 0.45);
+}
+
+.ops-nav-link {
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.ops-nav-link:hover {
+  transform: translateY(-1px);
+}
+
+.ops-main-card {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: var(--ops-surface);
+  box-shadow: 0 18px 40px -32px rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
+}
+
+/* react-multi-date-picker */
+.persian-date-container {
+  width: 100%;
+}
+
+.persian-date-input {
+  width: 100% !important;
+  height: 2.65rem !important;
+  border-radius: 0.9rem !important;
+  border: 1px solid #cbd5e1 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  padding: 0.55rem 0.9rem !important;
+  font-size: 0.9rem !important;
+  color: #0f172a !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  direction: rtl;
+  text-align: right;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.persian-date-input:hover {
+  border-color: #67e8f9 !important;
+}
+
+.persian-date-input:focus {
+  outline: none !important;
+  border-color: #0891b2 !important;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.18) !important;
+}
+
+.persian-date-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rmdp-wrapper {
+  z-index: 60;
+}
+
+.rmdp-calendar {
+  border-radius: 1rem !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 22px 50px -28px rgba(15, 23, 42, 0.55) !important;
+  font-family: inherit !important;
+}
+
+.rmdp-day.rmdp-selected span:not(.highlight) {
+  box-shadow: 0 0 0 1px #0e7490;
+}
+
+.rmdp-week-day {
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+.rmdp-header-values {
+  font-weight: 700 !important;
+}

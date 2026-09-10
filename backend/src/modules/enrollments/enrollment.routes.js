@@ -17,6 +17,7 @@ const {
   documentReviewBody,
   medicalProfileBody,
   attendanceBody,
+  attendanceSubmitBody,
   paginationQuery,
 } = require("./enrollment.validation");
 
@@ -161,7 +162,15 @@ router.post(
 router.post("/discounts", authenticate, authorize("ADMIN"), validate(discountBody), controller.createDiscount);
 
 router.post("/attendance", authenticate, enrollLimiter, validate(attendanceBody), controller.markAttendance);
+router.post(
+  "/attendance/submit-session",
+  authenticate,
+  enrollLimiter,
+  validate(attendanceSubmitBody),
+  controller.submitSessionAttendance,
+);
 router.get("/classes/:classId/attendance", authenticate, controller.listClassAttendance);
+router.get("/classes/:classId/roster", authenticate, controller.listClassRoster);
 
 router.get("/users/me/360", authenticate, controller.getUser360);
 router.get("/users/:userId/360", authenticate, authorize("ADMIN"), controller.getUser360);

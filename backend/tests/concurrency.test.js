@@ -46,7 +46,7 @@ describe("Capacity concurrency", () => {
         level: "Beginner",
         ageMin: 5,
         ageMax: 50,
-        genderRestriction: "ANY",
+        genderRestriction: "MALE",
       });
     const instructor = await request(app)
       .post("/api/courses/instructors")
@@ -94,7 +94,7 @@ describe("Capacity concurrency", () => {
         firstName: `فرزند${index}`,
         lastName: `تست${index}`,
         birthDate: "2012-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
     return {

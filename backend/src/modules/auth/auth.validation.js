@@ -1,5 +1,6 @@
 const { z } = require("zod");
 const { normalizePhone, isValidIranianMobile } = require("../../utils/phone");
+const { env } = require("../../config/env");
 
 const phoneSchema = z
   .string({ required_error: "شماره موبایل الزامی است" })
@@ -26,10 +27,11 @@ const nameSchema = z
       .max(80, "حداکثر ۸۰ کاراکتر مجاز است"),
   );
 
+const otpLen = Number(env.OTP_CODE_LENGTH) || 5;
 const otpCodeSchema = z
   .string({ required_error: "کد تأیید الزامی است" })
   .trim()
-  .regex(/^\d{5}$/, "کد تأیید باید ۵ رقم باشد");
+  .regex(new RegExp(`^\\d{${otpLen}}$`), `کد تأیید باید ${otpLen} رقم باشد`);
 
 const checkPhoneSchema = z.object({
   phone: phoneSchema,

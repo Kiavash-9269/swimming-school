@@ -1,6 +1,7 @@
 const { env } = require("../../config/env");
 const { AppError } = require("../../utils/AppError");
 const { logEvent, logError } = require("../../services/logging");
+const crypto = require("crypto");
 const {
   PAYMENT_STATUSES,
   ENROLLMENT_STATUSES,
@@ -24,7 +25,16 @@ const OPEN_PAYMENT_STATUSES = [
   PAYMENT_STATUSES.PENDING,
 ];
 
+function secretsEqual(expected, provided) {
+  if (!expected || !provided) return false;
+  const a = Buffer.from(String(expected), "utf8");
+  const b = Buffer.from(String(provided), "utf8");
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
 function toPublicPayment(doc) {
+  const meta = doc.metadata || {};
   return {
     id: String(doc._id),
     userId: String(doc.userId),
@@ -47,6 +57,9 @@ function toPublicPayment(doc) {
     refundedAt: doc.refundedAt,
     expiresAt: doc.expiresAt,
     failureCode: doc.failureCode || null,
+    // Safe ops flags only — never raw provider payloads/secrets
+    reconciliationRequired: Boolean(meta.reconciliationRequired),
+    reconciliationReason: meta.reconciliationReason || null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -196,6 +209,15 @@ async function completeEnrollmentActivation(payment, enrollment, { recovery = fa
       reason: "ENROLLMENT_TERMINAL",
       enrollmentStatus: enrollment.status,
     });
+    await Payment.updateOne(
+      { _id: payment._id, status: PAYMENT_STATUSES.SUCCESS },
+      {
+        $set: {
+          "metadata.reconciliationRequired": true,
+          "metadata.reconciliationReason": "ENROLLMENT_TERMINAL",
+        },
+      },
+    );
     return { payment, enrollment, alreadyProcessed: false, reconciliationRequired: true };
   }
 
@@ -231,20 +253,26 @@ async function completeEnrollmentActivation(payment, enrollment, { recovery = fa
       { returnDocument: "after" },
     );
     if (!seat) {
+      // Money was already claimed SUCCESS — never downgrade to FAILED after capture.
+      // Leave SUCCESS + flag reconciliation; enrollment stays PAYMENT_PENDING for ops.
+      logEvent("PAYMENT_RECONCILIATION_REQUIRED", {
+        paymentId: String(payment._id),
+        enrollmentId: String(enrollment._id),
+        reason: "CAPACITY_UNAVAILABLE_AFTER_SUCCESS",
+      });
       await Payment.updateOne(
-        { _id: payment._id },
+        { _id: payment._id, status: PAYMENT_STATUSES.SUCCESS },
         {
           $set: {
-            status: PAYMENT_STATUSES.FAILED,
-            failedAt: new Date(),
-            failureCode: "CAPACITY_UNAVAILABLE",
-            failureReason: "No capacity at finalization",
+            "metadata.reconciliationRequired": true,
+            "metadata.reconciliationReason": "CAPACITY_UNAVAILABLE_AFTER_SUCCESS",
           },
         },
       );
-      throw new AppError("ظرفیت در لحظه نهایی‌سازی موجود نبود", {
+      throw new AppError("ظرفیت در لحظه نهایی‌سازی موجود نبود — پرداخت موفق است و نیاز به رسیدگی دستی دارد", {
         statusCode: 409,
         code: "COURSE_FULL",
+        details: { reconciliationRequired: true, paymentStatus: PAYMENT_STATUSES.SUCCESS },
       });
     }
   }
@@ -672,8 +700,11 @@ async function verifyAndActivatePayment({
   });
 
   const secret = env.PAYMENT_CALLBACK_SECRET;
-  const secretOk = secret && callbackSecret && callbackSecret === secret;
-  if (!isAdmin && !secretOk && userId && String(payment.userId) !== String(userId)) {
+  const secretOk = secretsEqual(secret, callbackSecret);
+  const authenticatedOwner = Boolean(userId && String(payment.userId) === String(userId));
+  // Require one of: ADMIN JWT, owning USER JWT, or valid server callback secret.
+  // Never allow anonymous verify when secret is missing/wrong (userId null must not bypass).
+  if (!isAdmin && !secretOk && !authenticatedOwner) {
     throw new AppError("دسترسی مجاز نیست", { statusCode: 403, code: "FORBIDDEN" });
   }
 
@@ -705,6 +736,15 @@ async function verifyAndActivatePayment({
       reason: "LATE_OR_TERMINAL_CALLBACK",
       status: payment.status,
     });
+    await Payment.updateOne(
+      { _id: payment._id },
+      {
+        $set: {
+          "metadata.reconciliationRequired": true,
+          "metadata.reconciliationReason": "LATE_OR_TERMINAL_CALLBACK",
+        },
+      },
+    );
     throw new AppError("پرداخت در وضعیت نهایی است و قابل تأیید مجدد نیست", {
       statusCode: 409,
       code: "PAYMENT_TERMINAL",
@@ -915,10 +955,21 @@ async function requestRefund({ paymentId, adminUserId }) {
       reason: result.reason || "PROVIDER_REFUND_FAILED",
       deferred: Boolean(result.deferred),
     });
+    // Provider-deferred refund (e.g. Zarinpal not wired): keep REFUND_REQUESTED for ops.
+    // Do not throw after claim — that left a 502 with no clear admin path.
+    if (result.deferred) {
+      return {
+        payment: toPublicPayment(claimed),
+        alreadyProcessed: false,
+        deferred: true,
+        reason: result.reason || "PROVIDER_REFUND_DEFERRED",
+        classification: "INTERNAL_REFUND_REQUESTED_AWAITING_PROVIDER",
+      };
+    }
     throw new AppError("استرداد ناموفق بود", {
       statusCode: 502,
       code: "REFUND_FAILED",
-      details: { reason: result.reason || null, deferred: Boolean(result.deferred) },
+      details: { reason: result.reason || null, deferred: false },
     });
   }
 
@@ -1016,13 +1067,31 @@ async function reconcilePayments({ limit = 50 } = {}) {
     });
   }
 
+  const flagged = await Payment.find({ "metadata.reconciliationRequired": true })
+    .sort({ updatedAt: -1 })
+    .limit(safeLimit)
+    .select("_id enrollmentId status metadata.reconciliationReason")
+    .lean();
+
+  for (const p of flagged) {
+    findings.push({
+      type: "RECONCILIATION_FLAGGED",
+      paymentId: String(p._id),
+      enrollmentId: String(p.enrollmentId),
+      status: p.status,
+      reason: p.metadata?.reconciliationReason || null,
+      severity: "high",
+    });
+  }
+
   const successPayments = await Payment.find({ status: PAYMENT_STATUSES.SUCCESS })
     .sort({ updatedAt: -1 })
     .limit(safeLimit)
-    .select("_id enrollmentId amount")
+    .select("_id enrollmentId amount metadata.reconciliationRequired")
     .lean();
 
   for (const p of successPayments) {
+    if (p.metadata?.reconciliationRequired) continue; // already reported above
     const enrollment = await Enrollment.findById(p.enrollmentId).select("status").lean();
     if (
       !enrollment ||

@@ -1,6 +1,7 @@
 const { z } = require("zod");
 const { success } = require("../../utils/apiResponse");
 const { asyncHandler } = require("../../middleware/errorHandler");
+const { AppError } = require("../../utils/AppError");
 const { objectId } = require("../courses/courses.validation");
 const checkout = require("./checkout.service");
 const { PAYMENT_STATUSES } = require("../courses/domain.constants");
@@ -12,6 +13,55 @@ const getPayment = asyncHandler(async (req, res) => {
     isAdmin: req.user.role === "ADMIN",
   });
   return success(res, data);
+});
+
+const providerCallbackBody = z
+  .object({
+    paymentId: objectId,
+    success: z.boolean().optional().default(true),
+    providerRef: z.string().trim().max(120).optional(),
+    authority: z.string().trim().max(120).optional(),
+  })
+  .strict();
+
+/**
+ * Server-to-server / provider callback — NO user JWT.
+ * Requires x-payment-callback-secret matching PAYMENT_CALLBACK_SECRET.
+ * Still verifies with provider; never trusts success alone.
+ */
+const providerCallback = asyncHandler(async (req, res) => {
+  if (req.body.amount != null || req.body.finalAmount != null || req.body.price != null) {
+    throw new AppError("مبلغ توسط سرور محاسبه می‌شود", {
+      statusCode: 400,
+      code: "VALIDATION_ERROR",
+    });
+  }
+
+  const result = await checkout.verifyAndActivatePayment({
+    paymentId: req.body.paymentId,
+    providerRef: req.body.providerRef || req.body.authority,
+    authority: req.body.authority || req.body.providerRef,
+    intentSuccess: req.body.success !== false,
+    reportedAmount: undefined,
+    userId: null,
+    isAdmin: false,
+    callbackSecret: req.headers["x-payment-callback-secret"],
+  });
+
+  return success(res, {
+    alreadyProcessed: Boolean(result.alreadyProcessed),
+    payment: {
+      id: String(result.payment._id || result.payment.id),
+      status: result.payment.status,
+      amount: result.payment.amount,
+    },
+    enrollment: result.enrollment
+      ? {
+          id: String(result.enrollment._id || result.enrollment.id),
+          status: result.enrollment.status,
+        }
+      : null,
+  });
 });
 
 const listAdminPayments = asyncHandler(async (req, res) => {
@@ -69,6 +119,8 @@ const reconcileQuery = z.object({
 
 module.exports = {
   getPayment,
+  providerCallback,
+  providerCallbackBody,
   listAdminPayments,
   requestRefund,
   expirePayments,

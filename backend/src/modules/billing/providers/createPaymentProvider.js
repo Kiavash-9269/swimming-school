@@ -1,6 +1,7 @@
 const { env } = require("../../../config/env");
 const { MockPaymentProvider } = require("./mockProvider");
 const { AppError } = require("../../../utils/AppError");
+// Duck-typed contract: ./PaymentProvider.contract.js (initiate / verify / refund)
 
 function createPaymentProvider(config = env) {
   const name = config.PAYMENT_PROVIDER || "mock";

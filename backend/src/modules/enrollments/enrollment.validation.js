@@ -142,6 +142,25 @@ const attendanceBody = z
     sessionId: objectId,
     participantId: objectId,
     status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED", "UNKNOWN"]),
+    notifyAbsent: z.boolean().optional().default(true),
+  })
+  .strict();
+
+const attendanceSubmitBody = z
+  .object({
+    classId: objectId,
+    sessionId: objectId,
+    marks: z
+      .array(
+        z
+          .object({
+            participantId: objectId,
+            status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"]),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(200),
   })
   .strict();
 
@@ -174,5 +193,6 @@ module.exports = {
   documentReviewBody,
   medicalProfileBody,
   attendanceBody,
+  attendanceSubmitBody,
   paginationQuery,
 };

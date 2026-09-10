@@ -156,6 +156,35 @@ async function onWaitlistPromoted({ waitlist }) {
   });
 }
 
+/** SMS when a participant is marked ABSENT for a session. */
+async function onAttendanceAbsent({ enrollment, courseClass, session, attendanceId }) {
+  if (!enrollment?.userId || !session) return;
+  const dayLabel = session.date
+    ? new Date(session.date).toLocaleDateString("fa-IR")
+    : "—";
+  const timeLabel = [session.startTime, session.endTime].filter(Boolean).join(" تا ") || "—";
+  const classTitle = courseClass?.title || "کلاس شنا";
+
+  await safeEnqueue({
+    userId: enrollment.userId,
+    type: NOTIFICATION_TYPES.ATTENDANCE_ABSENT,
+    channel: NOTIFICATION_CHANNELS.SMS,
+    idempotencyKey: `ATTENDANCE_ABSENT:${session._id}:${enrollment.participantId}`,
+    refs: {
+      attendanceId,
+      enrollmentId: enrollment._id,
+      classId: enrollment.classId,
+      sessionId: session._id,
+      participantId: enrollment.participantId,
+    },
+    templateVars: {
+      classTitle,
+      dayLabel,
+      timeLabel,
+    },
+  });
+}
+
 module.exports = {
   safeEnqueue,
   onPaymentFinalized,
@@ -163,5 +192,6 @@ module.exports = {
   onEnrollmentRefunded,
   onDocumentReviewed,
   onWaitlistPromoted,
+  onAttendanceAbsent,
   NOTIFICATION_TYPES,
 };

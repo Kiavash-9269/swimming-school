@@ -7,6 +7,18 @@ const controller = require("./billing.controller");
 const router = express.Router();
 const adminLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 120 });
 const refundLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 40 });
+const callbackLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 300 });
+
+/**
+ * Provider/server callback — must stay BEFORE /:id routes.
+ * No JWT; auth via x-payment-callback-secret only.
+ */
+router.post(
+  "/callback",
+  callbackLimiter,
+  validate(controller.providerCallbackBody),
+  controller.providerCallback,
+);
 
 router.get(
   "/",

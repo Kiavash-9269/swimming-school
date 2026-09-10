@@ -20,7 +20,7 @@ const {
   verifyPasswordResetToken,
 } = require("../../utils/jwt");
 const { otpDeliveryService, SmsProviderError } = require("../../services/otpDelivery");
-const { logEvent } = require("../../services/logging");
+const { logEvent, logError } = require("../../services/logging");
 const { maskPhone } = require("../../utils/mask");
 
 const REFRESH_REUSE_GRACE_MS = 5000;
@@ -463,6 +463,13 @@ async function register({ registrationToken, firstName, lastName, password }, me
 
   logEvent("REGISTRATION_COMPLETED", { userId: String(user._id), phone });
 
+  try {
+    const { tryLinkInstructorByPhone } = require("../courses/instructorLink");
+    await tryLinkInstructorByPhone(user._id, phone);
+  } catch (linkErr) {
+    logError("INSTRUCTOR_AUTO_LINK_FAILED", linkErr, { userId: String(user._id), phase: "register" });
+  }
+
   return createSession(user, meta);
 }
 
@@ -503,6 +510,14 @@ async function login({ phone, password }, meta = {}) {
   }
 
   logEvent("LOGIN_SUCCESS", { userId: String(user._id), phone });
+
+  try {
+    const { tryLinkInstructorByPhone } = require("../courses/instructorLink");
+    await tryLinkInstructorByPhone(user._id, phone);
+  } catch (linkErr) {
+    logError("INSTRUCTOR_AUTO_LINK_FAILED", linkErr, { userId: String(user._id), phase: "login" });
+  }
+
   return createSession(user, meta);
 }
 

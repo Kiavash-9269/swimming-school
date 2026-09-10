@@ -1,12 +1,21 @@
 const { env } = require("../../config/env");
 const { AppError } = require("../../utils/AppError");
 const { logEvent } = require("../../services/logging");
-const { CLASS_STATUSES, SESSION_STATUSES } = require("./domain.constants");
+const { CLASS_STATUSES, SESSION_STATUSES, ENROLLMENT_STATUSES, GENDERS } = require("./domain.constants");
 const { CourseTemplate } = require("./courseTemplate.model");
 const { Instructor } = require("./instructor.model");
 const { CourseClass } = require("./courseClass.model");
 const { ClassSession } = require("./classSession.model");
 const { generateSessionDates, parseTimeToMinutes } = require("./schedule");
+
+/** Enrollments that block casual class cancel (must resolve financially/compliance first). */
+const CANCEL_BLOCKING_ENROLLMENT_STATUSES = [
+  ENROLLMENT_STATUSES.PENDING,
+  ENROLLMENT_STATUSES.PAYMENT_PENDING,
+  ENROLLMENT_STATUSES.PAID,
+  ENROLLMENT_STATUSES.ACTIVE,
+  ENROLLMENT_STATUSES.PENDING_COMPLIANCE,
+];
 
 function toPublicTemplate(doc) {
   return {
@@ -26,7 +35,7 @@ function toPublicTemplate(doc) {
   };
 }
 
-function toPublicClass(doc) {
+function toPublicClass(doc, { genderRestriction } = {}) {
   const available = Math.max(0, doc.capacity - doc.confirmedCount - doc.heldCount);
   return {
     id: String(doc._id),
@@ -46,9 +55,27 @@ function toPublicClass(doc) {
     heldCount: doc.heldCount,
     availableSeats: available,
     status: doc.status,
+    genderRestriction: genderRestriction || null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
+}
+
+async function genderByTemplateIds(templateIds) {
+  const ids = [...new Set((templateIds || []).map(String).filter(Boolean))];
+  if (!ids.length) return new Map();
+  const templates = await CourseTemplate.find({ _id: { $in: ids } })
+    .select("genderRestriction")
+    .lean();
+  return new Map(templates.map((t) => [String(t._id), t.genderRestriction || GENDERS.ANY]));
+}
+
+async function toPublicClassEnriched(doc) {
+  if (!doc) return null;
+  const map = await genderByTemplateIds([doc.courseTemplateId]);
+  return toPublicClass(doc, {
+    genderRestriction: map.get(String(doc.courseTemplateId)) || GENDERS.ANY,
+  });
 }
 
 function toPublicInstructor(doc) {
@@ -93,9 +120,12 @@ async function updateCourseTemplate(id, payload) {
   return toPublicTemplate(template);
 }
 
-async function getCourseTemplate(id) {
+async function getCourseTemplate(id, { isAdmin = false } = {}) {
   const template = await CourseTemplate.findById(id);
   if (!template) {
+    throw new AppError("Course template not found", { statusCode: 404, code: "COURSE_NOT_FOUND" });
+  }
+  if (!isAdmin && !template.isActive) {
     throw new AppError("Course template not found", { statusCode: 404, code: "COURSE_NOT_FOUND" });
   }
   return toPublicTemplate(template);
@@ -108,8 +138,80 @@ async function listCourseTemplates({ activeOnly = false } = {}) {
 }
 
 async function createInstructor(payload) {
-  const instructor = await Instructor.create(payload);
-  logEvent("INSTRUCTOR_CREATED", { instructorId: String(instructor._id) });
+  const {
+    normalizeInstructorPhone,
+    tryLinkUserToInstructorByStoredPhone,
+  } = require("./instructorLink");
+
+  const body = { ...payload };
+  if (body.phone != null) body.phone = normalizeInstructorPhone(body.phone);
+
+  if (body.userId) {
+    await assertUserIdAvailableForInstructor(body.userId, null);
+  }
+  let instructor = await Instructor.create(body);
+  if (!instructor.userId && instructor.phone) {
+    instructor = await tryLinkUserToInstructorByStoredPhone(instructor);
+  }
+  logEvent("INSTRUCTOR_CREATED", {
+    instructorId: String(instructor._id),
+    userLinked: Boolean(instructor.userId),
+  });
+  return toPublicInstructor(instructor);
+}
+
+async function assertUserIdAvailableForInstructor(userId, excludeInstructorId) {
+  if (!userId) return;
+  const filter = { userId, isActive: true };
+  if (excludeInstructorId) filter._id = { $ne: excludeInstructorId };
+  const existing = await Instructor.findOne(filter).select("_id");
+  if (existing) {
+    throw new AppError("این کاربر قبلاً به یک مربی فعال لینک شده است", {
+      statusCode: 409,
+      code: "INSTRUCTOR_USER_LINKED",
+    });
+  }
+}
+
+/**
+ * ADMIN update instructor profile / active flag / optional userId link.
+ * Soft-deactivate via isActive=false — no hard DELETE.
+ */
+async function updateInstructor(id, payload) {
+  const {
+    normalizeInstructorPhone,
+    tryLinkUserToInstructorByStoredPhone,
+  } = require("./instructorLink");
+
+  const instructor = await Instructor.findById(id);
+  if (!instructor) {
+    throw new AppError("مربی یافت نشد", { statusCode: 404, code: "INSTRUCTOR_NOT_FOUND" });
+  }
+
+  const next = { ...payload };
+  if (Object.prototype.hasOwnProperty.call(next, "userId")) {
+    const linkId = next.userId || null;
+    if (linkId) {
+      await assertUserIdAvailableForInstructor(linkId, instructor._id);
+    }
+    instructor.userId = linkId;
+  }
+  if (next.name != null) instructor.name = next.name;
+  if (next.phone != null) instructor.phone = normalizeInstructorPhone(next.phone);
+  if (next.bio != null) instructor.bio = next.bio;
+  if (next.isActive != null) instructor.isActive = next.isActive;
+
+  await instructor.save();
+
+  if (!instructor.userId && instructor.phone && instructor.isActive) {
+    await tryLinkUserToInstructorByStoredPhone(instructor);
+  }
+
+  logEvent("INSTRUCTOR_UPDATED", {
+    instructorId: String(instructor._id),
+    isActive: instructor.isActive,
+    userLinked: Boolean(instructor.userId),
+  });
   return toPublicInstructor(instructor);
 }
 
@@ -155,7 +257,7 @@ async function createClass(payload) {
   });
 
   logEvent("CLASS_CREATED", { classId: String(courseClass._id) });
-  return toPublicClass(courseClass);
+  return toPublicClassEnriched(courseClass);
 }
 
 async function updateClass(id, payload) {
@@ -194,23 +296,49 @@ async function updateClass(id, payload) {
 
   const courseClass = await CourseClass.findByIdAndUpdate(id, { $set: updates }, { returnDocument: "after", runValidators: true });
   logEvent("CLASS_UPDATED", { classId: String(id) });
-  return toPublicClass(courseClass);
+  return toPublicClassEnriched(courseClass);
 }
 
-async function getClass(id) {
+async function getClass(id, { isAdmin = false } = {}) {
   const courseClass = await CourseClass.findById(id);
   if (!courseClass) {
     throw new AppError("Class not found", { statusCode: 404, code: "CLASS_NOT_FOUND" });
   }
-  return toPublicClass(courseClass);
+  const nonPublic = [
+    CLASS_STATUSES.DRAFT,
+    CLASS_STATUSES.CANCELLED,
+    CLASS_STATUSES.ARCHIVED,
+  ];
+  if (!isAdmin && nonPublic.includes(courseClass.status)) {
+    throw new AppError("Class not found", { statusCode: 404, code: "CLASS_NOT_FOUND" });
+  }
+  return toPublicClassEnriched(courseClass);
 }
 
-async function listClasses({ status, courseTemplateId } = {}) {
+async function listClasses({ status, courseTemplateId, isAdmin = false } = {}) {
   const filter = {};
-  if (status) filter.status = status;
+  if (status) {
+    // Non-admins may not request DRAFT/CANCELLED/ARCHIVED explicitly
+    if (
+      !isAdmin &&
+      [CLASS_STATUSES.DRAFT, CLASS_STATUSES.CANCELLED, CLASS_STATUSES.ARCHIVED].includes(status)
+    ) {
+      return [];
+    }
+    filter.status = status;
+  } else if (!isAdmin) {
+    filter.status = {
+      $nin: [CLASS_STATUSES.DRAFT, CLASS_STATUSES.CANCELLED, CLASS_STATUSES.ARCHIVED],
+    };
+  }
   if (courseTemplateId) filter.courseTemplateId = courseTemplateId;
   const rows = await CourseClass.find(filter).sort({ startDate: 1 });
-  return rows.map(toPublicClass);
+  const genderMap = await genderByTemplateIds(rows.map((r) => r.courseTemplateId));
+  return rows.map((doc) =>
+    toPublicClass(doc, {
+      genderRestriction: genderMap.get(String(doc.courseTemplateId)) || GENDERS.ANY,
+    }),
+  );
 }
 
 async function transitionClassStatus(id, nextStatus, allowedFrom) {
@@ -231,7 +359,7 @@ async function transitionClassStatus(id, nextStatus, allowedFrom) {
 async function publishClass(id) {
   const courseClass = await transitionClassStatus(id, CLASS_STATUSES.PUBLISHED, [CLASS_STATUSES.DRAFT]);
   logEvent("CLASS_PUBLISHED", { classId: String(id) });
-  return toPublicClass(courseClass);
+  return toPublicClassEnriched(courseClass);
 }
 
 async function openRegistration(id) {
@@ -240,7 +368,7 @@ async function openRegistration(id) {
     CLASS_STATUSES.REGISTRATION_CLOSED,
   ]);
   logEvent("REGISTRATION_OPENED", { classId: String(id) });
-  return toPublicClass(courseClass);
+  return toPublicClassEnriched(courseClass);
 }
 
 async function closeRegistration(id) {
@@ -248,10 +376,23 @@ async function closeRegistration(id) {
     CLASS_STATUSES.REGISTRATION_OPEN,
   ]);
   logEvent("REGISTRATION_CLOSED", { classId: String(id) });
-  return toPublicClass(courseClass);
+  return toPublicClassEnriched(courseClass);
 }
 
 async function cancelClass(id) {
+  const { Enrollment } = require("../enrollments/enrollment.model");
+  const blocking = await Enrollment.countDocuments({
+    classId: id,
+    status: { $in: CANCEL_BLOCKING_ENROLLMENT_STATUSES },
+  });
+  if (blocking > 0) {
+    throw new AppError("کلاس دارای ثبت‌نام فعال/در جریان است و قابل لغو نیست", {
+      statusCode: 409,
+      code: "CLASS_HAS_ACTIVE_ENROLLMENTS",
+      details: { count: blocking },
+    });
+  }
+
   const courseClass = await transitionClassStatus(id, CLASS_STATUSES.CANCELLED, [
     CLASS_STATUSES.DRAFT,
     CLASS_STATUSES.PUBLISHED,
@@ -260,7 +401,35 @@ async function cancelClass(id) {
     CLASS_STATUSES.IN_PROGRESS,
   ]);
   logEvent("CLASS_CANCELLED", { classId: String(id) });
-  return toPublicClass(courseClass);
+  return toPublicClassEnriched(courseClass);
+}
+
+/** REGISTRATION_CLOSED → IN_PROGRESS */
+async function startClass(id) {
+  const courseClass = await transitionClassStatus(id, CLASS_STATUSES.IN_PROGRESS, [
+    CLASS_STATUSES.REGISTRATION_CLOSED,
+  ]);
+  logEvent("CLASS_STARTED", { classId: String(id) });
+  return toPublicClassEnriched(courseClass);
+}
+
+/** IN_PROGRESS → COMPLETED */
+async function completeClass(id) {
+  const courseClass = await transitionClassStatus(id, CLASS_STATUSES.COMPLETED, [
+    CLASS_STATUSES.IN_PROGRESS,
+  ]);
+  logEvent("CLASS_COMPLETED", { classId: String(id) });
+  return toPublicClassEnriched(courseClass);
+}
+
+/** COMPLETED | CANCELLED → ARCHIVED */
+async function archiveClass(id) {
+  const courseClass = await transitionClassStatus(id, CLASS_STATUSES.ARCHIVED, [
+    CLASS_STATUSES.COMPLETED,
+    CLASS_STATUSES.CANCELLED,
+  ]);
+  logEvent("CLASS_ARCHIVED", { classId: String(id) });
+  return toPublicClassEnriched(courseClass);
 }
 
 async function generateSessionsForClass(classId) {
@@ -282,6 +451,25 @@ async function generateSessionsForClass(classId) {
       code: "SESSION_GENERATION_FAILED",
       details: { generated: dates.length, expected: courseClass.totalSessions },
     });
+  }
+
+  const existingSessions = await ClassSession.find({ classId }).select("_id").lean();
+  if (existingSessions.length > 0) {
+    const { AttendanceRecord } = require("../enrollments/attendance.model");
+    const sessionIds = existingSessions.map((s) => s._id);
+    const attendanceCount = await AttendanceRecord.countDocuments({
+      sessionId: { $in: sessionIds },
+    });
+    if (attendanceCount > 0) {
+      throw new AppError(
+        "تولید مجدد جلسات مجاز نیست چون برای جلسات فعلی رکورد حضور ثبت شده است",
+        {
+          statusCode: 409,
+          code: "SESSIONS_HAVE_ATTENDANCE",
+          details: { sessionCount: existingSessions.length, attendanceCount },
+        },
+      );
+    }
   }
 
   await ClassSession.deleteMany({ classId });
@@ -317,6 +505,26 @@ async function getClassSchedule(classId) {
   };
 }
 
+async function getMyInstructor(userId) {
+  const { requireActiveInstructor } = require("./instructorAccess");
+  const instructor = await requireActiveInstructor(userId);
+  return toPublicInstructor(instructor);
+}
+
+async function listMyClasses(userId, { status } = {}) {
+  const { requireActiveInstructorAccess } = require("./instructorAccess");
+  const instructor = await requireActiveInstructorAccess(userId);
+  const filter = { instructorId: instructor._id };
+  if (status) filter.status = status;
+  const rows = await CourseClass.find(filter).sort({ startDate: 1 });
+  const genderMap = await genderByTemplateIds(rows.map((r) => r.courseTemplateId));
+  return rows.map((doc) =>
+    toPublicClass(doc, {
+      genderRestriction: genderMap.get(String(doc.courseTemplateId)) || GENDERS.ANY,
+    }),
+  );
+}
+
 module.exports = {
   toPublicTemplate,
   toPublicClass,
@@ -327,6 +535,7 @@ module.exports = {
   getCourseTemplate,
   listCourseTemplates,
   createInstructor,
+  updateInstructor,
   listInstructors,
   createClass,
   updateClass,
@@ -336,7 +545,12 @@ module.exports = {
   openRegistration,
   closeRegistration,
   cancelClass,
+  startClass,
+  completeClass,
+  archiveClass,
   generateSessionsForClass,
   listSessions,
   getClassSchedule,
+  getMyInstructor,
+  listMyClasses,
 };

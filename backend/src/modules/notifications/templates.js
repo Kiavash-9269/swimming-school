@@ -66,7 +66,24 @@ const TEMPLATES = {
     fa: "زمان کلاس شما تغییر کرده است.",
     en: "Your class has been rescheduled.",
   },
+  [NOTIFICATION_TYPES.ATTENDANCE_ABSENT]: {
+    version: "v1",
+    fa: "شما در روز {{dayLabel}} ساعت {{timeLabel}} در کلاس «{{classTitle}}» غایب بودید.",
+    en: "You were absent from class «{{classTitle}}» on {{dayLabel}} at {{timeLabel}}.",
+  },
 };
+
+function applyVars(body, vars = {}) {
+  let out = String(body || "");
+  for (const [key, raw] of Object.entries(vars)) {
+    if (raw == null) continue;
+    const safe = String(raw).replace(/[<>]/g, "").slice(0, 80);
+    out = out.split(`{{${key}}}`).join(safe);
+  }
+  // drop any leftover placeholders
+  out = out.replace(/\{\{[a-zA-Z0-9_]+\}\}/g, "").replace(/\s{2,}/g, " ").trim();
+  return out;
+}
 
 function renderTemplate(type, locale = LOCALES.FA, vars = {}) {
   const tpl = TEMPLATES[type];
@@ -74,9 +91,9 @@ function renderTemplate(type, locale = LOCALES.FA, vars = {}) {
     return { body: "", version: "v1" };
   }
   const lang = locale === LOCALES.EN ? "en" : "fa";
-  let body = tpl[lang] || tpl.fa;
+  let body = applyVars(tpl[lang] || tpl.fa, vars);
   // Safe optional placeholders only (never user-controlled HTML)
-  if (vars.whenLabel) {
+  if (vars.whenLabel && type !== NOTIFICATION_TYPES.ATTENDANCE_ABSENT) {
     body = `${body} (${String(vars.whenLabel).slice(0, 40)})`;
   }
   if (vars.rejectionHint && type === NOTIFICATION_TYPES.DOCUMENT_REJECTED) {

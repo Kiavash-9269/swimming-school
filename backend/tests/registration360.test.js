@@ -79,7 +79,7 @@ describe("Phase 4 registration / User 360", () => {
         level: "Beginner",
         ageMin: 5,
         ageMax: 18,
-        genderRestriction: "ANY",
+        genderRestriction: "MALE",
         requiresInsurance,
         requiresMedicalApproval,
       });
@@ -126,7 +126,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "مینا",
         lastName: "شناگر",
         birthDate: "2015-05-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
         phone: "09121234567",
         emergencyContact: { name: "پدر", phone: "09129876543", relationship: "FATHER" },
@@ -142,7 +142,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "آینده",
         lastName: "نامعتبر",
         birthDate: "2099-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
     expect(future.status).toBe(400);
@@ -154,7 +154,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "تلفن",
         lastName: "بد",
         birthDate: "2014-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         emergencyContact: { name: "x", phone: "123", relationship: "MOTHER" },
       });
     expect(badPhone.status).toBe(400);
@@ -181,7 +181,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "پزشکی",
         lastName: "تست",
         birthDate: "2014-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -270,7 +270,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "بیمه",
         lastName: "تست",
         birthDate: "2013-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -335,7 +335,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "فرزند",
         lastName: "جستجو",
         birthDate: "2012-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -382,7 +382,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "قیمت",
         lastName: "ثابت",
         birthDate: "2014-06-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -415,7 +415,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "حضور",
         lastName: "تست",
         birthDate: "2014-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -503,7 +503,7 @@ describe("Phase 4 registration / User 360", () => {
         firstName: "مس",
         lastName: "اساین",
         birthDate: "2015-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         isActive: false,
         ownerUserId: "000000000000000000000099",
       });

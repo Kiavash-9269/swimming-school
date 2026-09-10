@@ -239,7 +239,7 @@ export default function SwimmingPerformancePro() {
         world,
         national,
       });
-    } catch (err) {
+    } catch {
       setError("خطایی در محاسبات رخ داد. لطفاً دوباره تلاش کنید");
     } finally {
       setIsCalculating(false);

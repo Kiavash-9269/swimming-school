@@ -21,6 +21,10 @@ const listQuery = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 });
 
+const idParams = z.object({
+  id: objectId,
+});
+
 const listNotifications = asyncHandler(async (req, res) => {
   const data = await notificationService.listNotificationsAdmin(req.query);
   return success(res, data);
@@ -69,6 +73,7 @@ const runProcessNotifications = asyncHandler(async (_req, res) => {
 
 module.exports = {
   listQuery,
+  idParams,
   listNotifications,
   getNotification,
   retryNotification,

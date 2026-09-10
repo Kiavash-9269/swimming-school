@@ -74,7 +74,7 @@ describe("Phase 8 payment hardening", () => {
         level: "Beginner",
         ageMin: 5,
         ageMax: 60,
-        genderRestriction: "ANY",
+        genderRestriction: "MALE",
         requiresInsurance: false,
         requiresMedicalApproval: false,
       });
@@ -112,7 +112,7 @@ describe("Phase 8 payment hardening", () => {
         firstName: "شناگر",
         lastName: "فاز۸",
         birthDate: "2012-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -222,7 +222,7 @@ describe("Phase 8 payment hardening", () => {
             firstName: "انقضا",
             lastName: "فاز۸",
             birthDate: "2010-01-01",
-            gender: "FEMALE",
+            gender: "MALE",
             relation: "CHILD",
           })
       ).body.data.id,

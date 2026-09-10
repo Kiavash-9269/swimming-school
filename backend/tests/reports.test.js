@@ -72,7 +72,7 @@ describe("Phase 6 admin reports & exports", () => {
         level: "Beginner",
         ageMin: 5,
         ageMax: 60,
-        genderRestriction: "ANY",
+        genderRestriction: "MALE",
         requiresInsurance: false,
         requiresMedicalApproval: false,
       });
@@ -154,7 +154,7 @@ describe("Phase 6 admin reports & exports", () => {
       firstName: "نوجوان",
       lastName: "جوان",
       birthDate: new Date(Date.UTC(2015, 0, 1)),
-      gender: "FEMALE",
+      gender: "MALE",
       relation: "CHILD",
       isActive: true,
     });
@@ -382,6 +382,8 @@ describe("Phase 6 admin reports & exports", () => {
     expect(sanitizeCell("=1+1")).toBe("'=1+1");
     expect(sanitizeCell("@SUM(A1)")).toBe("'@SUM(A1)");
     expect(sanitizeCell("علی")).toBe("علی");
+    expect(sanitizeCell(true)).toBe("بله");
+    expect(sanitizeCell(false)).toBe("خیر");
 
     const exportRes = await request(app)
       .get("/api/admin/reports/participants/export")
@@ -397,11 +399,21 @@ describe("Phase 6 admin reports & exports", () => {
       /application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/,
     );
     expect(exportRes.headers["content-disposition"]).toMatch(/attachment; filename="/);
+    expect(exportRes.headers["content-disposition"]).toMatch(/filename\*=UTF-8''/);
     expect(exportRes.headers["content-disposition"]).not.toMatch(/[\r\n]/);
 
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(exportRes.body);
     const sheet = workbook.worksheets[0];
+    expect(sheet.name).toBe("شرکت‌کنندگان");
+    expect(sheet.views?.[0]?.rightToLeft).toBe(true);
+
+    const headerValues = [];
+    sheet.getRow(1).eachCell((cell) => headerValues.push(String(cell.value ?? "")));
+    expect(headerValues).toContain("نام");
+    expect(headerValues).toContain("نام خانوادگی");
+    expect(headerValues).not.toContain("First Name");
+
     let foundEscaped = false;
     let foundPersian = false;
     sheet.eachRow((row, rowNumber) => {

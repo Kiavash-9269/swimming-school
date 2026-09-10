@@ -491,8 +491,19 @@ const markAttendance = asyncHandler(async (req, res) => {
     sessionId: req.body.sessionId,
     participantId: req.body.participantId,
     status: req.body.status,
+    notifyAbsent: req.body.notifyAbsent !== false,
   });
   return success(res, record, 201);
+});
+
+const submitSessionAttendance = asyncHandler(async (req, res) => {
+  const data = await attendanceService.submitSessionAttendance({
+    user: req.user,
+    classId: req.body.classId,
+    sessionId: req.body.sessionId,
+    marks: req.body.marks,
+  });
+  return success(res, data, 201);
 });
 
 const listClassAttendance = asyncHandler(async (req, res) => {
@@ -502,6 +513,14 @@ const listClassAttendance = asyncHandler(async (req, res) => {
     limit: req.query.limit,
   });
   return success(res, { items });
+});
+
+const listClassRoster = asyncHandler(async (req, res) => {
+  const data = await enrollmentService.listClassRoster({
+    user: req.user,
+    classId: req.params.classId,
+  });
+  return success(res, data);
 });
 
 module.exports = {
@@ -540,7 +559,9 @@ module.exports = {
   adminSearchUsers,
   adminSearchParticipants,
   markAttendance,
+  submitSessionAttendance,
   listClassAttendance,
+  listClassRoster,
   toPublicEnrollment,
   toPublicParticipant,
 };

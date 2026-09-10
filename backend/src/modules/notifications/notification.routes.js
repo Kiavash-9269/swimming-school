@@ -41,7 +41,14 @@ router.post(
   controller.runProcessNotifications,
 );
 
-router.get("/:id", authenticate, authorize("ADMIN"), adminLimiter, controller.getNotification);
-router.post("/:id/retry", authenticate, authorize("ADMIN"), adminLimiter, controller.retryNotification);
+router.get("/:id", authenticate, authorize("ADMIN"), adminLimiter, validate(controller.idParams, "params"), controller.getNotification);
+router.post(
+  "/:id/retry",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  validate(controller.idParams, "params"),
+  controller.retryNotification,
+);
 
 module.exports = router;

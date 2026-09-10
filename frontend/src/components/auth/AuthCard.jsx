@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import {
   FaLock,
   FaUser,
@@ -12,7 +12,8 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 import { authApi } from "../../services/apiClient";
-import { useAuth } from "../../services/authContext";
+import { useAuth } from "../../services/useAuth";
+import { resolvePostAuthPath } from "../../services/homePath";
 
 const STEPS = {
   PHONE: "phone",
@@ -48,8 +49,13 @@ function normalizePhoneInput(value) {
 
 export default function AuthCard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { loginWithSession } = useAuth();
+
+  const goAfterAuth = (user) => {
+    navigate(resolvePostAuthPath(location.state?.from, user), { replace: true });
+  };
 
   const initialMode = searchParams.get("mode") === "signup" ? "register" : "login";
 
@@ -162,8 +168,8 @@ export default function AuthCard() {
     setIsLoading(true);
     try {
       const session = await authApi.login({ phone, password });
-      loginWithSession(session);
-      navigate("/", { replace: true });
+      const user = loginWithSession(session);
+      goAfterAuth(user);
     } catch (err) {
       setError(err.message || "ورود ناموفق بود");
     } finally {
@@ -220,7 +226,7 @@ export default function AuthCard() {
         confirmPassword,
       });
       loginWithSession(session);
-      navigate("/", { replace: true });
+      goAfterAuth(session?.user);
     } catch (err) {
       setError(err.message || "ثبت‌نام ناموفق بود");
     } finally {
@@ -270,7 +276,7 @@ export default function AuthCard() {
         confirmPassword,
       });
       loginWithSession(session);
-      navigate("/", { replace: true });
+      goAfterAuth(session?.user);
     } catch (err) {
       setError(err.message || "بازیابی رمز ناموفق بود");
     } finally {

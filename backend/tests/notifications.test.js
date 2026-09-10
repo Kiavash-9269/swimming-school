@@ -282,6 +282,24 @@ describe("Phase 5 notifications & scheduling", () => {
     expect([200, 409]).toContain(retry.status);
   });
 
+  test("invalid notification id returns 400 not 500", async () => {
+    await bootstrap();
+    const badGet = await request(app)
+      .get("/api/notifications/not-an-object-id")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(badGet.status).toBe(400);
+
+    const badRetry = await request(app)
+      .post("/api/notifications/not-an-object-id/retry")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(badRetry.status).toBe(400);
+
+    const missing = await request(app)
+      .get(`/api/notifications/${new mongoose.Types.ObjectId()}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(missing.status).toBe(404);
+  });
+
   test("notification failure does not corrupt payment success state", async () => {
     await bootstrap();
     const enrollment = await Enrollment.create({
@@ -307,5 +325,56 @@ describe("Phase 5 notifications & scheduling", () => {
     const e = await Enrollment.findById(enrollment._id);
     expect(p.status).toBe("SUCCESS");
     expect(e.status).toBe("ACTIVE");
+  });
+
+  test("attendance absent SMS template and idempotent enqueue", async () => {
+    await bootstrap();
+    const { renderTemplate } = require("../src/modules/notifications/templates");
+    const { onAttendanceAbsent } = require("../src/modules/notifications/dispatcher");
+
+    const rendered = renderTemplate(NOTIFICATION_TYPES.ATTENDANCE_ABSENT, "fa", {
+      classTitle: "مقدماتی",
+      dayLabel: "۱۴۰۴/۰۱/۰۱",
+      timeLabel: "10:00 تا 11:00",
+    });
+    expect(rendered.body).toContain("غایب");
+    expect(rendered.body).toContain("مقدماتی");
+    expect(rendered.body).toContain("10:00 تا 11:00");
+    expect(rendered.body).toContain("۱۴۰۴/۰۱/۰۱");
+
+    const participantId = new mongoose.Types.ObjectId();
+    const sessionId = new mongoose.Types.ObjectId();
+    const enrollment = {
+      _id: new mongoose.Types.ObjectId(),
+      userId,
+      participantId,
+      classId: new mongoose.Types.ObjectId(),
+    };
+    const session = {
+      _id: sessionId,
+      date: new Date("2026-03-21T00:00:00.000Z"),
+      startTime: "10:00",
+      endTime: "11:00",
+    };
+
+    await onAttendanceAbsent({
+      enrollment,
+      courseClass: { title: "مقدماتی" },
+      session,
+      attendanceId: new mongoose.Types.ObjectId(),
+    });
+    await onAttendanceAbsent({
+      enrollment,
+      courseClass: { title: "مقدماتی" },
+      session,
+      attendanceId: new mongoose.Types.ObjectId(),
+    });
+
+    expect(
+      await Notification.countDocuments({
+        type: NOTIFICATION_TYPES.ATTENDANCE_ABSENT,
+        userId,
+      }),
+    ).toBe(1);
   });
 });

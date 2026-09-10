@@ -77,7 +77,7 @@ describe("Phase 9 cross-phase audit invariants", () => {
         level: "Beginner",
         ageMin: 5,
         ageMax: 60,
-        genderRestriction: "ANY",
+        genderRestriction: "MALE",
         requiresInsurance: false,
         requiresMedicalApproval: false,
       });
@@ -115,7 +115,7 @@ describe("Phase 9 cross-phase audit invariants", () => {
         firstName: "شناگر",
         lastName: "فاز۹",
         birthDate: "2012-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
 
@@ -232,7 +232,7 @@ describe("Phase 9 cross-phase audit invariants", () => {
         firstName: "الف",
         lastName: "انتظار",
         birthDate: "2011-01-01",
-        gender: "FEMALE",
+        gender: "MALE",
         relation: "CHILD",
       });
     const filler = await reserveAndCheckout(classId, p1.body.data.id, userToken, "p9-fill-seat-1");

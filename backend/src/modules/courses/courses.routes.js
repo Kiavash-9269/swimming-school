@@ -1,5 +1,5 @@
 const express = require("express");
-const { authenticate, authorize } = require("../../middleware/authenticate");
+const { authenticate, optionalAuthenticate, authorize } = require("../../middleware/authenticate");
 const { validate } = require("../../middleware/validate");
 const { createLimiter } = require("../../middleware/rateLimit");
 const controller = require("./courses.controller");
@@ -7,16 +7,19 @@ const {
   courseTemplateBody,
   courseTemplateUpdate,
   instructorBody,
+  instructorUpdate,
+  listInstructorsQuery,
   classBody,
   classUpdate,
   listClassesQuery,
+  myClassesQuery,
 } = require("./courses.validation");
 
 const router = express.Router();
 const adminWriteLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 120 });
 
-router.get("/templates", controller.listTemplates);
-router.get("/templates/:id", controller.getTemplate);
+router.get("/templates", optionalAuthenticate, controller.listTemplates);
+router.get("/templates/:id", optionalAuthenticate, controller.getTemplate);
 router.post(
   "/templates",
   authenticate,
@@ -34,7 +37,20 @@ router.patch(
   controller.updateTemplate,
 );
 
-router.get("/instructors", authenticate, authorize("ADMIN"), controller.listInstructors);
+router.get("/instructors/me", authenticate, controller.getMyInstructor);
+router.get(
+  "/instructors/me/classes",
+  authenticate,
+  validate(myClassesQuery, "query"),
+  controller.listMyClasses,
+);
+router.get(
+  "/instructors",
+  authenticate,
+  authorize("ADMIN"),
+  validate(listInstructorsQuery, "query"),
+  controller.listInstructors,
+);
 router.post(
   "/instructors",
   authenticate,
@@ -43,12 +59,20 @@ router.post(
   validate(instructorBody),
   controller.createInstructor,
 );
+router.patch(
+  "/instructors/:id",
+  authenticate,
+  authorize("ADMIN"),
+  adminWriteLimiter,
+  validate(instructorUpdate),
+  controller.updateInstructor,
+);
 
-router.get("/classes", validate(listClassesQuery, "query"), controller.listClasses);
-router.get("/classes/:id", controller.getClass);
-router.get("/classes/:id/capacity", controller.getCapacity);
-router.get("/classes/:id/schedule", controller.getSchedule);
-router.get("/classes/:id/sessions", controller.listSessions);
+router.get("/classes", optionalAuthenticate, validate(listClassesQuery, "query"), controller.listClasses);
+router.get("/classes/:id", optionalAuthenticate, controller.getClass);
+router.get("/classes/:id/capacity", optionalAuthenticate, controller.getCapacity);
+router.get("/classes/:id/schedule", optionalAuthenticate, controller.getSchedule);
+router.get("/classes/:id/sessions", optionalAuthenticate, controller.listSessions);
 
 router.post(
   "/classes",
@@ -93,6 +117,27 @@ router.post(
   authorize("ADMIN"),
   adminWriteLimiter,
   controller.cancelClass,
+);
+router.post(
+  "/classes/:id/start",
+  authenticate,
+  authorize("ADMIN"),
+  adminWriteLimiter,
+  controller.startClass,
+);
+router.post(
+  "/classes/:id/complete",
+  authenticate,
+  authorize("ADMIN"),
+  adminWriteLimiter,
+  controller.completeClass,
+);
+router.post(
+  "/classes/:id/archive",
+  authenticate,
+  authorize("ADMIN"),
+  adminWriteLimiter,
+  controller.archiveClass,
 );
 router.post(
   "/classes/:id/generate-sessions",

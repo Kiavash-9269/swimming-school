@@ -1,5 +1,5 @@
 // src/components/gallery/GallerySection.jsx
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";

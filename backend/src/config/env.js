@@ -183,6 +183,13 @@ if (data.PAYMENT_PROVIDER === "zarinpal") {
   if (data.NODE_ENV === "production" && !data.PAYMENT_CALLBACK_SECRET?.trim()) {
     failConfig("PAYMENT_CALLBACK_SECRET is required in production when PAYMENT_PROVIDER=zarinpal");
   }
+  // Production must explicitly disable sandbox (unset defaults to true for local/dev).
+  if (data.NODE_ENV === "production") {
+    const sandbox = String(data.ZARINPAL_SANDBOX || "true").toLowerCase();
+    if (sandbox !== "false" && sandbox !== "0") {
+      failConfig("ZARINPAL_SANDBOX must be false in production when PAYMENT_PROVIDER=zarinpal");
+    }
+  }
 }
 
 if (data.NODE_ENV === "production" && data.PAYMENT_PROVIDER === "mock") {
