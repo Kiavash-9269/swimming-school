@@ -36,8 +36,20 @@ function toKavenegarReceptor(canonicalPhone) {
   return canonicalPhone;
 }
 
+/** Niksms Numbers: Iranian mobile in 09xxxxxxxxx form (panel samples use local mobile strings). */
+function toNiksmsNumber(canonicalPhone) {
+  if (!isValidIranianMobile(canonicalPhone)) {
+    throw new SmsProviderError("شماره موبایل برای ارسال پیامک معتبر نیست", {
+      code: SMS_ERROR_CODES.INVALID_PHONE_FOR_PROVIDER,
+      statusCode: 400,
+    });
+  }
+  return canonicalPhone;
+}
+
 module.exports = {
   toSmsWebserviceDestination,
   toSmsWebserviceRecipient,
   toKavenegarReceptor,
+  toNiksmsNumber,
 };

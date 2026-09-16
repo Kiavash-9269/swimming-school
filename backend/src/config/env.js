@@ -32,8 +32,19 @@ const envSchema = z.object({
   OTP_RATE_LIMIT_WINDOW_SEC: z.coerce.number().int().positive().default(600),
 
   // SMS provider
-  SMS_PROVIDER: z.enum(["development", "sms-webservice", "kavenegar"]).optional(),
+  SMS_PROVIDER: z.enum(["development", "niksms", "sms-webservice", "kavenegar"]).optional(),
   SMS_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
+  /** Niksms SOAP — Username/Password (NOT compatible with SMS_WEBSERVICE_API_KEY) */
+  NIKSMS_USERNAME: z.string().optional().default(""),
+  NIKSMS_PASSWORD: z.string().optional().default(""),
+  /** Optional; empty uses panel default public sender */
+  NIKSMS_SENDER: z.string().optional().default(""),
+  /** SOAP service URL (without ?wsdl). Default: public Niksms endpoint from panel docs */
+  NIKSMS_ENDPOINT: z
+    .string()
+    .optional()
+    .default("http://94.182.154.28:1370/NiksmsWebservice.svc"),
+  /** PayamResan / sms-webservice.com REST — separate from Niksms */
   SMS_WEBSERVICE_API_KEY: z.string().optional().default(""),
   SMS_WEBSERVICE_SENDER: z.string().optional().default(""),
   SMS_WEBSERVICE_TEMPLATE_KEY: z.string().optional().default(""),
@@ -113,7 +124,18 @@ if (data.NODE_ENV === "production" && !data.COOKIE_SECURE) {
 
 if (data.NODE_ENV === "production") {
   if (!SMS_PROVIDER || SMS_PROVIDER === "development") {
-    failConfig("Production requires SMS_PROVIDER=sms-webservice or SMS_PROVIDER=kavenegar");
+    failConfig(
+      "Production requires SMS_PROVIDER=niksms, SMS_PROVIDER=sms-webservice, or SMS_PROVIDER=kavenegar",
+    );
+  }
+}
+
+if (SMS_PROVIDER === "niksms") {
+  if (!data.NIKSMS_USERNAME?.trim()) {
+    failConfig("NIKSMS_USERNAME is required when SMS_PROVIDER=niksms");
+  }
+  if (!data.NIKSMS_PASSWORD?.trim()) {
+    failConfig("NIKSMS_PASSWORD is required when SMS_PROVIDER=niksms");
   }
 }
 

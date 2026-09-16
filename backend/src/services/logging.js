@@ -29,6 +29,8 @@ const logger = pino({
       "apiKey",
       "ApiKey",
       "SMS_WEBSERVICE_API_KEY",
+      "NIKSMS_USERNAME",
+      "NIKSMS_PASSWORD",
       "KAVENEGAR_API_KEY",
       "JWT_ACCESS_SECRET",
       "JWT_REFRESH_SECRET",

@@ -1,6 +1,7 @@
 const { DevelopmentDeliveryAdapter } = require("./providers/developmentProvider");
 const { SmsWebserviceProvider } = require("./providers/smsWebserviceProvider");
 const { KavenegarProvider } = require("./providers/kavenegarProvider");
+const { NiksmsProvider } = require("./providers/niksmsProvider");
 const { SmsProviderError, SMS_ERROR_CODES } = require("./errors");
 
 function requireCredential(value, name) {
@@ -28,6 +29,22 @@ function createSmsProvider(env) {
       });
     }
     return new DevelopmentDeliveryAdapter();
+  }
+
+  if (provider === "niksms") {
+    const username = requireCredential(env.NIKSMS_USERNAME, "NIKSMS_USERNAME");
+    const password = requireCredential(env.NIKSMS_PASSWORD, "NIKSMS_PASSWORD");
+    const sender = env.NIKSMS_SENDER?.trim() || "";
+    const endpoint = env.NIKSMS_ENDPOINT?.trim() || "";
+
+    return new NiksmsProvider({
+      username,
+      password,
+      sender,
+      endpoint,
+      timeoutMs: env.SMS_TIMEOUT_MS,
+      otpTtlSeconds: env.OTP_TTL_SECONDS,
+    });
   }
 
   if (provider === "sms-webservice") {

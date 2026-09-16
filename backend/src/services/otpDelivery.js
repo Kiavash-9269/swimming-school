@@ -5,6 +5,7 @@ const { createSmsProvider } = require("./sms/createProvider");
 const { DevelopmentDeliveryAdapter } = require("./sms/providers/developmentProvider");
 const { SmsWebserviceProvider } = require("./sms/providers/smsWebserviceProvider");
 const { KavenegarProvider } = require("./sms/providers/kavenegarProvider");
+const { NiksmsProvider } = require("./sms/providers/niksmsProvider");
 const { SmsProviderError, SMS_ERROR_CODES } = require("./sms/errors");
 
 /**
@@ -67,6 +68,7 @@ module.exports = {
   DevelopmentDeliveryAdapter,
   SmsWebserviceProvider,
   KavenegarProvider,
+  NiksmsProvider,
   SmsProviderError,
   SMS_ERROR_CODES,
   createSmsProvider,

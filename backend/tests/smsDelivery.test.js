@@ -9,6 +9,7 @@ const {
   otpDeliveryService,
   SmsWebserviceProvider,
   KavenegarProvider,
+  NiksmsProvider,
   createSmsProvider,
   SmsProviderError,
   SMS_ERROR_CODES,
@@ -52,6 +53,21 @@ describe("SMS provider integration", () => {
       expect(env.SMS_PROVIDER).toBe("development");
       const provider = createSmsProvider(env);
       expect(provider.constructor.name).toBe("DevelopmentDeliveryAdapter");
+    });
+
+    test("builds niksms provider when configured", () => {
+      const provider = createSmsProvider({
+        ...env,
+        SMS_PROVIDER: "niksms",
+        NIKSMS_USERNAME: "test-user",
+        NIKSMS_PASSWORD: "test-pass",
+        NIKSMS_SENDER: "9830006179",
+        NIKSMS_ENDPOINT: "http://94.182.154.28:1370/NiksmsWebservice.svc",
+        SMS_TIMEOUT_MS: 5000,
+        OTP_TTL_SECONDS: 120,
+        NODE_ENV: "development",
+      });
+      expect(provider).toBeInstanceOf(NiksmsProvider);
     });
 
     test("builds sms-webservice provider when configured", () => {
@@ -99,6 +115,182 @@ describe("SMS provider integration", () => {
           NODE_ENV: "production",
         }),
       ).toThrow(/not allowed in production/i);
+    });
+
+    test("niksms factory requires username and password (not API key)", () => {
+      expect(() =>
+        createSmsProvider({
+          ...env,
+          SMS_PROVIDER: "niksms",
+          NIKSMS_USERNAME: "",
+          NIKSMS_PASSWORD: "x",
+          NODE_ENV: "development",
+        }),
+      ).toThrow(/NIKSMS_USERNAME/);
+    });
+  });
+
+  describe("NiksmsProvider", () => {
+    function mockSoapOk(status = "Successful", nikId = "991122") {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => `<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <GroupSmsResponse xmlns="http://tempuri.org/">
+      <GroupSmsResult>
+        <Status>${status}</Status>
+        <Id>req-1</Id>
+        <WarningMessage></WarningMessage>
+        <NikIds><long>${nikId}</long></NikIds>
+      </GroupSmsResult>
+    </GroupSmsResponse>
+  </s:Body>
+</s:Envelope>`,
+      });
+    }
+
+    test("sends GroupSms SOAP with AuthenticationModel Username/Password", async () => {
+      mockSoapOk("Successful", "555001");
+
+      const provider = new NiksmsProvider({
+        username: "panel-user",
+        password: "panel-pass",
+        sender: "9830006179",
+        endpoint: "http://94.182.154.28:1370/NiksmsWebservice.svc",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+
+      const result = await provider.send({
+        phone: "09120001111",
+        code: "12345",
+        purpose: "REGISTER",
+      });
+
+      expect(result.delivered).toBe(true);
+      expect(result.provider).toBe("niksms");
+      expect(result.messageId).toBe("555001");
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      const [url, options] = global.fetch.mock.calls[0];
+      expect(url).toBe("http://94.182.154.28:1370/NiksmsWebservice.svc");
+      expect(options.method).toBe("POST");
+      expect(options.headers.SOAPAction).toContain("GroupSms");
+      expect(options.body).toContain("<Username>panel-user</Username>");
+      expect(options.body).toContain("<Password>panel-pass</Password>");
+      expect(options.body).toContain("<SenderNumber>9830006179</SenderNumber>");
+      expect(options.body).toContain("<string>09120001111</string>");
+      expect(options.body).toContain("کد تایید شما: 12345");
+      expect(options.body).toContain("<SendType>Normal</SendType>");
+      expect(options.body).not.toContain("ApiKey");
+      expect(options.body).not.toContain("SMS_WEBSERVICE");
+    });
+
+    test("accepts Warning status as delivered", async () => {
+      mockSoapOk("Warning", "777");
+      const provider = new NiksmsProvider({
+        username: "u",
+        password: "p",
+        sender: "",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+      const result = await provider.send({ phone: "09120001112", code: "11111", purpose: "REGISTER" });
+      expect(result.delivered).toBe(true);
+      expect(result.providerStatus).toBe("Warning");
+    });
+
+    test("maps InvalidUserNameOrPass to configuration error", async () => {
+      mockSoapOk("InvalidUserNameOrPass", "");
+      const provider = new NiksmsProvider({
+        username: "bad",
+        password: "bad",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+      await expect(
+        provider.send({ phone: "09120001113", code: "12345", purpose: "REGISTER" }),
+      ).rejects.toMatchObject({ code: SMS_ERROR_CODES.SMS_CONFIGURATION_ERROR });
+    });
+
+    test("maps InsufficientCredit to delivery failure", async () => {
+      mockSoapOk("InsufficientCredit", "");
+      const provider = new NiksmsProvider({
+        username: "u",
+        password: "p",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+      await expect(
+        provider.send({ phone: "09120001114", code: "12345", purpose: "REGISTER" }),
+      ).rejects.toMatchObject({ code: SMS_ERROR_CODES.SMS_DELIVERY_FAILED });
+    });
+
+    test("sendText uses GroupSms for notification body", async () => {
+      mockSoapOk("Successful", "888");
+      const provider = new NiksmsProvider({
+        username: "u",
+        password: "p",
+        sender: "9830006179",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+      const result = await provider.sendText({
+        phone: "09120001115",
+        message: "یادآوری کلاس شنا",
+        purpose: "CLASS_REMINDER",
+      });
+      expect(result.delivered).toBe(true);
+      expect(global.fetch.mock.calls[0][1].body).toContain("یادآوری کلاس شنا");
+    });
+
+    test("getSmsDelivery posts NikIds", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => `<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <GetSmsDeliveryResponse xmlns="http://tempuri.org/">
+      <GetSmsDeliveryResult>
+        <SmsStatus>sent</SmsStatus>
+      </GetSmsDeliveryResult>
+    </GetSmsDeliveryResponse>
+  </s:Body>
+</s:Envelope>`,
+      });
+
+      const provider = new NiksmsProvider({
+        username: "u",
+        password: "p",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+      const statuses = await provider.getSmsDelivery(["991122"]);
+      expect(statuses).toEqual(["sent"]);
+      expect(global.fetch.mock.calls[0][1].body).toContain("<long>991122</long>");
+      expect(global.fetch.mock.calls[0][1].headers.SOAPAction).toContain("GetSmsDelivery");
+    });
+
+    test("maps abort/timeout to SMS_PROVIDER_TIMEOUT", async () => {
+      global.fetch = jest.fn().mockImplementation(() => {
+        const err = new Error("aborted");
+        err.name = "AbortError";
+        return Promise.reject(err);
+      });
+
+      const provider = new NiksmsProvider({
+        username: "u",
+        password: "p",
+        timeoutMs: 1,
+        otpTtlSeconds: 120,
+      });
+
+      await expect(
+        provider.send({ phone: "09120001116", code: "12345", purpose: "REGISTER" }),
+      ).rejects.toMatchObject({ code: SMS_ERROR_CODES.SMS_PROVIDER_TIMEOUT });
     });
   });
 

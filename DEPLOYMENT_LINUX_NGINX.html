@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>راهنمای استقرار مدرسه شنا روی لینوکس و Nginx</title>
+<style>
+:root{--bg:#f6f3ee;--card:#fff;--ink:#1c2430;--muted:#5b6573;--accent:#0b6e6e;--code:#0f172a;--border:#e4ddd2;}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,"Segoe UI",sans-serif;background:linear-gradient(180deg,#eef5f4,#f6f3ee 30%);color:var(--ink);line-height:1.9}
+.wrap{max-width:920px;margin:0 auto;padding:28px 18px 64px}
+header{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:22px;box-shadow:0 8px 24px rgba(28,36,48,.06)}
+header h1{margin:0 0 8px;font-size:1.55rem;color:var(--accent)}
+header p{margin:0;color:var(--muted)}
+article{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:8px 24px 28px;box-shadow:0 8px 24px rgba(28,36,48,.05)}
+h1,h2,h3{color:#123;line-height:1.5}
+h2{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:1.25rem}
+h3{font-size:1.05rem}
+p{margin:.7rem 0}
+.li{margin:.25rem 0}
+blockquote{margin:1rem 0;padding:.75rem 1rem;background:#eef8f7;border-right:4px solid var(--accent);border-radius:8px;color:#234}
+pre{direction:ltr;text-align:left;background:var(--code);color:#e2e8f0;padding:14px 16px;border-radius:12px;overflow:auto;font-size:.86rem;line-height:1.55}
+code{font-family:Consolas,ui-monospace,monospace;font-size:.9em}
+p code,td code,th code{background:#eef2f7;padding:.1rem .35rem;border-radius:5px;color:#0f3d3d}
+pre code{background:transparent;color:inherit;padding:0}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+th,td{border:1px solid var(--border);padding:.55rem .7rem;text-align:right;vertical-align:top}
+th{background:#f0f7f6}
+hr{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+@media print{body{background:#fff}.wrap{max-width:none}header,article{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>راهنمای کامل استقرار پروژه مدرسه شنا</h1>
+<p>سرور لینوکس · Nginx · SSL · PM2 · MongoDB · نیک‌اس‌ام‌اس — نسخه راست‌چین خوانا</p>
+</header>
+<article>
+<h1>راهنمای کامل استقرار پروژه مدرسه شنا روی سرور لینوکس + Nginx</h1>
+
+<p>این سند مخصوص همین ریپازیتوری است: <strong>بک‌اند Express (Node.js)</strong> + <strong>فرانت‌اند Vite/React</strong> + <strong>MongoDB</strong> + <strong>Nginx</strong> به‌عنوان ریورس‌پراکسی و سرو فایل‌های استاتیک.</p>
+
+<hr/>
+
+<h2>۱) معماری پیشنهادی (یک دامنه)</h2>
+
+<table>
+<tr><th>بخش</th><th>نقش</th><th>مسیر روی سرور</th></tr>
+<tr><td>Nginx</td><td>SSL، فرانت استاتیک، پراکسی <code>/api</code></td><td>پورت <code>80</code> / <code>443</code></td></tr>
+<tr><td>Backend</td><td>API روی <code>127.0.0.1:4000</code></td><td><code>/var/www/swimming-school/backend</code></td></tr>
+<tr><td>Frontend build</td><td>فایل‌های <code>dist</code></td><td><code>/var/www/swimming-school/frontend/dist</code></td></tr>
+<tr><td>MongoDB</td><td>دیتابیس محلی</td><td>سرویس <code>mongod</code></td></tr>
+<tr><td>PM2</td><td>نگه‌داشتن پروسه Node</td><td>سرویس systemd از طریق PM2</td></tr>
+</table>
+
+<p>جریان درخواست:</p>
+
+<p class="li">1. کاربر به <code>https://YOUR_DOMAIN</code> می‌رود.</p>
+<p class="li">2. Nginx فایل‌های React را می‌دهد.</p>
+<p class="li">3. درخواست‌های <code>https://YOUR_DOMAIN/api/...</code> به <code>http://127.0.0.1:4000</code> پراکسی می‌شوند.</p>
+<p class="li">4. کوکی رفرش‌توکن روی مسیر <code>/api/auth</code> تنظیم می‌شود؛ با همین دامنه مشترک، لاگین پایدار می‌ماند.</p>
+
+<blockquote><strong>نکته مهم:</strong> در فرانت، پیش‌فرض <code>VITE_API_BASE_URL=/api</code> است. در پروداکشن همین مقدار را نگه دارید تا همه‌چیز از همان دامنه برود.</blockquote>
+
+<hr/>
+
+<h2>۲) پیش‌نیازها</h2>
+
+<h3>سخت‌افزار پیشنهادی</h3>
+<p class="li">• حداقل: ۱ تا ۲ vCPU، ۲GB RAM، ۲۰GB دیسک</p>
+<p class="li">• پیشنهادی: ۲ vCPU، ۴GB RAM</p>
+
+<h3>نرم‌افزار</h3>
+<p class="li">• Ubuntu 22.04 LTS یا Debian 12 (دستورات زیر برای Ubuntu است)</p>
+<p class="li">• دامنه که به IP سرور اشاره کند (A Record)</p>
+<p class="li">• دسترسی SSH با کاربر دارای <code>sudo</code></p>
+<p class="li">• پورت‌های خروجی برای SMS نیک‌اس‌ام‌اس: <code>94.182.154.28:1370</code> (اگر فایروال خروجی محدود است)</p>
+
+<h3>نسخه‌ها</h3>
+<p class="li">• Node.js <strong>20 LTS</strong> یا <strong>22 LTS</strong></p>
+<p class="li">• MongoDB <strong>7.x</strong> یا <strong>8.x</strong></p>
+<p class="li">• Nginx آخرین نسخه پایدار</p>
+<p class="li">• PM2 برای اجرای بک‌اند</p>
+
+<hr/>
+
+<h2>۳) آماده‌سازی سرور</h2>
+
+<pre><code class="language-bash">
+sudo apt update &amp;&amp; sudo apt upgrade -y
+
+sudo apt install -y curl git ufw build-essential
+
+</code></pre>
+
+<h3>فایروال</h3>
+
+<pre><code class="language-bash">
+sudo ufw allow OpenSSH
+
+sudo ufw allow 80/tcp
+
+sudo ufw allow 443/tcp
+
+sudo ufw enable
+
+sudo ufw status
+
+</code></pre>
+
+<blockquote>پورت <code>4000</code> را به اینترنت باز نکنید؛ فقط از localhost پشت Nginx در دسترس باشد.</blockquote>
+
+<hr/>
+
+<h2>۴) نصب Node.js (از NodeSource)</h2>
+
+<pre><code class="language-bash">
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+
+sudo apt install -y nodejs
+
+node -v
+
+npm -v
+
+</code></pre>
+
+<hr/>
+
+<h2>۵) نصب MongoDB</h2>
+
+<p>مستندات رسمی MongoDB را برای نسخه سیستم‌عامل خود دنبال کنید. نمونه برای Ubuntu 22.04:</p>
+
+<pre><code class="language-bash">
+# کلید و ریپو را طبق docs.mongodb.com اضافه کنید، سپس:
+
+sudo apt install -y mongodb-org
+
+sudo systemctl enable --now mongod
+
+sudo systemctl status mongod
+
+</code></pre>
+
+<p>تست اتصال:</p>
+
+<pre><code class="language-bash">
+mongosh --eval 'db.runCommand({ ping: 1 })'
+
+</code></pre>
+
+<p>برای پروداکشن توصیه می‌شود:</p>
+<p class="li">• احراز هویت MongoDB را فعال کنید</p>
+<p class="li">• فقط روی <code>127.0.0.1</code> گوش دهد</p>
+<p class="li">• بکاپ دوره‌ای بگیرید</p>
+
+<p>نمونه ساخت کاربر دیتابیس:</p>
+
+<pre><code class="language-javascript">
+// داخل mongosh
+
+use swimming-school
+
+db.createUser({
+
+  user: "swim_app",
+
+  pwd: "REPLACE_STRONG_PASSWORD",
+
+  roles: [{ role: "readWrite", db: "swimming-school" }]
+
+})
+
+</code></pre>
+
+<p>سپس در <code>.env</code> بک‌اند:</p>
+
+<pre><code class="language-env">
+MONGODB_URI=mongodb://swim_app:REPLACE_STRONG_PASSWORD@127.0.0.1:27017/swimming-school?authSource=swimming-school
+
+</code></pre>
+
+<hr/>
+
+<h2>۶) نصب Nginx و Certbot</h2>
+
+<pre><code class="language-bash">
+sudo apt install -y nginx
+
+sudo systemctl enable --now nginx
+
+
+
+sudo apt install -y certbot python3-certbot-nginx
+
+</code></pre>
+
+<hr/>
+
+<h2>۷) انتقال پروژه به سرور</h2>
+
+<h3>روش A — Git (پیشنهادی)</h3>
+
+<pre><code class="language-bash">
+sudo mkdir -p /var/www
+
+sudo chown -R $USER:$USER /var/www
+
+cd /var/www
+
+git clone YOUR_REPO_URL swimming-school
+
+cd swimming-school
+
+</code></pre>
+
+<h3>روش B — آپلود ZIP / SCP</h3>
+
+<pre><code class="language-bash">
+# از ماشین محلی:
+
+# scp -r ./swimming-school user@SERVER_IP:/var/www/
+
+</code></pre>
+
+<p>ساختار نهایی باید شبیه این باشد:</p>
+
+<pre><code class="language-text">
+/var/www/swimming-school/
+
+  backend/
+
+  frontend/
+
+  DEPLOYMENT_LINUX_NGINX.md
+
+</code></pre>
+
+<hr/>
+
+<h2>۸) پیکربندی بک‌اند (production)</h2>
+
+<pre><code class="language-bash">
+cd /var/www/swimming-school/backend
+
+cp .env.example .env
+
+nano .env
+
+</code></pre>
+
+<h3>نمونه <code>.env</code> پروداکشن (با دامنه واقعی خودتان)</h3>
+
+<pre><code class="language-env">
+NODE_ENV=production
+
+PORT=4000
+
+MONGODB_URI=mongodb://swim_app:REPLACE_STRONG_PASSWORD@127.0.0.1:27017/swimming-school?authSource=swimming-school
+
+
+
+JWT_ACCESS_SECRET=حداقل_۳۲_کاراکتر_تصادفی_قوی
+
+JWT_REFRESH_SECRET=حداقل_۳۲_کاراکتر_تصادفی_قوی_دیگر
+
+JWT_ACCESS_EXPIRES_IN=15m
+
+JWT_REFRESH_EXPIRES_IN=7d
+
+JWT_REGISTRATION_EXPIRES_IN=15m
+
+JWT_PASSWORD_RESET_EXPIRES_IN=15m
+
+
+
+FRONTEND_URL=https://YOUR_DOMAIN
+
+COOKIE_SECURE=true
+
+LOG_LEVEL=info
+
+
+
+OTP_TTL_SECONDS=120
+
+OTP_RESEND_COOLDOWN_SECONDS=60
+
+OTP_MAX_ATTEMPTS=5
+
+OTP_CODE_LENGTH=5
+
+OTP_RATE_LIMIT_PER_PHONE=5
+
+OTP_RATE_LIMIT_WINDOW_SEC=600
+
+
+
+SMS_PROVIDER=niksms
+
+SMS_TIMEOUT_MS=20000
+
+NIKSMS_USERNAME=YOUR_NIKSMS_USERNAME
+
+NIKSMS_PASSWORD=YOUR_NIKSMS_PASSWORD
+
+NIKSMS_SENDER=
+
+NIKSMS_ENDPOINT=http://94.182.154.28:1370/NiksmsWebservice.svc
+
+
+
+APP_TIMEZONE=Asia/Tehran
+
+RESERVATION_HOLD_SECONDS=900
+
+WAITLIST_OFFER_SECONDS=900
+
+
+
+# در production مقدار mock ممنوع است و سرور بالا نمی‌آید
+
+PAYMENT_PROVIDER=zarinpal
+
+PAYMENT_CALLBACK_URL=https://YOUR_DOMAIN/api/payments/callback
+
+PAYMENT_CALLBACK_SECRET=یک_رمز_قوی_برای_کال‌بک
+
+PAYMENT_TIMEOUT_MS=15000
+
+ZARINPAL_MERCHANT_ID=YOUR_MERCHANT_ID
+
+ZARINPAL_SANDBOX=false
+
+
+
+SCHEDULER_ENABLED=true
+
+SCHEDULER_INTERVAL_MS=15000
+
+JOB_BATCH_SIZE=50
+
+NOTIFICATION_MAX_ATTEMPTS=3
+
+NOTIFICATION_LEASE_SECONDS=60
+
+NOTIFICATION_DEFAULT_LOCALE=fa
+
+CLASS_REMINDER_HOURS=24
+
+SESSION_REMINDER_HOURS=1
+
+EMAIL_PROVIDER=mock
+
+
+
+EXPORT_MAX_ROWS=5000
+
+
+
+DOCUMENT_STORAGE_PROVIDER=local
+
+DOCUMENT_STORAGE_ROOT=/var/www/swimming-school/backend/.data/documents
+
+DOCUMENT_MAX_BYTES=5242880
+
+
+
+APP_VERSION=1.0.0
+
+</code></pre>
+
+<h3>قوانین اجباری کد پروژه (اگر رعایت نشود، بک‌اند استارت نمی‌شود)</h3>
+
+<table>
+<tr><th>شرط</th><th>مقدار لازم</th></tr>
+<tr><td><code>NODE_ENV=production</code></td><td><code>COOKIE_SECURE=true</code></td></tr>
+<tr><td>SMS</td><td><code>SMS_PROVIDER</code> یکی از <code>niksms</code> / <code>sms-webservice</code> / <code>kavenegar</code> (نه <code>development</code>)</td></tr>
+<tr><td>پرداخت</td><td><code>PAYMENT_PROVIDER</code> نباید <code>mock</code> باشد</td></tr>
+<tr><td>زرین‌پال</td><td><code>ZARINPAL_SANDBOX=false</code> + <code>ZARINPAL_MERCHANT_ID</code> + <code>PAYMENT_CALLBACK_URL</code> + <code>PAYMENT_CALLBACK_SECRET</code></td></tr>
+</table>
+
+<p>ساخت پوشه اسناد و قفل دسترسی <code>.env</code>:</p>
+
+<pre><code class="language-bash">
+mkdir -p /var/www/swimming-school/backend/.data/documents
+
+chmod 700 /var/www/swimming-school/backend/.env
+
+chmod 750 /var/www/swimming-school/backend/.data
+
+</code></pre>
+
+<p>نصب وابستگی‌ها:</p>
+
+<pre><code class="language-bash">
+cd /var/www/swimming-school/backend
+
+npm ci --omit=dev
+
+</code></pre>
+
+<p>اگر <code>npm ci</code> به‌خاطر نبودن <code>package-lock</code> خطا داد:</p>
+
+<pre><code class="language-bash">
+npm install --omit=dev
+
+</code></pre>
+
+<p>تست سریع هلث (بعد از بالا آمدن سرویس):</p>
+
+<pre><code class="language-bash">
+curl -s http://127.0.0.1:4000/api/health
+
+</code></pre>
+
+<hr/>
+
+<h2>۹) بیلد فرانت‌اند</h2>
+
+<pre><code class="language-bash">
+cd /var/www/swimming-school/frontend
+
+npm ci
+
+# یا: npm install
+
+</code></pre>
+
+<p>فایل محیطی فرانت (اختیاری؛ پیش‌فرض کافی است):</p>
+
+<pre><code class="language-bash">
+cat &gt; .env.production &lt;&lt; 'EOF'
+
+VITE_API_BASE_URL=/api
+
+EOF
+
+</code></pre>
+
+<p>بیلد:</p>
+
+<pre><code class="language-bash">
+npm run build
+
+ls -la dist
+
+</code></pre>
+
+<p>خروجی باید در <code>frontend/dist</code> باشد. Nginx همین پوشه را سرو می‌کند.</p>
+
+<hr/>
+
+<h2>۱۰) اجرای بک‌اند با PM2</h2>
+
+<pre><code class="language-bash">
+sudo npm install -g pm2
+
+
+
+cd /var/www/swimming-school/backend
+
+pm2 start index.js --name swimming-api
+
+pm2 save
+
+pm2 startup
+
+# دستوری که PM2 چاپ می‌کند را عیناً با sudo اجرا کنید
+
+</code></pre>
+
+<p>دستورات مفید:</p>
+
+<pre><code class="language-bash">
+pm2 status
+
+pm2 logs swimming-api --lines 100
+
+pm2 restart swimming-api
+
+pm2 stop swimming-api
+
+</code></pre>
+
+<hr/>
+
+<h2>۱۱) فایل کامل Nginx</h2>
+
+<p>دامنه را جایگزین کنید: <code>YOUR_DOMAIN</code></p>
+
+<pre><code class="language-bash">
+sudo nano /etc/nginx/sites-available/swimming-school
+
+</code></pre>
+
+<p>محتوای کامل فایل:</p>
+
+<pre><code class="language-nginx">
+# Upstream بک‌اند Node (فقط localhost)
+
+upstream swimming_api {
+
+    server 127.0.0.1:4000;
+
+    keepalive 32;
+
+}
+
+
+
+server {
+
+    listen 80;
+
+    listen [::]:80;
+
+    server_name YOUR_DOMAIN www.YOUR_DOMAIN;
+
+
+
+    # برای صدور گواهی Let's Encrypt
+
+    location /.well-known/acme-challenge/ {
+
+        root /var/www/certbot;
+
+    }
+
+
+
+    # قبل از SSL می‌توانید موقتاً به فرانت/API سرویس دهید؛
+
+    # بعد از certbot معمولاً به HTTPS ریدایرکت می‌شود.
+
+    location / {
+
+        return 301 https://$host$request_uri;
+
+    }
+
+}
+
+
+
+server {
+
+    listen 443 ssl http2;
+
+    listen [::]:443 ssl http2;
+
+    server_name YOUR_DOMAIN www.YOUR_DOMAIN;
+
+
+
+    # مسیرهای گواهی بعد از certbot پر می‌شوند
+
+    ssl_certificate     /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+
+
+    # امنیت پایه هدرها
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+
+    add_header X-Content-Type-Options "nosniff" always;
+
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+
+
+    # ریشه فرانت بیلدشده
+
+    root /var/www/swimming-school/frontend/dist;
+
+    index index.html;
+
+
+
+    client_max_body_size 6m;
+
+
+
+    # لاگ‌ها
+
+    access_log /var/log/nginx/swimming-access.log;
+
+    error_log  /var/log/nginx/swimming-error.log warn;
+
+
+
+    # —— API به Node ——
+
+    location /api/ {
+
+        proxy_pass http://swimming_api;
+
+        proxy_http_version 1.1;
+
+
+
+        proxy_set_header Host              $host;
+
+        proxy_set_header X-Real-IP         $remote_addr;
+
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Connection        "";
+
+
+
+        # برای آپلود مدارک / JSON
+
+        proxy_connect_timeout 60s;
+
+        proxy_send_timeout    60s;
+
+        proxy_read_timeout    60s;
+
+
+
+        # کوکی‌ها و CORS با credentials از همین دامنه عبور می‌کنند
+
+        proxy_cookie_path / /;
+
+    }
+
+
+
+    # فایل‌های استاتیک با کش بلندمدت (هش در نام فایل Vite)
+
+    location /assets/ {
+
+        try_files $uri =404;
+
+        access_log off;
+
+        expires 30d;
+
+        add_header Cache-Control "public, immutable";
+
+    }
+
+
+
+    # SPA: همه مسیرهای فرانت → index.html
+
+    location / {
+
+        try_files $uri $uri/ /index.html;
+
+    }
+
+
+
+    # مخفی‌سازی فایل‌های حساس
+
+    location ~ /\. {
+
+        deny all;
+
+    }
+
+}
+
+</code></pre>
+
+<p>فعال‌سازی:</p>
+
+<pre><code class="language-bash">
+sudo mkdir -p /var/www/certbot
+
+sudo ln -sf /etc/nginx/sites-available/swimming-school /etc/nginx/sites-enabled/
+
+sudo rm -f /etc/nginx/sites-enabled/default
+
+sudo nginx -t
+
+sudo systemctl reload nginx
+
+</code></pre>
+
+<h3>نکته درباره SSL قبل از وجود گواهی</h3>
+
+<p>اگر هنوز گواهی ندارید، موقتاً فقط بلوک <code>listen 80</code> را با سرو فرانت + پراکسی API بدون ریدایرکت HTTPS استفاده کنید، گواهی بگیرید، بعد فایل کامل بالا را بگذارید.</p>
+
+<p>نمونه موقت فقط HTTP (برای اولین بار):</p>
+
+<pre><code class="language-nginx">
+upstream swimming_api {
+
+    server 127.0.0.1:4000;
+
+    keepalive 32;
+
+}
+
+
+
+server {
+
+    listen 80;
+
+    listen [::]:80;
+
+    server_name YOUR_DOMAIN www.YOUR_DOMAIN;
+
+
+
+    root /var/www/swimming-school/frontend/dist;
+
+    index index.html;
+
+    client_max_body_size 6m;
+
+
+
+    location /api/ {
+
+        proxy_pass http://swimming_api;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+
+        proxy_set_header X-Real-IP $remote_addr;
+
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+    }
+
+
+
+    location / {
+
+        try_files $uri $uri/ /index.html;
+
+    }
+
+}
+
+</code></pre>
+
+<hr/>
+
+<h2>۱۲) گرفتن SSL با Let's Encrypt</h2>
+
+<pre><code class="language-bash">
+sudo certbot --nginx -d YOUR_DOMAIN -d www.YOUR_DOMAIN
+
+</code></pre>
+
+<p>تمدید خودکار معمولاً با timer سیستم نصب می‌شود. تست:</p>
+
+<pre><code class="language-bash">
+sudo certbot renew --dry-run
+
+</code></pre>
+
+<p>بعد از SSL، در <code>.env</code> بک‌اند حتماً:</p>
+
+<pre><code class="language-env">
+FRONTEND_URL=https://YOUR_DOMAIN
+
+COOKIE_SECURE=true
+
+</code></pre>
+
+<p>سپس:</p>
+
+<pre><code class="language-bash">
+pm2 restart swimming-api
+
+</code></pre>
+
+<hr/>
+
+<h2>۱۳) چک‌لیست بعد از استقرار</h2>
+
+<pre><code class="language-bash">
+# هلث API از داخل سرور
+
+curl -s http://127.0.0.1:4000/api/health | jq .
+
+
+
+# هلث از بیرون / دامنه
+
+curl -s https://YOUR_DOMAIN/api/health
+
+
+
+# فرانت
+
+curl -I https://YOUR_DOMAIN
+
+
+
+# وضعیت سرویس‌ها
+
+pm2 status
+
+sudo systemctl status nginx mongod --no-pager
+
+</code></pre>
+
+<p>در مرورگر:</p>
+<p class="li">1. باز شدن صفحه اصلی</p>
+<p class="li">2. ثبت‌نام / ارسال OTP (پیامک نیک‌اس‌ام‌اس)</p>
+<p class="li">3. لاگین و ماندگاری نشست (کوکی)</p>
+<p class="li">4. آپلود مدرک (حداکثر حدود ۵MB طبق <code>DOCUMENT_MAX_BYTES</code>)</p>
+
+<hr/>
+
+<h2>۱۴) به‌روزرسانی نسخه جدید (Deploy مجدد)</h2>
+
+<pre><code class="language-bash">
+cd /var/www/swimming-school
+
+git pull
+
+
+
+# بک‌اند
+
+cd backend
+
+npm ci --omit=dev
+
+# در صورت تغییر .env.example، متغیرهای جدید را دستی به .env اضافه کنید
+
+pm2 restart swimming-api
+
+
+
+# فرانت
+
+cd ../frontend
+
+npm ci
+
+npm run build
+
+
+
+sudo nginx -t &amp;&amp; sudo systemctl reload nginx
+
+</code></pre>
+
+<hr/>
+
+<h2>۱۵) بکاپ</h2>
+
+<h3>MongoDB</h3>
+
+<pre><code class="language-bash">
+mkdir -p /var/backups/swimming-school
+
+mongodump --uri="$MONGODB_URI" --out=/var/backups/swimming-school/$(date +%F)
+
+</code></pre>
+
+<h3>مدارک آپلودشده</h3>
+
+<pre><code class="language-bash">
+tar -czf /var/backups/swimming-school/documents-$(date +%F).tar.gz \
+
+  /var/www/swimming-school/backend/.data/documents
+
+</code></pre>
+
+<p><code>.env</code> را جداگانه در جای امن نگه دارید (هرگز داخل گیت نگذارید).</p>
+
+<hr/>
+
+<h2>۱۶) پیامک نیک‌اس‌ام‌اس روی سرور</h2>
+
+<p class="li">• احراز هویت: <code>NIKSMS_USERNAME</code> و <code>NIKSMS_PASSWORD</code> (نه ApiKey مربوط به sms-webservice)</p>
+<p class="li">• Endpoint پیش‌فرض: <code>http://94.182.154.28:1370/NiksmsWebservice.svc</code></p>
+<p class="li">• سرور باید بتواند به IP/پورت بالا <strong>خروجی</strong> بزند</p>
+<p class="li">• در پروداکشن <code>SMS_PROVIDER=development</code> ممنوع است</p>
+
+<p>تست اعتبار از روی سرور (بدون ارسال پیامک واقعی به کاربر نهایی، با GetCredit از پنل یا با یک شماره تست خودتان):</p>
+
+<pre><code class="language-bash">
+# بعد از استارت API، از UI ثبت‌نام یک OTP تست بگیرید
+
+pm2 logs swimming-api --lines 50
+
+</code></pre>
+
+<hr/>
+
+<h2>۱۷) عیب‌یابی رایج</h2>
+
+<table>
+<tr><th>مشکل</th><th>علت محتمل</th><th>راه‌حل</th></tr>
+<tr><td>بک‌اند بالا نمی‌آید</td><td><code>COOKIE_SECURE</code> یا <code>PAYMENT_PROVIDER=mock</code> یا SMS اشتباه</td><td>لاگ <code>pm2 logs</code> و <code>.env</code> را با جدول بخش ۸ چک کنید</td></tr>
+<tr><td>CORS / کوکی لاگین نمی‌ماند</td><td><code>FRONTEND_URL</code> با دامنه واقعی یکی نیست یا HTTP بدون Secure</td><td>دامنه HTTPS و <code>COOKIE_SECURE=true</code></td></tr>
+<tr><td><code>502 Bad Gateway</code></td><td>Node خاموش است</td><td><code>pm2 restart swimming-api</code></td></tr>
+<tr><td>فرانت سفید / رفرش ۴۰۴</td><td><code>try_files</code> برای SPA نیست</td><td>بلوک <code>location /</code> بخش Nginx</td></tr>
+<tr><td>OTP نمی‌رود</td><td>فایروال خروجی یا اعتبار نیک‌اس‌ام‌اس</td><td>دسترسی به <code>94.182.154.28:1370</code> و لاگ SMS</td></tr>
+<tr><td>آپلود مدرک خطا</td><td>محدودیت حجم Nginx</td><td><code>client_max_body_size 6m</code></td></tr>
+</table>
+
+<p>لاگ‌ها:</p>
+
+<pre><code class="language-bash">
+pm2 logs swimming-api
+
+sudo tail -f /var/log/nginx/swimming-error.log
+
+sudo journalctl -u mongod -n 100 --no-pager
+
+</code></pre>
+
+<hr/>
+
+<h2>۱۸) امنیت عملیاتی (خلاصه)</h2>
+
+<p class="li">1. هرگز <code>.env</code> را commit نکنید (<code>backend/.env</code> در <code>.gitignore</code> است).</p>
+<p class="li">2. پورت <code>4000</code> و MongoDB را روی اینترنت باز نگذارید.</p>
+<p class="li">3. JWT و رمزهای پنل SMS را قوی و یکتا بگذارید.</p>
+<p class="li">4. بعد از تست، رمزهایی که در چت/پیام رد و بدل شده‌اند را در پنل عوض کنید.</p>
+<p class="li">5. به‌روزرسانی امنیتی OS را فعال نگه دارید: <code>unattended-upgrades</code>.</p>
+<p class="li">6. در صورت امکان Fail2ban برای SSH نصب کنید.</p>
+
+<hr/>
+
+<h2>۱۹) خلاصه مسیر سریع (Cheat Sheet)</h2>
+
+<pre><code class="language-bash">
+# 1) وابستگی‌های سیستم
+
+sudo apt update &amp;&amp; sudo apt install -y nginx git curl ufw
+
+# Node 22 + MongoDB + Certbot را طبق بخش‌های ۴ تا ۶ نصب کنید
+
+
+
+# 2) کد
+
+cd /var/www &amp;&amp; git clone YOUR_REPO_URL swimming-school
+
+
+
+# 3) بک‌اند
+
+cd /var/www/swimming-school/backend
+
+cp .env.example .env   # سپس ویرایش پروداکشن
+
+npm ci --omit=dev
+
+pm2 start index.js --name swimming-api &amp;&amp; pm2 save &amp;&amp; pm2 startup
+
+
+
+# 4) فرانت
+
+cd /var/www/swimming-school/frontend
+
+npm ci &amp;&amp; npm run build
+
+
+
+# 5) Nginx + SSL
+
+sudo nano /etc/nginx/sites-available/swimming-school
+
+sudo ln -sf /etc/nginx/sites-available/swimming-school /etc/nginx/sites-enabled/
+
+sudo nginx -t &amp;&amp; sudo systemctl reload nginx
+
+sudo certbot --nginx -d YOUR_DOMAIN -d www.YOUR_DOMAIN
+
+
+
+# 6) تست
+
+curl -s https://YOUR_DOMAIN/api/health
+
+</code></pre>
+
+<hr/>
+
+<h2>۲۰) فایل‌های مرتبط در پروژه</h2>
+
+<table>
+<tr><th>فایل</th><th>کاربرد</th></tr>
+<tr><td><code>backend/.env.example</code></td><td>الگوی متغیرهای محیطی بک‌اند</td></tr>
+<tr><td><code>backend/src/config/env.js</code></td><td>اعتبارسنجی اجباری پروداکشن</td></tr>
+<tr><td><code>frontend/.env.example</code></td><td><code>VITE_API_BASE_URL</code></td></tr>
+<tr><td><code>frontend/vite.config.js</code></td><td>پراکسی توسعه <code>/api</code> → <code>:4000</code></td></tr>
+<tr><td><code>backend/src/app.js</code></td><td>CORS، Helmet، <code>trust proxy</code>، <code>/api/health</code></td></tr>
+</table>
+
+<hr/>
+
+<p><strong>پایان راهنما.</strong> در صورت تغییر دامنه، فقط <code>FRONTEND_URL</code>، بلاک <code>server_name</code> در Nginx، و گواهی SSL را هم‌راستا کنید و <code>pm2 restart swimming-api</code> بزنید.</p>
+</article>
+</div>
+</body>
+</html>
