@@ -16,11 +16,13 @@ function createLimiter({ windowMs, max }) {
 }
 
 const windowMs = 15 * 60 * 1000;
+/** In local/dev, allow many OTP probes without blocking real phone tests. */
+const isDev = env.NODE_ENV === "development";
 
-const loginLimiter = createLimiter({ windowMs, max: 20 });
-const otpSendLimiter = createLimiter({ windowMs, max: 10 });
-const otpVerifyLimiter = createLimiter({ windowMs, max: 30 });
-const passwordResetLimiter = createLimiter({ windowMs, max: 15 });
+const loginLimiter = createLimiter({ windowMs, max: isDev ? 100 : 20 });
+const otpSendLimiter = createLimiter({ windowMs, max: isDev ? 100 : 10 });
+const otpVerifyLimiter = createLimiter({ windowMs, max: isDev ? 100 : 30 });
+const passwordResetLimiter = createLimiter({ windowMs, max: isDev ? 100 : 15 });
 const refreshLimiter = createLimiter({ windowMs, max: 60 });
 const checkPhoneLimiter = createLimiter({ windowMs, max: 60 });
 

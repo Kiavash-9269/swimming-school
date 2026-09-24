@@ -36,8 +36,11 @@ function toKavenegarReceptor(canonicalPhone) {
   return canonicalPhone;
 }
 
-/** Niksms Numbers: Iranian mobile in 09xxxxxxxxx form (panel samples use local mobile strings). */
-function toNiksmsNumber(canonicalPhone) {
+/**
+ * Niksms SOAP GroupSms / API v2: use 09xxxxxxxxxx (canonical).
+ * Sending 98… often returns Successful without debiting credit.
+ */
+function toNiksmsRecipient(canonicalPhone) {
   if (!isValidIranianMobile(canonicalPhone)) {
     throw new SmsProviderError("شماره موبایل برای ارسال پیامک معتبر نیست", {
       code: SMS_ERROR_CODES.INVALID_PHONE_FOR_PROVIDER,
@@ -47,9 +50,21 @@ function toNiksmsNumber(canonicalPhone) {
   return canonicalPhone;
 }
 
+/** Legacy helper: 98xxxxxxxxxx (kept for callers that still need it). */
+function toNiksmsNumber(canonicalPhone) {
+  if (!isValidIranianMobile(canonicalPhone)) {
+    throw new SmsProviderError("شماره موبایل برای ارسال پیامک معتبر نیست", {
+      code: SMS_ERROR_CODES.INVALID_PHONE_FOR_PROVIDER,
+      statusCode: 400,
+    });
+  }
+  return `98${canonicalPhone.slice(1)}`;
+}
+
 module.exports = {
   toSmsWebserviceDestination,
   toSmsWebserviceRecipient,
   toKavenegarReceptor,
   toNiksmsNumber,
+  toNiksmsRecipient,
 };

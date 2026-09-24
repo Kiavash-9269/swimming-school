@@ -36,12 +36,14 @@ function createSmsProvider(env) {
     const password = requireCredential(env.NIKSMS_PASSWORD, "NIKSMS_PASSWORD");
     const sender = env.NIKSMS_SENDER?.trim() || "";
     const endpoint = env.NIKSMS_ENDPOINT?.trim() || "";
+    const restUrl = env.NIKSMS_REST_URL?.trim() || "";
 
     return new NiksmsProvider({
       username,
       password,
       sender,
       endpoint,
+      restUrl,
       timeoutMs: env.SMS_TIMEOUT_MS,
       otpTtlSeconds: env.OTP_TTL_SECONDS,
     });

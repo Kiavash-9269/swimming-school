@@ -1,43 +1,63 @@
 const { fetchWithTimeout } = require("../http");
 const { SmsProviderError, SMS_ERROR_CODES } = require("../errors");
-const { toNiksmsNumber } = require("../phoneFormat");
+const { toNiksmsRecipient } = require("../phoneFormat");
 const { logEvent, logError } = require("../../logging");
 const { maskPhone } = require("../../../utils/mask");
 
-/** Public Niksms SOAP endpoint from panel docs (WSDL host may advertise a private IP). */
-const DEFAULT_ENDPOINT = "http://94.182.154.28:1370/NiksmsWebservice.svc";
+/** Official panel SOAP endpoint (docs: …/NiksmsWebservice.svc?wsdl). */
+const DEFAULT_SOAP_ENDPOINT = "http://94.182.154.28:1370/NiksmsWebservice.svc";
+
+/**
+ * Optional REST fallback (API v2 SendOne). Official OTP path is SOAP GroupSms.
+ */
+const DEFAULT_REST_URL = "https://niksms.com/api/v2/send/one";
 
 const SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/";
 const TEMPURI_NS = "http://tempuri.org/";
 
-/** SmsReturn values that mean the message was accepted for send. */
-const SUCCESS_STATUSES = new Set(["Successful", "Warning", "1", "13"]);
+/** SmsReturn values that mean accepted. */
+const SUCCESS_STATUSES = new Set(["Successful", "Warning", "1", "13", 1, 13]);
 
 const STATUS_MESSAGES = {
   Successful: "پیام با موفقیت ارسال شد",
+  1: "پیام با موفقیت ارسال شد",
   UnknownError: "خطای نامشخص از سرویس پیامک",
+  2: "خطای نامشخص از سرویس پیامک",
   InsufficientCredit: "موجودی پنل پیامک کافی نیست",
+  3: "موجودی پنل پیامک کافی نیست",
   ForbiddenHours: "ارسال در این ساعت مجاز نیست",
+  4: "ارسال در این ساعت مجاز نیست",
   Filtered: "متن پیامک فیلتر شده است",
-  NoFilters: "این پیام شامل فیلترینگ نمی‌شود",
+  5: "متن پیامک فیلتر شده است",
   PrivateNumberIsDisable: "شماره اختصاصی غیرفعال است",
+  7: "شماره اختصاصی غیرفعال است",
   ArgumentIsNullOrIncorrect: "پارامترهای ارسال پیامک نامعتبر است",
+  8: "پارامترهای ارسال پیامک نامعتبر است",
   MessageBodyIsNullOrEmpty: "متن پیامک خالی است",
+  9: "متن پیامک خالی است",
   PrivateNumberIsIncorrect: "شماره اختصاصی نامعتبر است",
+  10: "شماره اختصاصی نامعتبر است",
   ReceptionNumberIsIncorrect: "شماره موبایل گیرنده نامعتبر است",
+  11: "شماره موبایل گیرنده نامعتبر است",
   SentTypeIsIncorrect: "نوع ارسال نامعتبر است",
+  12: "نوع ارسال نامعتبر است",
   Warning: "ارسال با هشدار انجام شد",
+  13: "ارسال با هشدار انجام شد",
   PanelIsBlocked: "پنل پیامک مسدود است",
+  14: "پنل پیامک مسدود است",
   SiteUpdating: "سرویس پیامک در حال به‌روزرسانی است",
-  AudioMessageNotAllowed: "ارسال پیام صوتی مجاز نیست",
-  AudioMessageFileSizeNotAllowed: "حجم فایل صوتی بیش از حد مجاز است",
+  15: "سرویس پیامک در حال به‌روزرسانی است",
   PanelExpired: "پنل پیامک منقضی شده است",
+  18: "پنل پیامک منقضی شده است",
   InvalidUserNameOrPass: "نام کاربری یا رمز عبور پیامک نادرست است",
+  19: "نام کاربری یا رمز عبور پیامک نادرست است",
+  UserIsWaitForApprove: "حساب کاربری پیامک در انتظار تأیید است",
+  UserApiBlocked: "دسترسی وب‌سرویس/API پنل نیک‌اس‌ام‌اس مسدود است؛ از پشتیبانی یا تنظیمات پنل فعال کنید",
+  CheckedByAi: "پیامک توسط سیستم بررسی محتوا متوقف شده است",
+  HavePendingFilter: "پیامک در صف بررسی فیلتر است",
+  LinkNotAllowed: "ارسال لینک در متن پیامک مجاز نیست",
 };
 
-/**
- * Escape text for inclusion in SOAP XML element bodies.
- */
 function escapeXml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -45,6 +65,23 @@ function escapeXml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+/**
+ * Panel GetSenderNumbers returns 98-prefixed lines (e.g. 985000403011).
+ * REST v2 often wants the bare line without 98.
+ */
+function normalizeNiksmsSender(sender, { forRest = false } = {}) {
+  const raw = String(sender || "").trim();
+  if (!raw) return "";
+  if (forRest) {
+    return raw.replace(/^98/, "");
+  }
+  if (/^98\d+$/.test(raw)) return raw;
+  if (/^3000\d+$/.test(raw) || /^5000\d+$/.test(raw) || /^9000\d+$/.test(raw)) {
+    return `98${raw}`;
+  }
+  return raw;
 }
 
 function extractTag(xml, tagName) {
@@ -64,47 +101,100 @@ function extractAllTags(xml, tagName) {
   return values;
 }
 
-function buildArrayOfString(tagName, values) {
-  const items = values.map((v) => `<string>${escapeXml(v)}</string>`).join("");
-  return `<${tagName}>${items}</${tagName}>`;
+/**
+ * Parse v2 SendOne / public API JSON. Prefer string Id from raw text
+ * (JSON numbers can exceed Number.MAX_SAFE_INTEGER).
+ */
+function parsePublicApiPayload(rawText) {
+  const text = String(rawText || "").trim();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+    if (typeof parsed === "string") {
+      parsed = JSON.parse(parsed);
+    }
+  } catch {
+    parsed = null;
+  }
+
+  const data = parsed?.Data && typeof parsed.Data === "object" ? parsed.Data : parsed;
+  const idMatch = text.match(/"Id"\s*:\s*"([^"]+)"/i) || text.match(/"Id"\s*:\s*([0-9]+)/i);
+  const nikIdMatch = text.match(/"NikId"\s*:\s*"([^"]+)"/i) || text.match(/"NikId"\s*:\s*([0-9]+)/i);
+
+  let nikIds = [];
+  if (Array.isArray(data?.NikIds) && data.NikIds.length) {
+    nikIds = data.NikIds.map((v) => String(v));
+  } else {
+    const nikMatches = [...text.matchAll(/"NikIds"\s*:\s*\[([^\]]*)\]/gi)];
+    if (nikMatches.length) {
+      nikIds = nikMatches[0][1]
+        .split(",")
+        .map((s) => s.replace(/["\\\s]/g, "").trim())
+        .filter(Boolean);
+    }
+  }
+
+  const id =
+    data?.Id != null && String(data.Id) !== ""
+      ? String(data.Id)
+      : idMatch?.[1] || "";
+
+  const nikId =
+    data?.NikId != null && String(data.NikId) !== ""
+      ? String(data.NikId)
+      : nikIdMatch?.[1] || "";
+
+  if (nikId) {
+    nikIds = [nikId, ...nikIds.filter((n) => n !== nikId)];
+  }
+  if (id && (!nikIds.length || nikIds.some((n) => n !== id && n.startsWith(id.slice(0, 12))))) {
+    nikIds = [id, ...nikIds.filter((n) => n !== id)];
+  }
+
+  const status = data?.Status ?? parsed?.Status ?? "";
+
+  return {
+    status,
+    id: id || nikId,
+    warningMessage: data?.WarningMessage || parsed?.WarningMessage || "",
+    nikIds: nikIds.length ? nikIds : id || nikId ? [id || nikId] : [],
+    raw: text.slice(0, 400),
+  };
 }
 
 /**
- * Niksms SOAP provider (WCF).
- * Auth: AuthenticationModel { Username, Password } — not an API key.
- * OTP / single text: GroupSms (one message → n numbers).
- * Docs: https://niksms.com/fa/panel/ (Web Service)
+ * Niksms provider — primary: API v2 SendOne (form-urlencoded, recipient 09…).
+ * This is the path that actually debits panel credit on this account.
+ * Fallback: official SOAP GroupSms (panel WSDL) on transport failures only.
  */
 class NiksmsProvider {
-  constructor({ username, password, sender, endpoint, timeoutMs, otpTtlSeconds }) {
+  constructor({ username, password, sender, endpoint, restUrl, timeoutMs, otpTtlSeconds }) {
     this.username = username;
     this.password = password;
-    this.sender = sender || "";
-    this.endpoint = String(endpoint || DEFAULT_ENDPOINT).replace(/\?wsdl$/i, "").replace(/\/$/, "");
+    this.sender = String(sender || "").trim();
+    this.soapEndpoint = String(endpoint || DEFAULT_SOAP_ENDPOINT)
+      .replace(/\?wsdl$/i, "")
+      .replace(/\/$/, "");
+    this.restUrl = String(restUrl || DEFAULT_REST_URL).replace(/\/$/, "");
     this.timeoutMs = timeoutMs;
     this.otpTtlSeconds = otpTtlSeconds;
   }
 
   async send({ phone, code, purpose }) {
     const ttlMinutes = Math.max(1, Math.ceil(this.otpTtlSeconds / 60));
-    const message = `کد تایید شما: ${code}\nاعتبار کد: ${ttlMinutes} دقیقه`;
-    return this.#sendGroupSms({ phone, message, purpose, mode: "otp_text" });
+    const message = `کد تایید شما: ${code} اعتبار: ${ttlMinutes} دقیقه`;
+    return this.#sendOtpSms({ phone, message, purpose, mode: "otp_text" });
   }
 
   async sendText({ phone, message, purpose = "notification" }) {
-    return this.#sendGroupSms({
+    return this.#sendOtpSms({
       phone,
-      message: String(message || "").slice(0, 900),
+      message: String(message || "").replace(/\s+/g, " ").trim().slice(0, 900),
       purpose,
       mode: "notification_text",
     });
   }
 
-  /**
-   * Delivery status for NikIds returned by GroupSms / PtpSms.
-   * @param {Array<string|number>} nikIds
-   * @returns {Promise<string[]>} SmsStatus enum strings from the service
-   */
   async getSmsDelivery(nikIds) {
     const ids = (Array.isArray(nikIds) ? nikIds : [nikIds]).filter((id) => id != null && id !== "");
     if (!ids.length) {
@@ -124,23 +214,19 @@ class NiksmsProvider {
     const xml = await this.#soapCall("GetSmsDelivery", body);
     const resultBlock = extractTag(xml, "GetSmsDeliveryResult") || "";
     const statuses = extractAllTags(resultBlock, "SmsStatus");
-    if (statuses.length) {
-      return statuses;
-    }
-    // Some responses nest bare enum text under the result element.
+    if (statuses.length) return statuses;
     const nested = extractAllTags(resultBlock, "string");
-    if (nested.length) {
-      return nested;
-    }
+    if (nested.length) return nested;
     return resultBlock ? [resultBlock] : [];
   }
 
-  async #sendGroupSms({ phone, message, purpose, mode }) {
+  async #sendOtpSms({ phone, message, purpose, mode }) {
     logEvent("SMS_SEND_STARTED", {
       provider: "niksms",
       phoneMasked: maskPhone(phone),
       purpose,
       mode,
+      transport: "rest",
       bodyLength: String(message || "").length,
     });
 
@@ -153,44 +239,58 @@ class NiksmsProvider {
         });
       }
 
-      const number = toNiksmsNumber(phone);
+      // Live account: API v2 SendOne with 09… actually debits credit.
+      // Official SOAP GroupSms often returns Successful without debiting / delivering.
+      const recipient09 = toNiksmsRecipient(phone);
+      const senderBare = normalizeNiksmsSender(this.sender, { forRest: true });
+      const senderSoap = normalizeNiksmsSender(this.sender, { forRest: false });
       const clientMessageId = String(Date.now());
-      // XSD requires SendOn (xs:dateTime). Docs sample treats scheduling as optional;
-      // current UTC time = send immediately.
-      const sendOn = new Date().toISOString();
 
-      const modelParts = [
-        this.sender ? `<SenderNumber>${escapeXml(this.sender)}</SenderNumber>` : "<SenderNumber />",
-        buildArrayOfString("Numbers", [number]),
-        `<SendOn>${escapeXml(sendOn)}</SendOn>`,
-        "<SendType>Normal</SendType>",
-        buildArrayOfString("YourMessageId", [clientMessageId]),
-        `<Message>${escapeXml(message)}</Message>`,
-      ];
+      let result;
+      try {
+        result = await this.#sendViaRest({
+          recipient09,
+          senderBare,
+          message,
+          clientMessageId,
+        });
+        this.#assertAccepted(result);
+      } catch (restError) {
+        const canFallback =
+          restError?.details?.reason === "http_error" ||
+          restError?.code === SMS_ERROR_CODES.SMS_PROVIDER_UNAVAILABLE ||
+          restError?.code === SMS_ERROR_CODES.SMS_PROVIDER_TIMEOUT;
 
-      const soapBody = `
-        <GroupSms xmlns="${TEMPURI_NS}">
-          ${this.#securityXml()}
-          <model>
-            ${modelParts.join("\n            ")}
-          </model>
-        </GroupSms>`;
+        if (!canFallback) {
+          throw restError;
+        }
 
-      const xml = await this.#soapCall("GroupSms", soapBody);
-      const result = this.#parseReturnSmsResult(xml, "GroupSmsResult");
-      this.#assertAccepted(result);
+        logEvent("SMS_REST_FALLBACK_SOAP", {
+          provider: "niksms",
+          phoneMasked: maskPhone(phone),
+          reason: restError?.details?.reason || restError?.code || "rest_failed",
+          httpStatus: restError?.details?.httpStatus,
+          providerStatus: restError?.details?.providerStatus,
+        });
 
-      const messageId =
-        result.nikIds[0] ||
-        (result.id != null && result.id !== "" ? String(result.id) : undefined) ||
-        clientMessageId;
+        result = await this.#sendViaSoap({
+          recipient09,
+          senderSoap,
+          message,
+          clientMessageId,
+        });
+        this.#assertAccepted(result);
+      }
+
+      const messageId = result.nikIds[0] || result.id || clientMessageId;
 
       logEvent("SMS_SEND_SUCCESS", {
         provider: "niksms",
         phoneMasked: maskPhone(phone),
         purpose,
         messageId,
-        providerStatus: result.status,
+        providerStatus: String(result.status),
+        transport: result.transport || "rest",
       });
 
       return {
@@ -199,17 +299,107 @@ class NiksmsProvider {
         provider: "niksms",
         messageId: String(messageId),
         nikIds: result.nikIds,
-        providerStatus: result.status,
+        providerStatus: String(result.status),
       };
     } catch (error) {
       logError("SMS_SEND_FAILED", error, {
         provider: "niksms",
         phoneMasked: maskPhone(phone),
         purpose,
-        code: error?.code,
+        smsErrorCode: error?.code,
+        providerStatus: error?.details?.providerStatus,
+        httpStatus: error?.details?.httpStatus,
+        warningMessage: error?.details?.warningMessage,
       });
       throw error;
     }
+  }
+
+  /**
+   * Official GroupSms SOAP — matches panel node.js sample.
+   * SendOn omitted for immediate send (docs: optional; wrong format prevents real queue).
+   */
+  async #sendViaSoap({ recipient09, senderSoap, message, clientMessageId }) {
+    const modelParts = [
+      senderSoap ? `<SenderNumber>${escapeXml(senderSoap)}</SenderNumber>` : "<SenderNumber />",
+      `<Numbers><string>${escapeXml(recipient09)}</string></Numbers>`,
+      "<SendType>Normal</SendType>",
+      `<YourMessageId><long>${escapeXml(clientMessageId)}</long></YourMessageId>`,
+      `<Message>${escapeXml(message)}</Message>`,
+    ];
+
+    const soapBody = `
+      <GroupSms xmlns="${TEMPURI_NS}">
+        ${this.#securityXml()}
+        <model>
+          ${modelParts.join("\n          ")}
+        </model>
+      </GroupSms>`;
+
+    const xml = await this.#soapCall("GroupSms", soapBody);
+    const block = extractTag(xml, "GroupSmsResult");
+    if (!block) {
+      throw new SmsProviderError("پاسخ نامعتبر از سرویس پیامک", {
+        code: SMS_ERROR_CODES.SMS_DELIVERY_FAILED,
+        statusCode: 502,
+        details: { reason: "missing_result", transport: "soap" },
+      });
+    }
+
+    const status = extractTag(block, "Status") || "";
+    const id = extractTag(block, "Id") || "";
+    const warningMessage = extractTag(block, "WarningMessage") || "";
+    const nikIds = extractAllTags(extractTag(block, "NikIds") || "", "long").filter(Boolean);
+
+    return {
+      status,
+      id,
+      warningMessage,
+      nikIds: nikIds.length ? nikIds : id ? [id] : [],
+      transport: "soap",
+    };
+  }
+
+  async #sendViaRest({ recipient09, senderBare, message, clientMessageId }) {
+    const body = new URLSearchParams({
+      username: this.username,
+      password: this.password,
+      message: String(message),
+      senderNumber: senderBare,
+      sendDate: "",
+      recipient: recipient09,
+      localId: String(clientMessageId || Date.now()),
+    });
+
+    const response = await fetchWithTimeout(
+      this.restUrl,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body,
+      },
+      this.timeoutMs,
+    );
+
+    const rawText = await response.text();
+    if (!response.ok) {
+      throw new SmsProviderError("ارسال پیامک ناموفق بود", {
+        code: SMS_ERROR_CODES.SMS_DELIVERY_FAILED,
+        statusCode: 502,
+        details: {
+          httpStatus: response.status,
+          reason: "http_error",
+          raw: String(rawText || "").slice(0, 200),
+        },
+      });
+    }
+
+    const result = parsePublicApiPayload(rawText);
+    result.transport = "rest";
+    return result;
   }
 
   #securityXml() {
@@ -229,7 +419,7 @@ class NiksmsProvider {
 
     const soapAction = `${TEMPURI_NS}INiksmsWebservice/${operation}`;
     const response = await fetchWithTimeout(
-      this.endpoint,
+      this.soapEndpoint,
       {
         method: "POST",
         headers: {
@@ -246,68 +436,33 @@ class NiksmsProvider {
       throw new SmsProviderError("ارسال پیامک ناموفق بود", {
         code: SMS_ERROR_CODES.SMS_DELIVERY_FAILED,
         statusCode: 502,
-        details: {
-          httpStatus: response.status,
-          reason: "http_error",
-          fault: Boolean(extractTag(text, "Fault") || extractTag(text, "faultstring")),
-        },
+        details: { httpStatus: response.status, reason: "http_error" },
       });
     }
-
-    const faultString = extractTag(text, "faultstring") || extractTag(text, "FaultString");
-    if (faultString) {
-      throw new SmsProviderError("ارسال پیامک ناموفق بود", {
-        code: SMS_ERROR_CODES.SMS_DELIVERY_FAILED,
-        statusCode: 502,
-        details: { reason: "soap_fault" },
-      });
-    }
-
     return text;
   }
 
-  #parseReturnSmsResult(xml, resultTag) {
-    const block = extractTag(xml, resultTag);
-    if (!block) {
-      throw new SmsProviderError("پاسخ نامعتبر از سرویس پیامک", {
-        code: SMS_ERROR_CODES.SMS_DELIVERY_FAILED,
-        statusCode: 502,
-        details: { reason: "missing_result", resultTag },
-      });
-    }
-
-    const status = extractTag(block, "Status");
-    const id = extractTag(block, "Id");
-    const warningMessage = extractTag(block, "WarningMessage");
-    const nikIdsBlock = extractTag(block, "NikIds") || "";
-    const nikIds = extractAllTags(nikIdsBlock, "long").filter(Boolean);
-
-    return {
-      status: status || "",
-      id,
-      warningMessage,
-      nikIds,
-    };
-  }
-
   #assertAccepted(result) {
-    const status = String(result.status || "");
-    if (SUCCESS_STATUSES.has(status)) {
+    const status = result?.status;
+    if (SUCCESS_STATUSES.has(status) || SUCCESS_STATUSES.has(String(status))) {
       return;
     }
 
-    const authFailure = status === "InvalidUserNameOrPass" || status === "19";
+    const statusKey = status;
+    const authFailure = status === "InvalidUserNameOrPass" || status === "19" || status === 19;
     const configFailure =
       status === "PrivateNumberIsIncorrect" ||
       status === "PrivateNumberIsDisable" ||
-      status === "10" ||
-      status === "7" ||
+      status === "UserApiBlocked" ||
+      status === "UserIsWaitForApprove" ||
       status === "PanelIsBlocked" ||
-      status === "14" ||
       status === "PanelExpired" ||
-      status === "18";
+      status === 7 ||
+      status === 10 ||
+      status === 14 ||
+      status === 18;
 
-    const message = STATUS_MESSAGES[status] || "ارسال پیامک ناموفق بود";
+    const message = STATUS_MESSAGES[statusKey] || STATUS_MESSAGES[String(statusKey)] || "ارسال پیامک ناموفق بود";
 
     throw new SmsProviderError(message, {
       code:
@@ -316,8 +471,9 @@ class NiksmsProvider {
           : SMS_ERROR_CODES.SMS_DELIVERY_FAILED,
       statusCode: 502,
       details: {
-        providerStatus: status || "unknown",
+        providerStatus: status != null && status !== "" ? String(status) : "unknown",
         reason: authFailure ? "invalid_credentials" : configFailure ? "provider_config" : "provider_rejected",
+        warningMessage: result?.warningMessage || undefined,
       },
     });
   }
@@ -325,6 +481,9 @@ class NiksmsProvider {
 
 module.exports = {
   NiksmsProvider,
-  NIKSMS_DEFAULT_ENDPOINT: DEFAULT_ENDPOINT,
+  NIKSMS_DEFAULT_ENDPOINT: DEFAULT_SOAP_ENDPOINT,
+  NIKSMS_DEFAULT_REST_URL: DEFAULT_REST_URL,
   NIKSMS_SUCCESS_STATUSES: SUCCESS_STATUSES,
+  normalizeNiksmsSender,
+  parsePublicApiPayload,
 };

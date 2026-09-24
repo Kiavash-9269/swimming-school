@@ -70,7 +70,6 @@ export default function AuthCard() {
   const [showPassword, setShowPassword] = useState(false);
   const [registrationToken, setRegistrationToken] = useState("");
   const [resetToken, setResetToken] = useState("");
-  const [devOtpHint, setDevOtpHint] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -106,7 +105,6 @@ export default function AuthCard() {
     setPassword("");
     setConfirmPassword("");
     setOtp("");
-    setDevOtpHint("");
     setError("");
     setInfo("");
   };
@@ -130,7 +128,6 @@ export default function AuthCard() {
       if (intent === "reset") {
         const result = await authApi.sendPasswordOtp(normalized);
         // No existence leak via `eligible` — always continue to OTP step.
-        setDevOtpHint(import.meta.env.DEV ? result.devOtp || "" : "");
         setInfo(result.message || "اگر حسابی با این شماره وجود داشته باشد، کد بازیابی ارسال می‌شود");
         setStep(STEPS.RESET_OTP);
         return;
@@ -145,9 +142,8 @@ export default function AuthCard() {
         return;
       }
 
-      const otpResult = await authApi.sendRegisterOtp(normalized);
+      await authApi.sendRegisterOtp(normalized);
       setIntent("register");
-      setDevOtpHint(import.meta.env.DEV ? otpResult.devOtp || "" : "");
       setInfo("کد تأیید ارسال شد");
       setStep(STEPS.REGISTER_OTP);
     } catch (err) {
@@ -357,16 +353,6 @@ export default function AuthCard() {
               <p className="text-sky-800 text-sm text-center">{info}</p>
             </div>
           )}
-
-          {import.meta.env.DEV &&
-            devOtpHint &&
-            (step === STEPS.REGISTER_OTP || step === STEPS.RESET_OTP) && (
-              <div className="w-3/4 mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-amber-800 text-xs text-center">
-                  کد توسعه (فقط محیط توسعه): {devOtpHint}
-                </p>
-              </div>
-            )}
 
           {step === STEPS.PHONE && (
             <>

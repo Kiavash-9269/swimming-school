@@ -41,6 +41,24 @@ async function parseJsonSafe(response) {
   }
 }
 
+/**
+ * Vite proxy / upstream reset often yields HTTP 5xx with an empty or non-JSON body.
+ * Map that to a clear network/server message instead of a vague INVALID_RESPONSE.
+ */
+function emptyFailedPayload(response) {
+  const status = Number(response?.status) || 0;
+  const upstreamDown = status === 502 || status === 503 || status === 504 || status === 500;
+  return {
+    success: false,
+    error: {
+      code: upstreamDown ? "SERVER_UNAVAILABLE" : "INVALID_RESPONSE",
+      message: upstreamDown
+        ? "اتصال به سرور قطع شد. اگر بک‌اند تازه ری‌استارت شده، چند ثانیه بعد دوباره تلاش کنید"
+        : "پاسخ نامعتبر از سرور دریافت شد",
+    },
+  };
+}
+
 function buildHeaders({ auth, jsonBody, extra } = {}) {
   const headers = {
     Accept: "application/json",
@@ -135,9 +153,14 @@ export async function apiRequest(
     const payload = await parseJsonSafe(response);
 
     if (!response.ok || payload?.success === false) {
-      throwFromJsonPayload(response, payload || {
-        success: false,
-        error: { code: "INVALID_RESPONSE", message: "پاسخ نامعتبر از سرور دریافت شد" },
+      throwFromJsonPayload(response, payload || emptyFailedPayload(response));
+    }
+
+    if (!payload || typeof payload !== "object") {
+      throw new ApiError({
+        status: response.status || 0,
+        code: "INVALID_RESPONSE",
+        message: "پاسخ نامعتبر از سرور دریافت شد",
       });
     }
 
@@ -182,9 +205,13 @@ export async function apiUpload(
 
     const payload = await parseJsonSafe(response);
     if (!response.ok || payload?.success === false) {
-      throwFromJsonPayload(response, payload || {
-        success: false,
-        error: { code: "INVALID_RESPONSE", message: "پاسخ نامعتبر از سرور دریافت شد" },
+      throwFromJsonPayload(response, payload || emptyFailedPayload(response));
+    }
+    if (!payload || typeof payload !== "object") {
+      throw new ApiError({
+        status: response.status || 0,
+        code: "INVALID_RESPONSE",
+        message: "پاسخ نامعتبر از سرور دریافت شد",
       });
     }
     return payload.data;

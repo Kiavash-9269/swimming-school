@@ -34,6 +34,14 @@ const envSchema = z.object({
   // SMS provider
   SMS_PROVIDER: z.enum(["development", "niksms", "sms-webservice", "kavenegar"]).optional(),
   SMS_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
+  /**
+   * When true (and NODE_ENV !== production), API responses may include `devOtp`
+   * even if SMS_PROVIDER is a real gateway — for local delivery debugging only.
+   */
+  SMS_EXPOSE_DEV_OTP: z
+    .string()
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
   /** Niksms SOAP — Username/Password (NOT compatible with SMS_WEBSERVICE_API_KEY) */
   NIKSMS_USERNAME: z.string().optional().default(""),
   NIKSMS_PASSWORD: z.string().optional().default(""),
@@ -44,6 +52,8 @@ const envSchema = z.object({
     .string()
     .optional()
     .default("http://94.182.154.28:1370/NiksmsWebservice.svc"),
+  /** Official REST SendOne endpoint (v2) */
+  NIKSMS_REST_URL: z.string().optional().default("https://niksms.com/api/v2/send/one"),
   /** PayamResan / sms-webservice.com REST — separate from Niksms */
   SMS_WEBSERVICE_API_KEY: z.string().optional().default(""),
   SMS_WEBSERVICE_SENDER: z.string().optional().default(""),

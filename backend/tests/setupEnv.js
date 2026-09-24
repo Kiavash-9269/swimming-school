@@ -21,6 +21,7 @@ process.env.OTP_RATE_LIMIT_PER_PHONE = "5";
 process.env.OTP_RATE_LIMIT_WINDOW_SEC = "600";
 process.env.SMS_PROVIDER = "development";
 process.env.SMS_TIMEOUT_MS = "20000";
+process.env.SMS_EXPOSE_DEV_OTP = "false";
 process.env.NIKSMS_USERNAME = "";
 process.env.NIKSMS_PASSWORD = "";
 process.env.NIKSMS_SENDER = "";

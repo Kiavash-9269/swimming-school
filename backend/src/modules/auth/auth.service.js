@@ -212,7 +212,8 @@ async function issueOtp({ phone, purpose }) {
       cooldownSeconds: env.OTP_RESEND_COOLDOWN_SECONDS,
     };
 
-    const devOtp = otpDeliveryService.maybeExposeDevOtp(delivery.code);
+    // Always use the issued code (providers may not echo it back).
+    const devOtp = otpDeliveryService.maybeExposeDevOtp(code);
     if (devOtp) {
       payload.devOtp = devOtp;
     }

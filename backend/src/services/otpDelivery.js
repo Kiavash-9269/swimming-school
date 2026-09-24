@@ -5,7 +5,7 @@ const { createSmsProvider } = require("./sms/createProvider");
 const { DevelopmentDeliveryAdapter } = require("./sms/providers/developmentProvider");
 const { SmsWebserviceProvider } = require("./sms/providers/smsWebserviceProvider");
 const { KavenegarProvider } = require("./sms/providers/kavenegarProvider");
-const { NiksmsProvider } = require("./sms/providers/niksmsProvider");
+const { NiksmsProvider, normalizeNiksmsSender } = require("./sms/providers/niksmsProvider");
 const { SmsProviderError, SMS_ERROR_CODES } = require("./sms/errors");
 
 /**
@@ -49,15 +49,17 @@ class OtpDeliveryService {
 
   /**
    * Only expose OTP to API consumers outside production.
+   * - Always when SMS_PROVIDER=development
+   * - Or when SMS_EXPOSE_DEV_OTP=true (local debugging with a real SMS provider)
    */
   maybeExposeDevOtp(code) {
     if (env.NODE_ENV === "production") {
       return undefined;
     }
-    if (env.SMS_PROVIDER !== "development") {
-      return undefined;
+    if (env.SMS_PROVIDER === "development" || env.SMS_EXPOSE_DEV_OTP) {
+      return code;
     }
-    return code;
+    return undefined;
   }
 }
 
@@ -73,4 +75,5 @@ module.exports = {
   SMS_ERROR_CODES,
   createSmsProvider,
   otpDeliveryService,
+  normalizeNiksmsSender,
 };
