@@ -444,15 +444,15 @@ export default function AdminAttendancePage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin"
-        backLabel="← مرکز عملیات"
+        backLabel="میز مدیریت"
         title="حضور و غیاب"
-        description="اول دوره مردانه یا زنانه را انتخاب کنید، بعد روز، بعد کلاس همان روز. با «ثبت» ذخیره و پیامک غایبین انجام می‌شود."
+        description="دوره، روز و کلاس را انتخاب کنید. تا وقتی «ثبت» را نزنید، وضعیت‌ها پیش‌نویس می‌مانند و پیامک غیبت ارسال نمی‌شود."
       />
 
       <section className="rounded-2xl border border-cyan-200/80 bg-gradient-to-b from-cyan-50/40 to-white p-5 shadow-sm">
-        <h2 className="text-lg font-extrabold text-slate-900">ثبت حضور جلسه</h2>
+        <h2 className="text-lg font-extrabold text-slate-900">ثبت حضور همین جلسه</h2>
         <p className="mt-1 text-sm text-slate-600">
-          دوره‌ها فقط مردانه یا زنانه هستند. وضعیت‌ها پیش‌نویس‌اند تا دکمه ثبت زده شود.
+          اول نوع دوره را انتخاب کنید، بعد روز، بعد کلاس. تا ثبت نهایی، هیچ پیامکی نمی‌رود.
         </p>
 
         <div className="mt-4">

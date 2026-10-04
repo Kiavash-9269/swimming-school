@@ -125,7 +125,7 @@ export default function AdminNotificationDetailPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin/notifications"
-        backLabel="← اعلان‌ها"
+        backLabel="بازگشت به پیام‌ها"
         title={NOTIFICATION_TYPE_LABELS[item.type] || item.type}
         description={
           <span className="inline-flex flex-wrap items-center gap-2">

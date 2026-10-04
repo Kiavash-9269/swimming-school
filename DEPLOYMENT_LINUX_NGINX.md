@@ -2,6 +2,10 @@
 
 # راهنمای کامل استقرار پروژه مدرسه شنا روی سرور لینوکس + Nginx
 
+> **مسیر سریع (Ubuntu 24/26 + GitHub):** [`deploy/README.md`](./deploy/README.md)
+> روی سرور: `git clone …` سپس `sudo bash deploy/ubuntu/setup.sh --domain YOUR_DOMAIN.com`
+> آپدیت: `sudo bash deploy/ubuntu/update.sh` (داخلش `git pull` دارد)
+
 این سند مخصوص همین ریپازیتوری است: **بک‌اند Express (Node.js)** + **فرانت‌اند Vite/React** + **MongoDB** + **Nginx** به‌عنوان ریورس‌پراکسی و سرو فایل‌های استاتیک.
 
 ---
@@ -34,7 +38,7 @@
 - پیشنهادی: ۲ vCPU، ۴GB RAM
 
 ### نرم‌افزار
-- Ubuntu 22.04 LTS یا Debian 12 (دستورات زیر برای Ubuntu است)
+- Ubuntu 22.04 / 24.04 / 26.04 LTS یا Debian 12 (دستورات زیر برای Ubuntu است؛ مسیر خودکار: `deploy/ubuntu/setup.sh`)
 - دامنه که به IP سرور اشاره کند (A Record)
 - دسترسی SSH با کاربر دارای `sudo`
 - پورت‌های خروجی برای SMS نیک‌اس‌ام‌اس: `94.182.154.28:1370` (اگر فایروال خروجی محدود است)

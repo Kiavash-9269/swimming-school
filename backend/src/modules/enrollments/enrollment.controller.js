@@ -478,6 +478,8 @@ const adminSearchParticipants = asyncHandler(async (req, res) => {
     gender: req.query.gender,
     isActive: req.query.isActive,
     ownerUserId: req.query.ownerUserId,
+    enrolled: req.query.enrolled,
+    classId: req.query.classId,
     page: req.query.page,
     limit: req.query.limit,
   });

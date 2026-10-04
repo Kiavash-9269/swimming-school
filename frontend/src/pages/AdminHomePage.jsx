@@ -2,14 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getReportsDashboard } from "../features/reports/reportsApi";
 import { formatIrrAmount, userMessageFromReportError } from "../features/reports/reportLabels";
-import { AdminPageHeader } from "../features/courses/components/AdminCourseUi";
-import { MetricTile, DetailSection, ActionBar } from "../features/ops/OpsUi";
+import { MetricTile, DetailSection } from "../features/ops/OpsUi";
 import { SectionLoader } from "../components/Ui/Loading";
 import ErrorState from "../components/Ui/ErrorState";
 
 /**
- * Admin operations home — real dashboard counts + prioritized next actions.
- * No invented KPIs.
+ * Admin home — real dashboard counts and the next decisions worth a director's attention.
  */
 export default function AdminHomePage() {
   const [dashboard, setDashboard] = useState(null);
@@ -25,7 +23,7 @@ export default function AdminHomePage() {
       setStatus("ready");
     } catch (err) {
       if (err?.code === "ABORTED") return;
-      setErrorMessage(userMessageFromReportError(err, "بارگذاری خلاصه عملیاتی ناموفق بود."));
+      setErrorMessage(userMessageFromReportError(err, "خلاصه امروز مدرسه بارگذاری نشد."));
       setStatus("error");
     }
   }, []);
@@ -36,9 +34,9 @@ export default function AdminHomePage() {
     return () => ac.abort();
   }, [load]);
 
-  if (status === "loading") return <SectionLoader label="در حال آماده‌سازی مرکز عملیات…" />;
+  if (status === "loading") return <SectionLoader label="در حال چیدن میز مدیریت…" />;
   if (status === "error") {
-    return <ErrorState title="خطا در بارگذاری" message={errorMessage} onRetry={() => load()} />;
+    return <ErrorState title="میز مدیریت باز نشد" message={errorMessage} onRetry={() => load()} />;
   }
 
   const d = dashboard || {};
@@ -51,114 +49,112 @@ export default function AdminHomePage() {
   if (pendingDocs > 0) {
     priorities.push({
       to: "/admin/documents/pending",
-      title: "بررسی مدارک در صف",
-      hint: `${pendingDocs.toLocaleString("fa-IR")} مدرک بیمه/پزشکی`,
+      title: "مدارک خانواده‌ها منتظر تأیید شماست",
+      hint: `${pendingDocs.toLocaleString("fa-IR")} بیمه‌نامه و گواهی پزشکی در صف بررسی`,
     });
   }
   if (pendingCompliance > 0) {
     priorities.push({
       to: "/admin/reports?tab=compliance",
-      title: "ثبت‌نام در انتظار مدارک",
-      hint: `${pendingCompliance.toLocaleString("fa-IR")} ثبت‌نام`,
+      title: "ثبت‌نام‌هایی که هنوز کامل نشده‌اند",
+      hint: `${pendingCompliance.toLocaleString("fa-IR")} خانواده منتظر نتیجه مدارک است`,
     });
   }
   if (waitlist > 0) {
     priorities.push({
       to: "/admin/reports?tab=waitlist",
-      title: "لیست انتظار",
-      hint: `${waitlist.toLocaleString("fa-IR")} مورد`,
+      title: "لیست انتظار ظرفیت می‌خواهد",
+      hint: `${waitlist.toLocaleString("fa-IR")} نفر چشم‌به‌راه جا در کلاس هستند`,
     });
   }
   priorities.push({
     to: "/admin/classes?status=REGISTRATION_OPEN",
-    title: "کلاس‌های با ثبت‌نام باز",
-    hint: "مدیریت ظرفیت و بستن ثبت‌نام",
+    title: "کلاس‌هایی که هنوز ثبت‌نام می‌پذیرند",
+    hint: "ظرفیت را ببینید و در زمان مناسب درِ ثبت‌نام را ببندید",
   });
   priorities.push({
     to: "/admin/attendance",
-    title: "حضور و غیاب جلسات",
-    hint: "ثبت حاضر/غایب شاگردان توسط ادمین",
+    title: "حضور امروز را ثبت کنید",
+    hint: "حاضر و غایب هر جلسه، با یک تأیید نهایی",
   });
 
   return (
     <div className="space-y-8">
-      <AdminPageHeader
-        title="مرکز عملیات"
-        description="اعداد از گزارش سرور است. تمرکز روی اقدام بعدی، نه داشبورد تزئینی."
-      />
+      <section className="admin-hero">
+        <p className="admin-eyebrow">دفتر مدیر</p>
+        <h1>میز مدیریت</h1>
+        <p>
+          امروز مدرسه را از همین‌جا ببینید. عددها واقعی‌اند و هر کارت شما را به تصمیمی می‌برد که
+          ارزش توجه دارد: ظرفیت، آرامش خانواده‌ها، و نظم آموزش.
+        </p>
+        <span className="admin-hero-orb" aria-hidden="true" />
+      </section>
 
-      <DetailSection title="الان چه کار کنم؟" hint="اولویت‌های پیشنهادی بر اساس اعداد واقعی داشبورد">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {priorities.map((p) => (
-            <Link
-              key={p.to + p.title}
-              to={p.to}
-              className="rounded-2xl border border-cyan-200 bg-cyan-50/40 p-4 transition hover:border-cyan-400 hover:bg-cyan-50"
-            >
-              <p className="font-bold text-slate-900">{p.title}</p>
-              <p className="mt-1 text-xs text-slate-600">{p.hint}</p>
+      <DetailSection
+        title="اولویت‌های امروز"
+        hint="از مهم‌ترین کار شروع کنید. بقیه می‌تواند تا بعد از ظهر بماند."
+      >
+        <div className="admin-stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {priorities.map((item, index) => (
+            <Link key={item.to + item.title} to={item.to} className="admin-priority">
+              <p className="admin-priority-index">
+                اولویت {(index + 1).toLocaleString("fa-IR")}
+              </p>
+              <strong>{item.title}</strong>
+              <span>{item.hint}</span>
             </Link>
           ))}
         </div>
       </DetailSection>
 
       <section>
-        <h2 className="mb-3 text-sm font-bold text-slate-700">وضعیت فعلی (واقعی)</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="mb-3 text-sm font-bold text-slate-800">نبض مدرسه</h2>
+        <div className="admin-stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <MetricTile
-            label="کلاس‌های فعال / کل"
-            value={`${Number(d.activeClasses || 0).toLocaleString("fa-IR")} / ${Number(d.courses || 0).toLocaleString("fa-IR")}`}
+            label="کلاس‌های در جریان"
+            value={`${Number(d.activeClasses || 0).toLocaleString("fa-IR")} از ${Number(d.courses || 0).toLocaleString("fa-IR")}`}
+            hint="کلاس‌های منتشرشده، باز، بسته یا در حال برگزاری"
             to="/admin/classes"
           />
           <MetricTile
-            label="ثبت‌نام فعال / کل"
-            value={`${Number(d.activeEnrollments || 0).toLocaleString("fa-IR")} / ${Number(d.enrollments || 0).toLocaleString("fa-IR")}`}
+            label="ثبت‌نام‌های جاری"
+            value={`${Number(d.activeEnrollments || 0).toLocaleString("fa-IR")} از ${Number(d.enrollments || 0).toLocaleString("fa-IR")}`}
+            hint="شاگردانی که هنوز در مسیر کلاس هستند"
             to="/admin/reports?tab=enrollments"
           />
           <MetricTile
             label="مدارک در انتظار"
             value={pendingDocs.toLocaleString("fa-IR")}
+            hint="هر تأیید، یک خانواده را از انتظار خارج می‌کند"
             to="/admin/documents/pending"
           />
           <MetricTile
-            label="درآمد موفق"
+            label="درآمد تأییدشده"
             value={formatIrrAmount(d.revenue)}
-            hint={`موفق ${Number(d.successfulPayments || 0).toLocaleString("fa-IR")} از ${Number(d.payments || 0).toLocaleString("fa-IR")}`}
+            hint={`${Number(d.successfulPayments || 0).toLocaleString("fa-IR")} پرداخت موفق از ${Number(d.payments || 0).toLocaleString("fa-IR")}`}
             to="/admin/payments"
           />
         </div>
       </section>
 
-      <DetailSection title="میان‌برهای عملیاتی">
-        <ActionBar tone="primary">
-          <Link to="/admin/courses" className="rounded-xl bg-white px-3 py-2 text-sm font-medium text-cyan-900 border border-cyan-200">
-            قالب دوره‌ها
+      <DetailSection title="سه نگاه مدیر" hint="اگر فقط یک مسیر را امروز باز می‌کنید، یکی از این سه باشد.">
+        <div className="grid gap-3 md:grid-cols-3">
+          <Link to="/admin/classes" className="admin-priority">
+            <p className="admin-priority-index">آموزش</p>
+            <strong>کلاس‌ها را زنده نگه دارید</strong>
+            <span>دوره الگوست؛ کلاس جایی است که شاگرد واقعاً شنا می‌کند.</span>
           </Link>
-          <Link to="/admin/classes" className="rounded-xl bg-cyan-700 px-3 py-2 text-sm font-medium text-white">
-            کلاس‌ها
+          <Link to="/admin/documents/pending" className="admin-priority">
+            <p className="admin-priority-index">اعتماد</p>
+            <strong>به مدارک پاسخ بدهید</strong>
+            <span>تأخیر در بررسی، خانواده را پشت درِ استخر نگه می‌دارد.</span>
           </Link>
-          <Link to="/admin/instructors" className="rounded-xl bg-white px-3 py-2 text-sm border border-cyan-200 text-cyan-900">
-            مربیان
+          <Link to="/admin/reports" className="admin-priority">
+            <p className="admin-priority-index">شفافیت</p>
+            <strong>گزارش را مثل یک جلسه هیئت‌مدیره بخوانید</strong>
+            <span>ثبت‌نام، درآمد و ظرفیت، بدون حدس و بدون عدد تزئینی.</span>
           </Link>
-          <Link to="/admin/participants" className="rounded-xl bg-white px-3 py-2 text-sm border border-cyan-200 text-cyan-900">
-            شرکت‌کنندگان
-          </Link>
-          <Link to="/admin/payments" className="rounded-xl bg-white px-3 py-2 text-sm border border-cyan-200 text-cyan-900">
-            پرداخت‌ها
-          </Link>
-          <Link to="/admin/notifications" className="rounded-xl bg-white px-3 py-2 text-sm border border-cyan-200 text-cyan-900">
-            اعلان‌ها
-          </Link>
-          <Link to="/admin/reports" className="rounded-xl bg-white px-3 py-2 text-sm border border-cyan-200 text-cyan-900">
-            گزارش‌ها
-          </Link>
-          <Link to="/instructor" className="rounded-xl bg-white px-3 py-2 text-sm border border-slate-200 text-slate-700">
-            فضای مربی
-          </Link>
-        </ActionBar>
-        <p className="mt-3 text-xs text-slate-500">
-          دوره = قالب قابل استفاده مجدد · کلاس = نمونه عملیاتی · صف اعلان‌ها از قرارداد واقعی سرور.
-        </p>
+        </div>
       </DetailSection>
     </div>
   );

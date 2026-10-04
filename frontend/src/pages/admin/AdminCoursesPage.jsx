@@ -74,9 +74,9 @@ export default function AdminCoursesPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin"
-        backLabel="← مرکز عملیات"
-        title="قالب‌های دوره"
-        description="این فهرست قالب‌های قابل استفاده مجدد است — نه کلاس‌های در حال اجرا. برای نمونه‌های عملیاتی به «کلاس‌ها» بروید. حذف سخت وجود ندارد؛ غیرفعال‌سازی با ویرایش وضعیت «فعال» است و حذف نیست."
+        backLabel="میز مدیریت"
+        title="دوره‌ها"
+        description="الگوی هر دوره را اینجا می‌سازید. کلاس‌های واقعی از همین الگو متولد می‌شوند. اگر دوره‌ای دیگر ارائه نمی‌شود، آن را غیرفعال کنید؛ سابقه پاک نمی‌شود."
         actions={
           <Link
             to="/admin/courses/new"
@@ -89,7 +89,7 @@ export default function AdminCoursesPage() {
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
         <label className="text-sm">
-          <span className="text-xs text-slate-500">جستجو در نتایج بارگذاری‌شده (محلی)</span>
+          <span className="text-xs text-slate-500">جستجو در عنوان یا سطح</span>
           <input
             value={localQ}
             onChange={(e) => setLocalQ(e.target.value)}

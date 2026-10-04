@@ -176,6 +176,10 @@ const paginationQuery = z.object({
   ownerUserId: objectId.optional(),
   status: z.string().trim().max(40).optional(),
   classId: objectId.optional(),
+  enrolled: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
 });
 
 module.exports = {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   getInsuranceDocument,
   getMedicalDocument,
@@ -17,6 +17,7 @@ import {
   userMessageFromEnrollmentError,
   formatExpiryFa,
 } from "../../features/enrollments/enrollmentLabels";
+import { AdminPageHeader } from "../../features/courses/components/AdminCourseUi";
 import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import ForbiddenState from "../../components/Ui/ForbiddenState";
@@ -217,14 +218,16 @@ export default function AdminDocumentReviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link to="/admin/documents/pending" className="text-sm text-cyan-700 hover:underline">
-          ← بررسی مدارک
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">
-          بررسی {kind === "insurance" ? "بیمه" : "پزشکی"}
-        </h1>
-      </div>
+      <AdminPageHeader
+        backTo="/admin/documents/pending"
+        backLabel="بازگشت به صف مدارک"
+        title={kind === "insurance" ? "بررسی بیمه‌نامه" : "بررسی گواهی پزشکی"}
+        description={
+          participantName
+            ? `پرونده ${participantName}. تصمیم شما وضعیت ثبت‌نام این خانواده را روشن می‌کند.`
+            : "تصمیم شما وضعیت ثبت‌نام این خانواده را روشن می‌کند."
+        }
+      />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="font-bold text-slate-900">مدرک</h2>

@@ -6,5 +6,10 @@ frontend/dist/
 backend/coverage/
 backend/.env
 backend/.data/
+deploy/ubuntu/.generated-secrets.txt
+deploy/ubuntu/.env.server.tmp
+deploy/ubuntu/.env.server
 *.log
 .DS_Store
+*.tar
+*.tar.gz

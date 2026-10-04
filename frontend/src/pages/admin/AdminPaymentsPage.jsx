@@ -97,9 +97,9 @@ export default function AdminPaymentsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin"
-        backLabel="← مرکز عملیات"
+        backLabel="میز مدیریت"
         title="پرداخت‌ها"
-        description="فهرست ادمین از گزارش سرور. صفحه‌بندی ندارد — حداکثر ۱۰۰ رکورد با فیلتر سرور. استرداد فقط از جزئیات پرداخت."
+        description="تصویر شفاف دریافت‌ها. استرداد از صفحه همان پرداخت انجام می‌شود. برای دیدن ناهماهنگی، تطبیق را از همین صفحه اجرا کنید."
       />
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">

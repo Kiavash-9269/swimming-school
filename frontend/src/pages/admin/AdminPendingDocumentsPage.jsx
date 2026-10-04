@@ -6,6 +6,7 @@ import {
   userMessageFromEnrollmentError,
   formatExpiryFa,
 } from "../../features/enrollments/enrollmentLabels";
+import { AdminPageHeader } from "../../features/courses/components/AdminCourseUi";
 import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import EmptyState from "../../components/Ui/EmptyState";
@@ -123,16 +124,12 @@ export default function AdminPendingDocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link to="/admin" className="text-sm text-cyan-700 hover:underline">
-          ← پنل مدیریت
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">بررسی مدارک</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          بیمه در انتظار: {(data?.insuranceTotal || 0).toLocaleString("fa-IR")} · پزشکی در انتظار:{" "}
-          {(data?.medicalTotal || 0).toLocaleString("fa-IR")}
-        </p>
-      </div>
+      <AdminPageHeader
+        backTo="/admin"
+        backLabel="میز مدیریت"
+        title="بررسی مدارک"
+        description={`بیمه‌نامه در انتظار: ${(data?.insuranceTotal || 0).toLocaleString("fa-IR")} · گواهی پزشکی در انتظار: ${(data?.medicalTotal || 0).toLocaleString("fa-IR")}. هر پرونده را باز کنید و با اطمینان تأیید یا رد کنید.`}
+      />
 
       {insurance.length ? (
         <section className="space-y-3">

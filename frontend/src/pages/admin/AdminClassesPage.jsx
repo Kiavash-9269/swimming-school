@@ -68,9 +68,9 @@ export default function AdminClassesPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin"
-        backLabel="← مرکز عملیات"
-        title="کلاس‌های عملیاتی"
-        description="هر کلاس یک نمونه اجرایی از قالب دوره است. کلاس‌های پیش‌نویس برای کاربران دیده نمی‌شوند — از جزئیات کلاس «انتشار و باز کردن ثبت‌نام» را بزنید تا در «کلاس‌های مجموعه» ظاهر شوند."
+        backLabel="میز مدیریت"
+        title="کلاس‌ها"
+        description="هر کلاس، اجرای واقعی یک دوره است. پیش‌نویس‌ها برای خانواده‌ها دیده نمی‌شوند. وقتی آماده بود، ثبت‌نام را باز کنید تا کلاس در سایت ظاهر شود."
         actions={
           <Link
             to="/admin/classes/new"
@@ -98,7 +98,7 @@ export default function AdminClassesPage() {
           </select>
         </label>
         <label className="text-sm">
-          <span className="text-xs text-slate-500">قالب دوره</span>
+          <span className="text-xs text-slate-500">دوره</span>
           <select
             value={courseTemplateId}
             onChange={(e) => setFilter("courseTemplateId", e.target.value)}

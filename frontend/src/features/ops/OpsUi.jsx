@@ -6,7 +6,7 @@ import { ATTENDANCE_CHIP_TONES } from "./opsHelpers";
 
 export function OpsTabs({ tabs, activeId, onChange }) {
   return (
-    <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 bg-gradient-to-l from-slate-50 to-white p-1.5 shadow-sm">
+    <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200/70 bg-white/80 p-1.5 shadow-sm backdrop-blur">
       {tabs.map((t) => {
         const active = t.id === activeId;
         return (
@@ -36,7 +36,7 @@ export function OpsTabs({ tabs, activeId, onChange }) {
 export function DetailSection({ title, hint, actions, children, className = "" }) {
   return (
     <section
-      className={`rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/40 p-5 shadow-sm ${className}`}
+      className={`rounded-[1.35rem] border border-slate-200/70 bg-white/90 p-5 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.55)] ${className}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
@@ -66,24 +66,21 @@ export function ActionBar({ children, tone = "default" }) {
 export function MetricTile({ label, value, hint, to }) {
   const body = (
     <>
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1.5 text-xl font-extrabold tracking-tight text-slate-900">{value}</p>
-      {hint ? <p className="mt-1 text-[11px] text-slate-400">{hint}</p> : null}
+      <p className="text-xs font-semibold text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{value}</p>
+      {hint ? <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">{hint}</p> : null}
     </>
   );
+  const shell =
+    "relative block overflow-hidden rounded-[1.25rem] border border-slate-200/70 bg-white p-4 shadow-[0_16px_34px_-28px_rgba(15,23,42,0.65)] before:absolute before:inset-x-0 before:top-0 before:h-1 before:bg-gradient-to-l before:from-teal-600 before:to-amber-200";
   if (to) {
     return (
-      <Link
-        to={to}
-        className="block rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md"
-      >
+      <Link to={to} className={`${shell} transition hover:-translate-y-1 hover:border-teal-200`}>
         {body}
       </Link>
     );
   }
-  return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">{body}</div>
-  );
+  return <div className={shell}>{body}</div>;
 }
 
 export function EntityCard({ title, meta, status, actions, children, to }) {

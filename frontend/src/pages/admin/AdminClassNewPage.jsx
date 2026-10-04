@@ -138,7 +138,7 @@ export default function AdminClassNewPage() {
       ) : null}
 
       <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
-        <Field label="قالب دوره" error={errors.courseTemplateId}>
+        <Field label="دوره" error={errors.courseTemplateId}>
           <select
             className={inputClass}
             value={form.courseTemplateId}

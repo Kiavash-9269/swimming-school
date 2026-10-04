@@ -105,7 +105,7 @@ export default function AdminParticipantDetailPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin/participants"
-        backLabel="← جستجوی شرکت‌کنندگان"
+        backLabel="بازگشت به شاگردان"
         title={name}
         description={
           <span className="inline-flex flex-wrap items-center gap-2">

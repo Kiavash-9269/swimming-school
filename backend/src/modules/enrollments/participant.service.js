@@ -180,11 +180,36 @@ async function listOwnerParticipants(ownerUserId, { includeInactive = false } = 
   return Participant.find(filter).sort({ createdAt: -1 });
 }
 
+async function enrollmentSummaries(participantIds) {
+  if (!participantIds.length) return new Map();
+  const rows = await Enrollment.find({ participantId: { $in: participantIds } })
+    .sort({ createdAt: -1 })
+    .populate("classId", "title")
+    .select("participantId classId status createdAt")
+    .lean();
+
+  const byParticipant = new Map();
+  for (const row of rows) {
+    const key = String(row.participantId);
+    if (!byParticipant.has(key)) byParticipant.set(key, []);
+    byParticipant.get(key).push({
+      id: String(row._id),
+      classId: row.classId?._id ? String(row.classId._id) : String(row.classId || ""),
+      classTitle: row.classId?.title || "",
+      status: row.status,
+      createdAt: row.createdAt,
+    });
+  }
+  return byParticipant;
+}
+
 async function searchParticipantsAdmin({
   q,
   gender,
   isActive,
   ownerUserId,
+  enrolled,
+  classId,
   page = 1,
   limit = 20,
 } = {}) {
@@ -192,6 +217,13 @@ async function searchParticipantsAdmin({
   const safePage = Math.max(1, Number(page) || 1);
   const filter = {};
   if (ownerUserId) filter.ownerUserId = ownerUserId;
+  if (enrolled === true || enrolled === false || classId) {
+    const enrolledIds = await Enrollment.distinct(
+      "participantId",
+      classId ? { classId } : {},
+    );
+    filter._id = enrolled === false && !classId ? { $nin: enrolledIds } : { $in: enrolledIds };
+  }
   if (gender) filter.gender = gender;
   if (isActive === true || isActive === false) filter.isActive = isActive;
   if (q && String(q).trim()) {
@@ -211,11 +243,16 @@ async function searchParticipantsAdmin({
     Participant.countDocuments(filter),
   ]);
 
+  const summaries = await enrollmentSummaries(items.map((p) => p._id));
+
   return {
     page: safePage,
     limit: safeLimit,
     total,
-    items: items.map((p) => toPublicParticipant(p, { includeEmergency: true, includeAge: true })),
+    items: items.map((p) => ({
+      ...toPublicParticipant(p, { includeEmergency: true, includeAge: true }),
+      enrollments: summaries.get(String(p._id)) || [],
+    })),
   };
 }
 

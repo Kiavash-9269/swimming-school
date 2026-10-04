@@ -290,7 +290,7 @@ export function getAdminUser360(userId, { signal } = {}) {
 
 /** ADMIN: GET /enrollments/admin/participants/search */
 export function searchAdminParticipants(
-  { q, page = 1, limit = 20, gender, isActive, ownerUserId, signal } = {},
+  { q, page = 1, limit = 20, gender, isActive, ownerUserId, enrolled, classId, signal } = {},
 ) {
   const params = new URLSearchParams();
   if (q) params.set("q", String(q));
@@ -299,6 +299,8 @@ export function searchAdminParticipants(
   if (gender) params.set("gender", String(gender));
   if (isActive === true || isActive === false) params.set("isActive", String(isActive));
   if (ownerUserId) params.set("ownerUserId", String(ownerUserId));
+  if (enrolled === true || enrolled === false) params.set("enrolled", String(enrolled));
+  if (classId) params.set("classId", String(classId));
   const qs = params.toString();
   return apiRequest(`/enrollments/admin/participants/search${qs ? `?${qs}` : ""}`, {
     method: "GET",

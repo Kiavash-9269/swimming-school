@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { searchAdminParticipants } from "../../features/enrollments/enrollmentsApi";
+import { getCourseClasses } from "../../features/courses/coursesApi";
 import {
+  ENROLLMENT_STATUS_LABELS,
   formatExpiryFa,
   userMessageFromEnrollmentError,
 } from "../../features/enrollments/enrollmentLabels";
@@ -13,10 +15,24 @@ import EmptyState from "../../components/Ui/EmptyState";
 import ForbiddenState from "../../components/Ui/ForbiddenState";
 
 const GENDER_OPTIONS = ["MALE", "FEMALE"];
+const PAGE_SIZE = 20;
+
+const ENROLLMENT_TONES = {
+  ACTIVE: "success",
+  PAID: "success",
+  COMPLETED: "info",
+  PENDING: "warn",
+  PAYMENT_PENDING: "warn",
+  PENDING_COMPLIANCE: "warn",
+  WAITLISTED: "info",
+  CANCELLED: "neutral",
+  EXPIRED: "neutral",
+  PAYMENT_FAILED: "danger",
+  REFUNDED: "neutral",
+};
 
 /**
- * ADMIN participant discovery — GET /enrollments/admin/participants/search only.
- * Explicit search action (no request spam).
+ * ADMIN — everyone who registered for a class, via GET /enrollments/admin/participants/search.
  */
 export default function AdminParticipantsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -24,27 +40,29 @@ export default function AdminParticipantsPage() {
   const page = Number(searchParams.get("page") || 1) || 1;
   const gender = searchParams.get("gender") || "";
   const isActiveParam = searchParams.get("isActive");
+  const classId = searchParams.get("classId") || "";
+  const showAll = searchParams.get("scope") === "all";
 
   const [qInput, setQInput] = useState(qParam);
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [status, setStatus] = useState(qParam || gender || isActiveParam != null ? "loading" : "idle");
+  const [classes, setClasses] = useState([]);
+  const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [forbidden, setForbidden] = useState(false);
-  const [searched, setSearched] = useState(Boolean(qParam || gender || isActiveParam != null));
+
+  useEffect(() => {
+    const ac = new AbortController();
+    getCourseClasses({ signal: ac.signal })
+      .then((data) => setClasses(Array.isArray(data?.items) ? data.items : []))
+      .catch(() => {});
+    return () => ac.abort();
+  }, []);
 
   const load = useCallback(
     async (signal) => {
-      if (!qParam && !gender && isActiveParam == null) {
-        setItems([]);
-        setTotal(0);
-        setStatus("idle");
-        setSearched(false);
-        return;
-      }
       setStatus("loading");
       setForbidden(false);
-      setSearched(true);
       try {
         let isActive;
         if (isActiveParam === "true") isActive = true;
@@ -52,9 +70,11 @@ export default function AdminParticipantsPage() {
         const data = await searchAdminParticipants({
           q: qParam || undefined,
           page,
-          limit: 20,
+          limit: PAGE_SIZE,
           gender: gender || undefined,
           isActive,
+          enrolled: showAll ? undefined : true,
+          classId: classId || undefined,
           signal,
         });
         setItems(Array.isArray(data?.items) ? data.items : []);
@@ -67,11 +87,11 @@ export default function AdminParticipantsPage() {
           setStatus("error");
           return;
         }
-        setErrorMessage(userMessageFromEnrollmentError(err, "جستجوی شرکت‌کننده ناموفق بود."));
+        setErrorMessage(userMessageFromEnrollmentError(err, "فهرست شاگردان بارگذاری نشد."));
         setStatus("error");
       }
     },
-    [qParam, page, gender, isActiveParam],
+    [qParam, page, gender, isActiveParam, classId, showAll],
   );
 
   useEffect(() => {
@@ -80,25 +100,35 @@ export default function AdminParticipantsPage() {
     return () => ac.abort();
   }, [load]);
 
-  function submitSearch(e) {
-    e?.preventDefault?.();
-    const next = new URLSearchParams();
-    if (qInput.trim()) next.set("q", qInput.trim());
-    if (gender) next.set("gender", gender);
-    if (isActiveParam === "true" || isActiveParam === "false") next.set("isActive", isActiveParam);
+  function setFilter(key, value) {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
     next.set("page", "1");
     setSearchParams(next);
   }
 
-  const totalPages = Math.max(1, Math.ceil(total / 20) || 1);
+  function submitSearch(e) {
+    e?.preventDefault?.();
+    setFilter("q", qInput.trim());
+  }
+
+  function goToPage(nextPage) {
+    const next = new URLSearchParams(searchParams);
+    next.set("page", String(nextPage));
+    setSearchParams(next);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE) || 1);
+  const hasFilters = Boolean(qParam || gender || isActiveParam != null || classId);
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin"
-        backLabel="← مرکز عملیات"
-        title="شرکت‌کنندگان"
-        description="جستجوی ادمین روی نام/نام‌خانوادگی یا تلفن دقیق. ساخت یا حذف مستقیم شرکت‌کننده توسط ادمین وجود ندارد."
+        backLabel="میز مدیریت"
+        title="شاگردان"
+        description="همه کسانی که برای کلاس‌ها ثبت‌نام کرده‌اند، با کلاس و وضعیت ثبت‌نامشان. با نام، شماره تماس یا کلاس فهرست را محدود کنید."
       />
 
       <form
@@ -106,7 +136,7 @@ export default function AdminParticipantsPage() {
         className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4"
       >
         <label className="text-sm">
-          <span className="text-xs text-slate-500">جستجو (q)</span>
+          <span className="text-xs text-slate-500">نام یا شماره تماس</span>
           <input
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
@@ -115,16 +145,25 @@ export default function AdminParticipantsPage() {
           />
         </label>
         <label className="text-sm">
+          <span className="text-xs text-slate-500">کلاس</span>
+          <select
+            value={classId}
+            onChange={(e) => setFilter("classId", e.target.value)}
+            className="mt-1 block min-w-48 rounded-xl border border-slate-200 px-3 py-2"
+          >
+            <option value="">همه کلاس‌ها</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
           <span className="text-xs text-slate-500">جنسیت</span>
           <select
             value={gender}
-            onChange={(e) => {
-              const next = new URLSearchParams(searchParams);
-              if (e.target.value) next.set("gender", e.target.value);
-              else next.delete("gender");
-              next.set("page", "1");
-              setSearchParams(next);
-            }}
+            onChange={(e) => setFilter("gender", e.target.value)}
             className="mt-1 block rounded-xl border border-slate-200 px-3 py-2"
           >
             <option value="">همه</option>
@@ -136,16 +175,10 @@ export default function AdminParticipantsPage() {
           </select>
         </label>
         <label className="text-sm">
-          <span className="text-xs text-slate-500">فعال</span>
+          <span className="text-xs text-slate-500">وضعیت پرونده</span>
           <select
             value={isActiveParam ?? ""}
-            onChange={(e) => {
-              const next = new URLSearchParams(searchParams);
-              if (e.target.value === "") next.delete("isActive");
-              else next.set("isActive", e.target.value);
-              next.set("page", "1");
-              setSearchParams(next);
-            }}
+            onChange={(e) => setFilter("isActive", e.target.value)}
             className="mt-1 block rounded-xl border border-slate-200 px-3 py-2"
           >
             <option value="">همه</option>
@@ -156,22 +189,32 @@ export default function AdminParticipantsPage() {
         <button type="submit" className="rounded-xl bg-cyan-700 px-4 py-2 text-sm text-white hover:bg-cyan-600">
           جستجو
         </button>
+        <label className="mr-auto flex items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={showAll}
+            onChange={(e) => setFilter("scope", e.target.checked ? "all" : "")}
+          />
+          نمایش پرونده‌های بدون ثبت‌نام هم
+        </label>
       </form>
 
-      {forbidden ? <ForbiddenState title="دسترسی مجاز نیست" message="فقط ادمین." /> : null}
-      {!forbidden && status === "idle" ? (
-        <EmptyState title="برای شروع جستجو کنید." description="حداقل یک فیلتر یا عبارت جستجو لازم است." />
-      ) : null}
-      {!forbidden && status === "loading" ? <SectionLoader label="در حال جستجو…" /> : null}
+      {forbidden ? <ForbiddenState title="دسترسی مجاز نیست" message="فقط مدیر به فهرست شاگردان دسترسی دارد." /> : null}
+      {!forbidden && status === "loading" ? <SectionLoader label="در حال آماده کردن فهرست شاگردان…" /> : null}
       {!forbidden && status === "error" ? (
-        <ErrorState title="خطا" message={errorMessage} onRetry={() => load()} />
+        <ErrorState title="فهرست باز نشد" message={errorMessage} onRetry={() => load()} />
       ) : null}
-      {!forbidden && status === "ready" && searched && items.length === 0 ? (
-        <EmptyState title="نتیجه‌ای یافت نشد." />
+      {!forbidden && status === "ready" && items.length === 0 ? (
+        <EmptyState
+          title={hasFilters ? "شاگردی با این فیلترها پیدا نشد." : "هنوز کسی برای کلاس‌ها ثبت‌نام نکرده است."}
+        />
       ) : null}
 
       {!forbidden && status === "ready" && items.length > 0 ? (
         <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            {Number(total).toLocaleString("fa-IR")} {showAll ? "پرونده" : "شاگرد ثبت‌نام‌شده"}
+          </p>
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
             <table className="min-w-full text-right text-sm">
               <thead className="bg-slate-50 text-xs text-slate-500">
@@ -180,69 +223,87 @@ export default function AdminParticipantsPage() {
                   <th className="px-3 py-2">تلفن</th>
                   <th className="px-3 py-2">جنسیت</th>
                   <th className="px-3 py-2">سن</th>
-                  <th className="px-3 py-2">وضعیت</th>
+                  <th className="px-3 py-2">کلاس‌ها و وضعیت ثبت‌نام</th>
+                  <th className="px-3 py-2">پرونده</th>
                   <th className="px-3 py-2">ایجاد</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((p) => (
-                  <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                    <td className="px-3 py-2">
-                      <Link
-                        to={`/admin/participants/${p.id}`}
-                        className="font-medium text-cyan-800 hover:underline"
-                      >
-                        {`${p.firstName || ""} ${p.lastName || ""}`.trim() || p.id}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">{p.phone || "—"}</td>
-                    <td className="px-3 py-2">
-                      {GENDER_RESTRICTION_LABELS[p.gender] || p.gender || "—"}
-                    </td>
-                    <td className="px-3 py-2">
-                      {p.age != null ? Number(p.age).toLocaleString("fa-IR") : "—"}
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusPill tone={p.isActive ? "success" : "neutral"}>
-                        {p.isActive ? "فعال" : "غیرفعال"}
-                      </StatusPill>
-                    </td>
-                    <td className="px-3 py-2 text-slate-500">{formatExpiryFa(p.createdAt)}</td>
-                  </tr>
-                ))}
+                {items.map((p) => {
+                  const enrollments = Array.isArray(p.enrollments) ? p.enrollments : [];
+                  return (
+                    <tr key={p.id} className="border-t border-slate-100 align-top hover:bg-slate-50/60">
+                      <td className="px-3 py-2">
+                        <Link
+                          to={`/admin/participants/${p.id}`}
+                          className="font-medium text-cyan-800 hover:underline"
+                        >
+                          {`${p.firstName || ""} ${p.lastName || ""}`.trim() || p.id}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2">{p.phone || "—"}</td>
+                      <td className="px-3 py-2">
+                        {GENDER_RESTRICTION_LABELS[p.gender] || p.gender || "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        {p.age != null ? Number(p.age).toLocaleString("fa-IR") : "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        {enrollments.length ? (
+                          <ul className="space-y-1.5">
+                            {enrollments.map((e) => (
+                              <li key={e.id} className="flex flex-wrap items-center gap-2">
+                                <Link
+                                  to={`/admin/enrollments/${e.id}`}
+                                  className="text-slate-800 hover:text-cyan-800 hover:underline"
+                                >
+                                  {e.classTitle || "کلاس حذف‌شده"}
+                                </Link>
+                                <StatusPill tone={ENROLLMENT_TONES[e.status] || "neutral"}>
+                                  {ENROLLMENT_STATUS_LABELS[e.status] || e.status}
+                                </StatusPill>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-slate-400">بدون ثبت‌نام</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        <StatusPill tone={p.isActive ? "success" : "neutral"}>
+                          {p.isActive ? "فعال" : "غیرفعال"}
+                        </StatusPill>
+                      </td>
+                      <td className="px-3 py-2 text-slate-500">{formatExpiryFa(p.createdAt)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => {
-                const next = new URLSearchParams(searchParams);
-                next.set("page", String(page - 1));
-                setSearchParams(next);
-              }}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
-            >
-              قبلی
-            </button>
-            <span>
-              صفحه {Number(page).toLocaleString("fa-IR")} / {Number(totalPages).toLocaleString("fa-IR")} · جمع{" "}
-              {Number(total).toLocaleString("fa-IR")}
-            </span>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => {
-                const next = new URLSearchParams(searchParams);
-                next.set("page", String(page + 1));
-                setSearchParams(next);
-              }}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
-            >
-              بعدی
-            </button>
-          </div>
+          {totalPages > 1 ? (
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+              >
+                قبلی
+              </button>
+              <span>
+                صفحه {Number(page).toLocaleString("fa-IR")} از {Number(totalPages).toLocaleString("fa-IR")}
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => goToPage(page + 1)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+              >
+                بعدی
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

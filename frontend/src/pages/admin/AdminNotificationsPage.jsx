@@ -104,12 +104,12 @@ export default function AdminNotificationsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin"
-        backLabel="← مرکز عملیات"
-        title="اعلان‌ها"
-        description="صف تحویل پیامک/ایمیل از سرور. تلاش مجدد فقط از جزئیات و پس از پاسخ سرور."
+        backLabel="میز مدیریت"
+        title="پیام‌ها"
+        description="وضعیت ارسال پیامک و ایمیل. اگر پیامی نرسیده باشد، از صفحه همان پیام دوباره تلاش کنید."
       />
 
-      <DetailSection title="فیلتر صف" hint="فیلترها از قرارداد سرور اعتبارسنجی می‌شوند">
+      <DetailSection title="پیدا کردن یک پیام" hint="وضعیت، کانال یا مناسبت را محدود کنید.">
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-sm">
             <span className="text-xs text-slate-500">وضعیت</span>

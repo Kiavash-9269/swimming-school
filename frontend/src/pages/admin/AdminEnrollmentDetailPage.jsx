@@ -107,7 +107,7 @@ export default function AdminEnrollmentDetailPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin/reports?tab=enrollments"
-        backLabel="← گزارش ثبت‌نام‌ها"
+        backLabel="بازگشت به گزارش ثبت‌نام"
         title={ENROLLMENT_STATUS_LABELS[enrollment.status] || enrollment.status}
         description={<span className="font-mono text-xs text-slate-400">{enrollment.id}</span>}
         actions={

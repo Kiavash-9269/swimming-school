@@ -61,24 +61,20 @@ export function ConfirmBanner({ title, message, confirmLabel, onConfirm, onCance
   );
 }
 
-/** Consistent page chrome for Admin operational screens. */
+/** Consistent page chrome for Admin screens. */
 export function AdminPageHeader({ backTo, backLabel = "بازگشت", title, description, actions }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200/80 pb-5">
+    <header className="admin-page-head">
       <div className="min-w-0">
         {backTo ? (
-          <Link to={backTo} className="text-sm font-medium text-cyan-800 hover:underline">
+          <Link to={backTo} className="admin-back">
             {backLabel}
           </Link>
         ) : null}
-        <h1 className={`text-2xl font-extrabold tracking-tight text-slate-900 ${backTo ? "mt-2" : ""}`}>
-          {title}
-        </h1>
-        {description ? (
-          <div className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">{description}</div>
-        ) : null}
+        <h1>{title}</h1>
+        {description ? <div className="admin-lead">{description}</div> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
-    </div>
+    </header>
   );
 }

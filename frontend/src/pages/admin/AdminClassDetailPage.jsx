@@ -160,7 +160,7 @@ export default function AdminClassDetailPage() {
     <div className="space-y-6" dir="rtl">
       <AdminPageHeader
         backTo="/admin/classes"
-        backLabel="← کلاس‌ها"
+        backLabel="بازگشت به کلاس‌ها"
         title={courseClass.title}
         description={
           <span className="inline-flex flex-wrap items-center gap-2">
@@ -609,7 +609,7 @@ export default function AdminClassDetailPage() {
       ) : null}
 
       {tab === "links" ? (
-        <DetailSection title="پیوندهای مرتبط" hint="میان‌بر به صفحات عملیاتی فیلترشده با این کلاس">
+        <DetailSection title="از همین کلاس" hint="میان‌برهایی که فقط همین کلاس را نشان می‌دهند.">
           <ActionBar>
             <Link
               to={`/admin/payments?classId=${classId}`}
@@ -627,7 +627,7 @@ export default function AdminClassDetailPage() {
               to={`/admin/courses/${courseClass.courseTemplateId}`}
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-cyan-900 hover:bg-cyan-50"
             >
-              قالب دوره
+              دورهٔ این کلاس
             </Link>
             <Link
               to={`/admin/classes/${classId}/edit`}

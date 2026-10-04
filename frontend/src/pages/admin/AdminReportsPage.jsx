@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -31,6 +31,8 @@ import {
   formatExpiryFa,
   userMessageFromReportError,
 } from "../../features/reports/reportLabels";
+import { AdminPageHeader } from "../../features/courses/components/AdminCourseUi";
+import { OpsTabs } from "../../features/ops/OpsUi";
 import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import EmptyState from "../../components/Ui/EmptyState";
@@ -262,32 +264,14 @@ export default function AdminReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link to="/admin" className="text-sm text-cyan-700 hover:underline">
-          ← پنل مدیریت
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">گزارش‌ها</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          داده‌ها فقط از گزارش سرور خوانده می‌شوند. واحد مبلغ: ریال.
-        </p>
-      </div>
+      <AdminPageHeader
+        backTo="/admin"
+        backLabel="میز مدیریت"
+        title="گزارش مدیریت"
+        description="ثبت‌نام، درآمد، ظرفیت و مدارک را مثل یک جلسه هیئت‌مدیره بخوانید. مبالغ به ریال است و هر عدد از داده واقعی مدرسه می‌آید."
+      />
 
-      <div className="flex flex-wrap gap-2">
-        {REPORT_TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-xl px-3 py-1.5 text-sm ${
-              tab === t.id
-                ? "bg-cyan-700 text-white"
-                : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <OpsTabs tabs={REPORT_TABS} activeId={tab} onChange={setTab} />
 
       {tab !== "summary" ? (
         <FilterBar
@@ -369,7 +353,7 @@ export default function AdminReportsPage() {
               value={`${Number(dashboard.activeParticipants || 0).toLocaleString("fa-IR")} / ${Number(dashboard.participants || 0).toLocaleString("fa-IR")}`}
             />
             <MetricCard
-              label="کلاس‌ها (فعال عملیاتی)"
+              label="کلاس‌های در جریان"
               value={`${Number(dashboard.activeClasses || 0).toLocaleString("fa-IR")} / ${Number(dashboard.courses || 0).toLocaleString("fa-IR")}`}
             />
             <MetricCard

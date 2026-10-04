@@ -108,7 +108,7 @@ export default function AdminPaymentDetailPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin/payments"
-        backLabel="← پرداخت‌ها"
+        backLabel="بازگشت به پرداخت‌ها"
         title={formatIrrAmount(payment.amount)}
         description={
           <span className="inline-flex flex-wrap items-center gap-2">

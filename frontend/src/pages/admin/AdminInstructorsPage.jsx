@@ -183,20 +183,21 @@ export default function AdminInstructorsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         backTo="/admin"
-        backLabel="← مرکز عملیات"
+        backLabel="میز مدیریت"
         title="مربیان"
         description={
           <>
-            پروفایل مربی جدا از نقش ورود است. حذف مربی نرم است (از فهرست مخفی می‌شود).{" "}
-            <Link to="/instructor" className="text-cyan-700 hover:underline">
-              فضای مربی
+            هر مربی یک پروفایل آموزشی دارد، جدا از حساب ورود. اتصال با همان شماره‌ای انجام می‌شود که
+            مربی با آن وارد می‌شود.{" "}
+            <Link to="/instructor" className="font-semibold text-teal-800 hover:underline">
+              ورود به فضای مربی
             </Link>
           </>
         }
       />
 
       <div className="rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 text-sm text-cyan-950">
-        <p className="font-bold">چطور فضای مربی برای فرد باز می‌شود؟</p>
+        <p className="font-bold">مسیر اتصال مربی به حسابش</p>
         <ul className="mt-2 list-disc space-y-1 pr-5 text-xs leading-relaxed">
           <li>
             شماره موبایل مربی را دقیقاً همان شماره‌ای بگذارید که با آن ثبت‌نام/ورود می‌کند (مثلاً
@@ -214,7 +215,7 @@ export default function AdminInstructorsPage() {
       </div>
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950">
-        <p className="font-bold">حذف مربی یعنی چه؟</p>
+        <p className="font-bold">اگر مربی را از فهرست بردارید</p>
         <ul className="mt-2 list-disc space-y-1 pr-5 text-xs leading-relaxed">
           <li>مربی از فهرست اصلی حذف می‌شود (مثل حذف).</li>
           <li>فضای مربی برای کاربر لینک‌شده بسته می‌شود.</li>
