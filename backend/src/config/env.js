@@ -129,7 +129,10 @@ function failConfig(message) {
 }
 
 if (data.NODE_ENV === "production" && !data.COOKIE_SECURE) {
-  failConfig("COOKIE_SECURE must be true in production");
+  // Allow insecure cookies only while FRONTEND_URL is plain HTTP (e.g. IP before SSL).
+  if (!String(data.FRONTEND_URL || "").startsWith("http://")) {
+    failConfig("COOKIE_SECURE must be true in production when FRONTEND_URL is HTTPS");
+  }
 }
 
 if (data.NODE_ENV === "production") {

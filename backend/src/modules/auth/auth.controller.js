@@ -12,23 +12,25 @@ function requestMeta(req) {
   };
 }
 
-function setRefreshCookie(res, refreshToken) {
-  res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+function refreshCookieOptions() {
+  // Secure + SameSite=None only works over HTTPS. On plain HTTP (IP before DNS/SSL), use Lax.
+  const secure = Boolean(env.COOKIE_SECURE);
+  return {
     httpOnly: true,
-    secure: env.COOKIE_SECURE,
-    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    secure,
+    sameSite: secure ? "none" : "lax",
     path: "/api/auth",
     maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  };
+}
+
+function setRefreshCookie(res, refreshToken) {
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions());
 }
 
 function clearRefreshCookie(res) {
-  res.clearCookie(REFRESH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: env.COOKIE_SECURE,
-    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/api/auth",
-  });
+  const { maxAge: _maxAge, ...clearOpts } = refreshCookieOptions();
+  res.clearCookie(REFRESH_COOKIE_NAME, clearOpts);
 }
 
 function authSuccessPayload(authResult) {
