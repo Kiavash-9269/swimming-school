@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { searchAdminParticipants } from "../../features/enrollments/enrollmentsApi";
+import {
+  exportAdminParticipants,
+  searchAdminParticipants,
+} from "../../features/enrollments/enrollmentsApi";
+import { useToast } from "../../components/feedback/useToast";
 import { getCourseClasses } from "../../features/courses/coursesApi";
 import {
   ENROLLMENT_STATUS_LABELS,
@@ -49,6 +53,8 @@ export default function AdminParticipantsPage() {
 
   const [qInput, setQInput] = useState(qParam);
   const [createOpen, setCreateOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const toast = useToast();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [classes, setClasses] = useState([]);
@@ -64,24 +70,50 @@ export default function AdminParticipantsPage() {
     return () => ac.abort();
   }, []);
 
+  const filters = useMemo(() => {
+    let isActive;
+    if (isActiveParam === "true") isActive = true;
+    if (isActiveParam === "false") isActive = false;
+    return {
+      q: qParam || undefined,
+      gender: gender || undefined,
+      isActive,
+      enrolled: showAll ? undefined : true,
+      classId: classId || undefined,
+      registeredFrom: registeredFrom || undefined,
+      registeredTo: registeredTo || undefined,
+    };
+  }, [qParam, gender, isActiveParam, showAll, classId, registeredFrom, registeredTo]);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const { blob, filename } = await exportAdminParticipants(filters);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "students.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("فایل اکسل شاگردان آماده شد.");
+    } catch (err) {
+      toast.error(userMessageFromEnrollmentError(err, "خروجی اکسل ناموفق بود."));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const load = useCallback(
     async (signal) => {
       setStatus("loading");
       setForbidden(false);
       try {
-        let isActive;
-        if (isActiveParam === "true") isActive = true;
-        if (isActiveParam === "false") isActive = false;
         const data = await searchAdminParticipants({
-          q: qParam || undefined,
+          ...filters,
           page,
           limit: PAGE_SIZE,
-          gender: gender || undefined,
-          isActive,
-          enrolled: showAll ? undefined : true,
-          classId: classId || undefined,
-          registeredFrom: registeredFrom || undefined,
-          registeredTo: registeredTo || undefined,
           signal,
         });
         setItems(Array.isArray(data?.items) ? data.items : []);
@@ -98,7 +130,7 @@ export default function AdminParticipantsPage() {
         setStatus("error");
       }
     },
-    [qParam, page, gender, isActiveParam, classId, showAll, registeredFrom, registeredTo],
+    [filters, page],
   );
 
   useEffect(() => {
@@ -159,6 +191,15 @@ export default function AdminParticipantsPage() {
           className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
         >
           {createOpen ? "بستن فرم افزودن" : "+ افزودن شاگرد"}
+        </button>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          className="rounded-xl border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+          title="خروجی همه شاگردانِ مطابق فیلترهای فعلی (همه صفحه‌ها)"
+        >
+          {exporting ? "در حال آماده‌سازی…" : "خروجی اکسل"}
         </button>
       </div>
 

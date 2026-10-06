@@ -5,6 +5,15 @@ const { Participant } = require("./participant.model");
 const { Enrollment } = require("./enrollment.model");
 const { User, ROLES } = require("../auth/user.model");
 const { hashPassword } = require("../../utils/password");
+const { env } = require("../../config/env");
+const { buildWorkbookBuffer, sanitizeFilename } = require("../reports/excel");
+const {
+  labelOf,
+  formatFaDate,
+  GENDER: GENDER_LABELS,
+  RELATION: RELATION_LABELS,
+  ENROLLMENT_STATUS: ENROLLMENT_STATUS_LABELS,
+} = require("../reports/exportLabels");
 const { ENROLLMENT_STATUSES, PARTICIPANT_RELATIONS } = require("../courses/domain.constants");
 
 const ACTIVE_HISTORY_BLOCKING = [
@@ -323,7 +332,7 @@ async function enrollmentSummaries(participantIds) {
   return byParticipant;
 }
 
-async function searchParticipantsAdmin({
+async function buildAdminParticipantFilter({
   q,
   gender,
   isActive,
@@ -332,11 +341,7 @@ async function searchParticipantsAdmin({
   classId,
   registeredFrom,
   registeredTo,
-  page = 1,
-  limit = 20,
 } = {}) {
-  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
-  const safePage = Math.max(1, Number(page) || 1);
   const filter = {};
   const and = [];
   if (ownerUserId) filter.ownerUserId = ownerUserId;
@@ -379,6 +384,20 @@ async function searchParticipantsAdmin({
     });
   }
   if (and.length) filter.$and = and;
+  return filter;
+}
+
+async function ownersById(participants) {
+  const owners = await User.find({ _id: { $in: participants.map((p) => p.ownerUserId) } })
+    .select("phone firstName lastName")
+    .lean();
+  return new Map(owners.map((u) => [String(u._id), u]));
+}
+
+async function searchParticipantsAdmin({ page = 1, limit = 20, ...filters } = {}) {
+  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+  const safePage = Math.max(1, Number(page) || 1);
+  const filter = await buildAdminParticipantFilter(filters);
 
   const [items, total] = await Promise.all([
     Participant.find(filter)
@@ -388,13 +407,10 @@ async function searchParticipantsAdmin({
     Participant.countDocuments(filter),
   ]);
 
-  const [summaries, owners] = await Promise.all([
+  const [summaries, ownerById] = await Promise.all([
     enrollmentSummaries(items.map((p) => p._id)),
-    User.find({ _id: { $in: items.map((p) => p.ownerUserId) } })
-      .select("phone firstName lastName")
-      .lean(),
+    ownersById(items),
   ]);
-  const ownerById = new Map(owners.map((u) => [String(u._id), u]));
 
   return {
     page: safePage,
@@ -413,6 +429,81 @@ async function searchParticipantsAdmin({
   };
 }
 
+const EXPORT_COLUMNS = [
+  { header: "ردیف", key: "row", width: 7 },
+  { header: "نام", key: "firstName", width: 16 },
+  { header: "نام خانوادگی", key: "lastName", width: 20 },
+  { header: "جنسیت", key: "gender", width: 9 },
+  { header: "تاریخ تولد", key: "birthDate", width: 13 },
+  { header: "سن", key: "age", width: 7 },
+  { header: "موبایل شاگرد", key: "phone", width: 15 },
+  { header: "موبایل حساب", key: "ownerPhone", width: 15 },
+  { header: "صاحب حساب", key: "ownerName", width: 22 },
+  { header: "نسبت", key: "relation", width: 10 },
+  { header: "تماس اضطراری", key: "emergencyName", width: 18 },
+  { header: "موبایل تماس اضطراری", key: "emergencyPhone", width: 18 },
+  { header: "کلاس‌ها و وضعیت ثبت‌نام", key: "enrollments", width: 45 },
+  { header: "وضعیت پرونده", key: "isActive", width: 12 },
+  { header: "تاریخ عضویت", key: "registeredAt", width: 13 },
+  { header: "افزوده‌شده توسط مدیر", key: "createdByAdmin", width: 14 },
+  { header: "یادداشت", key: "notes", width: 35 },
+];
+
+async function exportParticipantsAdmin(filters = {}) {
+  const filter = await buildAdminParticipantFilter(filters);
+  const max = env.EXPORT_MAX_ROWS || 5000;
+  const count = await Participant.countDocuments(filter);
+  if (count > max) {
+    throw new AppError(`تعداد ردیف‌ها (${count}) از سقف خروجی (${max}) بیشتر است؛ فیلترها را محدودتر کنید.`, {
+      statusCode: 413,
+      code: "EXPORT_TOO_LARGE",
+      details: { max, count },
+    });
+  }
+
+  const items = await Participant.find(filter).sort({ registeredAt: -1, createdAt: -1 });
+  const [summaries, ownerById] = await Promise.all([
+    enrollmentSummaries(items.map((p) => p._id)),
+    ownersById(items),
+  ]);
+
+  const rows = items.map((p, i) => {
+    const owner = ownerById.get(String(p.ownerUserId));
+    let age = "";
+    try {
+      age = ageFromBirthDate(p.birthDate);
+    } catch {
+      age = "";
+    }
+    const enrollments = (summaries.get(String(p._id)) || [])
+      .map((e) => `${e.classTitle || "کلاس حذف‌شده"} (${labelOf(ENROLLMENT_STATUS_LABELS, e.status)})`)
+      .join("، ");
+    return {
+      row: i + 1,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      gender: labelOf(GENDER_LABELS, p.gender),
+      birthDate: formatFaDate(p.birthDate),
+      age,
+      phone: p.phone || "",
+      ownerPhone: owner?.phone || "",
+      ownerName: owner ? `${owner.firstName || ""} ${owner.lastName || ""}`.trim() : "",
+      relation: labelOf(RELATION_LABELS, p.relation),
+      emergencyName: p.emergencyContact?.name || "",
+      emergencyPhone: p.emergencyContact?.phone || "",
+      enrollments: enrollments || "بدون ثبت‌نام",
+      isActive: p.isActive ? "فعال" : "غیرفعال",
+      registeredAt: formatFaDate(p.registeredAt || p.createdAt),
+      createdByAdmin: Boolean(p.createdByAdmin),
+      notes: p.notes || "",
+    };
+  });
+
+  const buffer = await buildWorkbookBuffer({ sheetName: "شاگردان", columns: EXPORT_COLUMNS, rows });
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  return { buffer, filename: sanitizeFilename(`شاگردان-${dateStamp}.xlsx`) };
+}
+
 module.exports = {
   toPublicParticipant,
   assertParticipantOwned,
@@ -423,4 +514,5 @@ module.exports = {
   deactivateParticipant,
   listOwnerParticipants,
   searchParticipantsAdmin,
+  exportParticipantsAdmin,
 };

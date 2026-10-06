@@ -299,21 +299,18 @@ export function createAdminParticipant(body, { signal } = {}) {
   });
 }
 
-export function searchAdminParticipants(
-  {
-    q,
-    page = 1,
-    limit = 20,
-    gender,
-    isActive,
-    ownerUserId,
-    enrolled,
-    classId,
-    registeredFrom,
-    registeredTo,
-    signal,
-  } = {},
-) {
+function adminParticipantQuery({
+  q,
+  page,
+  limit,
+  gender,
+  isActive,
+  ownerUserId,
+  enrolled,
+  classId,
+  registeredFrom,
+  registeredTo,
+} = {}) {
   const params = new URLSearchParams();
   if (registeredFrom) params.set("registeredFrom", String(registeredFrom));
   if (registeredTo) params.set("registeredTo", String(registeredTo));
@@ -326,7 +323,19 @@ export function searchAdminParticipants(
   if (enrolled === true || enrolled === false) params.set("enrolled", String(enrolled));
   if (classId) params.set("classId", String(classId));
   const qs = params.toString();
-  return apiRequest(`/enrollments/admin/participants/search${qs ? `?${qs}` : ""}`, {
+  return qs ? `?${qs}` : "";
+}
+
+export function searchAdminParticipants({ page = 1, limit = 20, signal, ...filters } = {}) {
+  return apiRequest(
+    `/enrollments/admin/participants/search${adminParticipantQuery({ ...filters, page, limit })}`,
+    { method: "GET", auth: true, signal },
+  );
+}
+
+/** GET /enrollments/admin/participants/export — xlsx of every student matching the list filters. */
+export function exportAdminParticipants({ signal, ...filters } = {}) {
+  return apiDownloadBlob(`/enrollments/admin/participants/export${adminParticipantQuery(filters)}`, {
     method: "GET",
     auth: true,
     signal,

@@ -471,6 +471,32 @@ describe("Phase 4 registration / User 360", () => {
       .get("/api/enrollments/admin/participants/search?q=09127770001")
       .set("Authorization", `Bearer ${adminToken}`);
     expect(byAccountPhone.body.data.total).toBe(1);
+
+    const exported = await request(app)
+      .get("/api/enrollments/admin/participants/export?registeredFrom=2024-01-01&registeredTo=2024-12-31")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .buffer(true)
+      .parse((res, cb) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => cb(null, Buffer.concat(chunks)));
+      });
+    expect(exported.status).toBe(200);
+    expect(exported.headers["content-type"]).toMatch(/spreadsheetml/);
+    const ExcelJS = require("exceljs");
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(exported.body);
+    const sheet = workbook.worksheets[0];
+    expect(sheet.rowCount).toBe(2);
+    const values = sheet.getRow(2).values.map(String);
+    expect(values).toContain("شاگرد");
+    expect(values).toContain("09127770001");
+    expect(values).toContain("سطح متوسط");
+
+    const userExport = await request(app)
+      .get("/api/enrollments/admin/participants/export")
+      .set("Authorization", `Bearer ${userToken}`);
+    expect(userExport.status).toBe(403);
   });
 
   test("enrollment financial snapshot survives class price change", async () => {

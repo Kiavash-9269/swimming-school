@@ -83,9 +83,27 @@ async function buildWorkbookBuffer({ sheetName, columns, rows, rightToLeft = tru
   return Buffer.from(buffer);
 }
 
+function sendWorkbook(res, { buffer, filename }) {
+  const safeName = String(filename || "report.xlsx");
+  // HTTP headers must stay ASCII; expose Persian name via RFC 5987 filename*.
+  const asciiFallback = safeName.replace(/[^\x20-\x7E]+/g, "_") || "report.xlsx";
+  const encoded = encodeURIComponent(safeName).replace(/['()]/g, escape);
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encoded}`,
+  );
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(200).send(buffer);
+}
+
 module.exports = {
   sanitizeCell,
   sanitizeFilename,
   buildWorkbookBuffer,
+  sendWorkbook,
   FORMULA_PREFIX,
 };

@@ -137,6 +137,14 @@ router.get(
   validate(paginationQuery, "query"),
   controller.adminSearchParticipants,
 );
+router.get(
+  "/admin/participants/export",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  validate(paginationQuery, "query"),
+  controller.adminExportParticipants,
+);
 router.post(
   "/admin/participants",
   authenticate,
