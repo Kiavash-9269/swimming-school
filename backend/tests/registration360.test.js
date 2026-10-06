@@ -372,6 +372,107 @@ describe("Phase 4 registration / User 360", () => {
     expect(oversized.status).toBe(400);
   });
 
+  test("admin adds pre-existing students and filters by registration date", async () => {
+    await bootstrapUsers();
+
+    const forbidden = await request(app)
+      .post("/api/enrollments/admin/participants")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({});
+    expect(forbidden.status).toBe(403);
+
+    const created = await request(app)
+      .post("/api/enrollments/admin/participants")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        accountPhone: "09127770001",
+        guardianFirstName: "پدر",
+        guardianLastName: "قدیمی",
+        firstName: "شاگرد",
+        lastName: "قدیمی",
+        birthDate: "2015-03-10",
+        gender: "MALE",
+        relation: "CHILD",
+        registeredAt: "2024-01-15",
+        notes: "سطح متوسط",
+      });
+    expect(created.status).toBe(201);
+    expect(created.body.data.account.created).toBe(true);
+    expect(created.body.data.participant.createdByAdmin).toBe(true);
+    expect(created.body.data.participant.notes).toBe("سطح متوسط");
+
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ phone: "09127770001", password: "09127770001" });
+    expect(login.status).toBe(200);
+
+    const duplicate = await request(app)
+      .post("/api/enrollments/admin/participants")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        accountPhone: "09127770001",
+        firstName: "شاگرد",
+        lastName: "قدیمی",
+        birthDate: "2015-03-10",
+        gender: "MALE",
+        relation: "CHILD",
+        guardianFirstName: "پدر",
+        guardianLastName: "قدیمی",
+      });
+    expect(duplicate.status).toBe(409);
+    expect(duplicate.body.error?.code || duplicate.body.code).toBe("PARTICIPANT_EXISTS");
+
+    const attached = await request(app)
+      .post("/api/enrollments/admin/participants")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        accountPhone: "09126660002",
+        firstName: "فرزند",
+        lastName: "جدید",
+        birthDate: "2016-05-01",
+        gender: "FEMALE",
+        relation: "CHILD",
+        guardianFirstName: "نادیده",
+        guardianLastName: "گرفته",
+        registeredAt: "2025-06-01",
+      });
+    expect(attached.status).toBe(201);
+    expect(attached.body.data.account.created).toBe(false);
+    expect(attached.body.data.participant.ownerUserId).toBe(userId);
+
+    const missingGuardian = await request(app)
+      .post("/api/enrollments/admin/participants")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        accountPhone: "09127770009",
+        firstName: "بی",
+        lastName: "ولی",
+        birthDate: "2017-01-01",
+        gender: "MALE",
+        relation: "CHILD",
+      });
+    expect(missingGuardian.status).toBe(400);
+
+    const in2024 = await request(app)
+      .get("/api/enrollments/admin/participants/search?registeredFrom=2024-01-01&registeredTo=2024-12-31")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(in2024.status).toBe(200);
+    expect(in2024.body.data.total).toBe(1);
+    expect(in2024.body.data.items[0].firstName).toBe("شاگرد");
+    expect(in2024.body.data.items[0].owner.phone).toBe("09127770001");
+
+    const sameDay = await request(app)
+      .get("/api/enrollments/admin/participants/search?registeredFrom=2025-06-01&registeredTo=2025-06-01")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(sameDay.body.data.total).toBe(1);
+    expect(sameDay.body.data.items[0].lastName).toBe("جدید");
+
+    const byAccountPhone = await request(app)
+      .get("/api/enrollments/admin/participants/search?q=09127770001")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(byAccountPhone.body.data.total).toBe(1);
+  });
+
   test("enrollment financial snapshot survives class price change", async () => {
     await bootstrapUsers();
     const { classId } = await createOpenClass();

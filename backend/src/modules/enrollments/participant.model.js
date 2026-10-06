@@ -55,6 +55,10 @@ const participantSchema = new mongoose.Schema(
       },
     },
     emergencyContact: { type: emergencyContactSchema, default: () => ({}) },
+    // When the student joined the school; admins backdate this for pre-existing students.
+    registeredAt: { type: Date, default: Date.now, index: true },
+    createdByAdmin: { type: Boolean, default: false },
+    notes: { type: String, trim: true, maxlength: 1000, default: "" },
     isActive: { type: Boolean, default: true, index: true },
     deactivatedAt: { type: Date, default: null },
   },

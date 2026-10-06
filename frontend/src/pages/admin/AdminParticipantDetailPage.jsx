@@ -145,6 +145,19 @@ export default function AdminParticipantDetailPage() {
             <dt className="text-xs text-slate-500">مالک حساب</dt>
             <dd className="font-mono text-xs">{participant.ownerUserId || "—"}</dd>
           </div>
+          <div>
+            <dt className="text-xs text-slate-500">تاریخ عضویت</dt>
+            <dd>
+              {formatExpiryFa(participant.registeredAt || participant.createdAt)}
+              {participant.createdByAdmin ? " · افزوده‌شده توسط مدیر" : ""}
+            </dd>
+          </div>
+          {participant.notes ? (
+            <div className="sm:col-span-2">
+              <dt className="text-xs text-slate-500">یادداشت</dt>
+              <dd className="whitespace-pre-line">{participant.notes}</dd>
+            </div>
+          ) : null}
         </dl>
       </section>
 

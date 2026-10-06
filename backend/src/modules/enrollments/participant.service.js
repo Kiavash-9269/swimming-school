@@ -3,7 +3,9 @@ const { logEvent } = require("../../services/logging");
 const { assertValidBirthDate, ageFromBirthDate } = require("../../utils/age");
 const { Participant } = require("./participant.model");
 const { Enrollment } = require("./enrollment.model");
-const { ENROLLMENT_STATUSES } = require("../courses/domain.constants");
+const { User, ROLES } = require("../auth/user.model");
+const { hashPassword } = require("../../utils/password");
+const { ENROLLMENT_STATUSES, PARTICIPANT_RELATIONS } = require("../courses/domain.constants");
 
 const ACTIVE_HISTORY_BLOCKING = [
   ENROLLMENT_STATUSES.PENDING,
@@ -25,6 +27,9 @@ function toPublicParticipant(doc, { includeEmergency = false, includeAge = false
     gender: doc.gender,
     relation: doc.relation,
     phone: doc.phone || "",
+    registeredAt: doc.registeredAt || doc.createdAt,
+    createdByAdmin: Boolean(doc.createdByAdmin),
+    notes: doc.notes || "",
     isActive: doc.isActive,
     deactivatedAt: doc.deactivatedAt || null,
     createdAt: doc.createdAt,
@@ -140,6 +145,10 @@ async function updateParticipant({ userId, role, participantId, data }) {
       relationship: data.emergencyContact.relationship || "",
     };
   }
+  if (role === "ADMIN") {
+    if (data.registeredAt != null) participant.registeredAt = data.registeredAt;
+    if (data.notes != null) participant.notes = data.notes;
+  }
 
   await participant.save();
   logEvent("PARTICIPANT_UPDATED", {
@@ -172,6 +181,117 @@ async function deactivateParticipant({ userId, role, participantId }) {
     actorId: String(userId),
   });
   return participant;
+}
+
+function nameConflictError() {
+  return new AppError("کاربری با همین نام و نام خانوادگی با شماره دیگری ثبت شده است", {
+    statusCode: 409,
+    code: "NAME_EXISTS",
+  });
+}
+
+/**
+ * Finds the account for `accountPhone`, or creates one whose initial password is the phone itself
+ * so pre-existing students can sign in and change it later.
+ */
+async function findOrCreateOwnerAccount({ accountPhone, firstName, lastName }) {
+  const existing = await User.findOne({ phone: accountPhone });
+  if (existing) return { user: existing, created: false };
+
+  if (await User.exists({ firstName, lastName })) throw nameConflictError();
+
+  try {
+    const user = await User.create({
+      phone: accountPhone,
+      firstName,
+      lastName,
+      passwordHash: await hashPassword(accountPhone),
+      phoneVerified: true,
+      role: ROLES.USER,
+      isActive: true,
+    });
+    return { user, created: true };
+  } catch (error) {
+    if (error?.code === 11000) {
+      if (error.keyPattern?.firstName || error.keyPattern?.lastName) throw nameConflictError();
+      const raced = await User.findOne({ phone: accountPhone });
+      if (raced) return { user: raced, created: false };
+    }
+    throw error;
+  }
+}
+
+async function createParticipantByAdmin({ actorId, data }) {
+  try {
+    assertValidBirthDate(data.birthDate);
+  } catch (error) {
+    throw new AppError("تاریخ تولد نامعتبر است", {
+      statusCode: 400,
+      code: error.code || "INVALID_BIRTH_DATE",
+    });
+  }
+
+  const isSelf = data.relation === PARTICIPANT_RELATIONS.SELF;
+  const ownerFirstName = isSelf ? data.firstName : data.guardianFirstName;
+  const ownerLastName = isSelf ? data.lastName : data.guardianLastName;
+  if (!ownerFirstName || !ownerLastName) {
+    throw new AppError("نام و نام خانوادگی صاحب حساب (ولی) الزامی است", {
+      statusCode: 400,
+      code: "GUARDIAN_NAME_REQUIRED",
+    });
+  }
+
+  const { user, created } = await findOrCreateOwnerAccount({
+    accountPhone: data.accountPhone,
+    firstName: ownerFirstName,
+    lastName: ownerLastName,
+  });
+
+  const duplicate = await Participant.exists({
+    ownerUserId: user._id,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    birthDate: data.birthDate,
+  });
+  if (duplicate) {
+    throw new AppError("این شاگرد قبلاً برای همین حساب ثبت شده است", {
+      statusCode: 409,
+      code: "PARTICIPANT_EXISTS",
+    });
+  }
+
+  const participant = await Participant.create({
+    ownerUserId: user._id,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    birthDate: data.birthDate,
+    gender: data.gender,
+    relation: data.relation,
+    phone: data.phone || (isSelf ? data.accountPhone : ""),
+    emergencyContact: data.emergencyContact || {},
+    registeredAt: data.registeredAt || new Date(),
+    notes: data.notes || "",
+    createdByAdmin: true,
+    isActive: true,
+  });
+
+  logEvent("PARTICIPANT_CREATED_BY_ADMIN", {
+    participantId: String(participant._id),
+    ownerUserId: String(user._id),
+    actorId: String(actorId),
+    accountCreated: created,
+  });
+
+  return {
+    participant,
+    account: {
+      id: String(user._id),
+      phone: user.phone,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      created,
+    },
+  };
 }
 
 async function listOwnerParticipants(ownerUserId, { includeInactive = false } = {}) {
@@ -210,12 +330,15 @@ async function searchParticipantsAdmin({
   ownerUserId,
   enrolled,
   classId,
+  registeredFrom,
+  registeredTo,
   page = 1,
   limit = 20,
 } = {}) {
   const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
   const safePage = Math.max(1, Number(page) || 1);
   const filter = {};
+  const and = [];
   if (ownerUserId) filter.ownerUserId = ownerUserId;
   if (enrolled === true || enrolled === false || classId) {
     const enrolledIds = await Enrollment.distinct(
@@ -228,31 +351,65 @@ async function searchParticipantsAdmin({
   if (isActive === true || isActive === false) filter.isActive = isActive;
   if (q && String(q).trim()) {
     const term = String(q).trim().slice(0, 80);
-    filter.$or = [
-      { firstName: new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") },
-      { lastName: new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") },
-      { phone: term },
-    ];
+    const ownerIds = /^09\d{9}$/.test(term) ? await User.distinct("_id", { phone: term }) : [];
+    and.push({
+      $or: [
+        { firstName: new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") },
+        { lastName: new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") },
+        { phone: term },
+        ...(ownerIds.length ? [{ ownerUserId: { $in: ownerIds } }] : []),
+      ],
+    });
   }
+  if (registeredFrom || registeredTo) {
+    const range = {};
+    if (registeredFrom) range.$gte = new Date(registeredFrom);
+    if (registeredTo) {
+      // Inclusive end day: everything before the start of the following day.
+      const end = new Date(registeredTo);
+      end.setUTCDate(end.getUTCDate() + 1);
+      range.$lt = end;
+    }
+    and.push({
+      $or: [
+        { registeredAt: range },
+        { registeredAt: { $exists: false }, createdAt: range },
+        { registeredAt: null, createdAt: range },
+      ],
+    });
+  }
+  if (and.length) filter.$and = and;
 
   const [items, total] = await Promise.all([
     Participant.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ registeredAt: -1, createdAt: -1 })
       .skip((safePage - 1) * safeLimit)
       .limit(safeLimit),
     Participant.countDocuments(filter),
   ]);
 
-  const summaries = await enrollmentSummaries(items.map((p) => p._id));
+  const [summaries, owners] = await Promise.all([
+    enrollmentSummaries(items.map((p) => p._id)),
+    User.find({ _id: { $in: items.map((p) => p.ownerUserId) } })
+      .select("phone firstName lastName")
+      .lean(),
+  ]);
+  const ownerById = new Map(owners.map((u) => [String(u._id), u]));
 
   return {
     page: safePage,
     limit: safeLimit,
     total,
-    items: items.map((p) => ({
-      ...toPublicParticipant(p, { includeEmergency: true, includeAge: true }),
-      enrollments: summaries.get(String(p._id)) || [],
-    })),
+    items: items.map((p) => {
+      const owner = ownerById.get(String(p.ownerUserId));
+      return {
+        ...toPublicParticipant(p, { includeEmergency: true, includeAge: true }),
+        owner: owner
+          ? { phone: owner.phone, firstName: owner.firstName, lastName: owner.lastName }
+          : null,
+        enrollments: summaries.get(String(p._id)) || [],
+      };
+    }),
   };
 }
 
@@ -261,6 +418,7 @@ module.exports = {
   assertParticipantOwned,
   getParticipantAuthorized,
   createParticipant,
+  createParticipantByAdmin,
   updateParticipant,
   deactivateParticipant,
   listOwnerParticipants,

@@ -289,10 +289,34 @@ export function getAdminUser360(userId, { signal } = {}) {
 }
 
 /** ADMIN: GET /enrollments/admin/participants/search */
+/** POST /enrollments/admin/participants — ADMIN adds a student (creates the owner account if missing). */
+export function createAdminParticipant(body, { signal } = {}) {
+  return apiRequest("/enrollments/admin/participants", {
+    method: "POST",
+    auth: true,
+    body,
+    signal,
+  });
+}
+
 export function searchAdminParticipants(
-  { q, page = 1, limit = 20, gender, isActive, ownerUserId, enrolled, classId, signal } = {},
+  {
+    q,
+    page = 1,
+    limit = 20,
+    gender,
+    isActive,
+    ownerUserId,
+    enrolled,
+    classId,
+    registeredFrom,
+    registeredTo,
+    signal,
+  } = {},
 ) {
   const params = new URLSearchParams();
+  if (registeredFrom) params.set("registeredFrom", String(registeredFrom));
+  if (registeredTo) params.set("registeredTo", String(registeredTo));
   if (q) params.set("q", String(q));
   if (page) params.set("page", String(page));
   if (limit) params.set("limit", String(limit));

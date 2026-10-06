@@ -480,10 +480,27 @@ const adminSearchParticipants = asyncHandler(async (req, res) => {
     ownerUserId: req.query.ownerUserId,
     enrolled: req.query.enrolled,
     classId: req.query.classId,
+    registeredFrom: req.query.registeredFrom,
+    registeredTo: req.query.registeredTo,
     page: req.query.page,
     limit: req.query.limit,
   });
   return success(res, data);
+});
+
+const adminCreateParticipant = asyncHandler(async (req, res) => {
+  const { participant, account } = await participantService.createParticipantByAdmin({
+    actorId: req.user._id,
+    data: req.body,
+  });
+  return success(
+    res,
+    {
+      participant: toPublicParticipant(participant, { includeEmergency: true, includeAge: true }),
+      account,
+    },
+    201,
+  );
 });
 
 const markAttendance = asyncHandler(async (req, res) => {
@@ -560,6 +577,7 @@ module.exports = {
   getUser360,
   adminSearchUsers,
   adminSearchParticipants,
+  adminCreateParticipant,
   markAttendance,
   submitSessionAttendance,
   listClassAttendance,

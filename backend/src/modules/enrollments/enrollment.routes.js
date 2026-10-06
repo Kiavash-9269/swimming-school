@@ -7,6 +7,7 @@ const controller = require("./enrollment.controller");
 const {
   participantBody,
   participantUpdateBody,
+  adminParticipantBody,
   reservationBody,
   waitlistBody,
   confirmEnrollmentBody,
@@ -135,6 +136,14 @@ router.get(
   adminLimiter,
   validate(paginationQuery, "query"),
   controller.adminSearchParticipants,
+);
+router.post(
+  "/admin/participants",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  validate(adminParticipantBody),
+  controller.adminCreateParticipant,
 );
 router.post(
   "/admin/enrollments/:id/activate-compliance",

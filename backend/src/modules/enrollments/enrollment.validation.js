@@ -53,6 +53,31 @@ const participantUpdateBody = z
       .optional()
       .refine((v) => v == null || v === "" || /^09\d{9}$/.test(v), "Invalid Iranian mobile number"),
     emergencyContact: emergencyContactSchema.optional(),
+    registeredAt: z.coerce.date().optional(),
+    notes: z.string().trim().max(1000).optional(),
+  })
+  .strict();
+
+const adminParticipantBody = z
+  .object({
+    accountPhone: iranianPhone,
+    guardianFirstName: z.string().trim().min(2).max(80).optional(),
+    guardianLastName: z.string().trim().min(2).max(80).optional(),
+    firstName: z.string().trim().min(2).max(80),
+    lastName: z.string().trim().min(2).max(80),
+    birthDate: z.coerce.date(),
+    gender: z.enum([GENDERS.MALE, GENDERS.FEMALE]),
+    relation: z.enum(Object.values(PARTICIPANT_RELATIONS)).optional().default(PARTICIPANT_RELATIONS.SELF),
+    phone: z
+      .string()
+      .trim()
+      .max(11)
+      .optional()
+      .default("")
+      .refine((v) => !v || /^09\d{9}$/.test(v), "Invalid Iranian mobile number"),
+    emergencyContact: emergencyContactSchema.optional(),
+    registeredAt: z.coerce.date().optional(),
+    notes: z.string().trim().max(1000).optional().default(""),
   })
   .strict();
 
@@ -180,6 +205,8 @@ const paginationQuery = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
+  registeredFrom: z.coerce.date().optional(),
+  registeredTo: z.coerce.date().optional(),
 });
 
 module.exports = {
@@ -187,6 +214,7 @@ module.exports = {
   emergencyContactSchema,
   participantBody,
   participantUpdateBody,
+  adminParticipantBody,
   reservationBody,
   waitlistBody,
   confirmEnrollmentBody,

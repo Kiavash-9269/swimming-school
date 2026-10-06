@@ -4,15 +4,17 @@ import { searchAdminParticipants } from "../../features/enrollments/enrollmentsA
 import { getCourseClasses } from "../../features/courses/coursesApi";
 import {
   ENROLLMENT_STATUS_LABELS,
-  formatExpiryFa,
   userMessageFromEnrollmentError,
 } from "../../features/enrollments/enrollmentLabels";
+import { formatDateFa } from "../../features/participants/participantLabels";
 import { GENDER_RESTRICTION_LABELS } from "../../features/courses/courseLabels";
 import { StatusPill, AdminPageHeader } from "../../features/courses/components/AdminCourseUi";
 import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import EmptyState from "../../components/Ui/EmptyState";
 import ForbiddenState from "../../components/Ui/ForbiddenState";
+import PersianDateField from "../../components/Ui/PersianDateField";
+import AdminParticipantCreatePanel from "../../features/participants/components/AdminParticipantCreatePanel";
 
 const GENDER_OPTIONS = ["MALE", "FEMALE"];
 const PAGE_SIZE = 20;
@@ -42,8 +44,11 @@ export default function AdminParticipantsPage() {
   const isActiveParam = searchParams.get("isActive");
   const classId = searchParams.get("classId") || "";
   const showAll = searchParams.get("scope") === "all";
+  const registeredFrom = searchParams.get("from") || "";
+  const registeredTo = searchParams.get("to") || "";
 
   const [qInput, setQInput] = useState(qParam);
+  const [createOpen, setCreateOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [classes, setClasses] = useState([]);
@@ -75,6 +80,8 @@ export default function AdminParticipantsPage() {
           isActive,
           enrolled: showAll ? undefined : true,
           classId: classId || undefined,
+          registeredFrom: registeredFrom || undefined,
+          registeredTo: registeredTo || undefined,
           signal,
         });
         setItems(Array.isArray(data?.items) ? data.items : []);
@@ -91,7 +98,7 @@ export default function AdminParticipantsPage() {
         setStatus("error");
       }
     },
-    [qParam, page, gender, isActiveParam, classId, showAll],
+    [qParam, page, gender, isActiveParam, classId, showAll, registeredFrom, registeredTo],
   );
 
   useEffect(() => {
@@ -120,7 +127,21 @@ export default function AdminParticipantsPage() {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE) || 1);
-  const hasFilters = Boolean(qParam || gender || isActiveParam != null || classId);
+  const hasFilters = Boolean(
+    qParam || gender || isActiveParam != null || classId || registeredFrom || registeredTo,
+  );
+
+  function handleCreated() {
+    // Admin-added students often have no enrollment yet, so switch to the full list to show them.
+    if (showAll && page === 1) {
+      load();
+      return;
+    }
+    const next = new URLSearchParams(searchParams);
+    next.set("scope", "all");
+    next.set("page", "1");
+    setSearchParams(next);
+  }
 
   return (
     <div className="space-y-6">
@@ -128,8 +149,22 @@ export default function AdminParticipantsPage() {
         backTo="/admin"
         backLabel="میز مدیریت"
         title="شاگردان"
-        description="همه کسانی که برای کلاس‌ها ثبت‌نام کرده‌اند، با کلاس و وضعیت ثبت‌نامشان. با نام، شماره تماس یا کلاس فهرست را محدود کنید."
+        description="همه کسانی که برای کلاس‌ها ثبت‌نام کرده‌اند، با کلاس و وضعیت ثبت‌نامشان. با نام، شماره تماس، کلاس یا بازه تاریخ عضویت فهرست را محدود کنید."
       />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setCreateOpen((v) => !v)}
+          className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+        >
+          {createOpen ? "بستن فرم افزودن" : "+ افزودن شاگرد"}
+        </button>
+      </div>
+
+      {createOpen ? (
+        <AdminParticipantCreatePanel onCreated={handleCreated} onClose={() => setCreateOpen(false)} />
+      ) : null}
 
       <form
         onSubmit={submitSearch}
@@ -186,6 +221,41 @@ export default function AdminParticipantsPage() {
             <option value="false">غیرفعال</option>
           </select>
         </label>
+        <div className="text-sm">
+          <span className="text-xs text-slate-500">عضویت از تاریخ</span>
+          <div className="mt-1 w-40">
+            <PersianDateField
+              value={registeredFrom}
+              placeholder="از…"
+              onChange={(v) => setFilter("from", v)}
+            />
+          </div>
+        </div>
+        <div className="text-sm">
+          <span className="text-xs text-slate-500">تا تاریخ</span>
+          <div className="mt-1 w-40">
+            <PersianDateField
+              value={registeredTo}
+              placeholder="تا…"
+              onChange={(v) => setFilter("to", v)}
+            />
+          </div>
+        </div>
+        {registeredFrom || registeredTo ? (
+          <button
+            type="button"
+            onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.delete("from");
+              next.delete("to");
+              next.set("page", "1");
+              setSearchParams(next);
+            }}
+            className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+          >
+            حذف فیلتر تاریخ
+          </button>
+        ) : null}
         <button type="submit" className="rounded-xl bg-cyan-700 px-4 py-2 text-sm text-white hover:bg-cyan-600">
           جستجو
         </button>
@@ -225,7 +295,7 @@ export default function AdminParticipantsPage() {
                   <th className="px-3 py-2">سن</th>
                   <th className="px-3 py-2">کلاس‌ها و وضعیت ثبت‌نام</th>
                   <th className="px-3 py-2">پرونده</th>
-                  <th className="px-3 py-2">ایجاد</th>
+                  <th className="px-3 py-2">تاریخ عضویت</th>
                 </tr>
               </thead>
               <tbody>
@@ -241,7 +311,15 @@ export default function AdminParticipantsPage() {
                           {`${p.firstName || ""} ${p.lastName || ""}`.trim() || p.id}
                         </Link>
                       </td>
-                      <td className="px-3 py-2">{p.phone || "—"}</td>
+                      <td className="px-3 py-2">
+                        <div>{p.phone || p.owner?.phone || "—"}</div>
+                        {p.owner?.phone && p.owner.phone !== p.phone ? (
+                          <div className="text-xs text-slate-400">
+                            حساب: {p.owner.phone}
+                            {p.owner.firstName ? ` (${p.owner.firstName} ${p.owner.lastName || ""})` : ""}
+                          </div>
+                        ) : null}
+                      </td>
                       <td className="px-3 py-2">
                         {GENDER_RESTRICTION_LABELS[p.gender] || p.gender || "—"}
                       </td>
@@ -274,7 +352,12 @@ export default function AdminParticipantsPage() {
                           {p.isActive ? "فعال" : "غیرفعال"}
                         </StatusPill>
                       </td>
-                      <td className="px-3 py-2 text-slate-500">{formatExpiryFa(p.createdAt)}</td>
+                      <td className="px-3 py-2 text-slate-500">
+                        {formatDateFa(p.registeredAt || p.createdAt)}
+                        {p.createdByAdmin ? (
+                          <div className="text-xs text-slate-400">افزوده‌شده توسط مدیر</div>
+                        ) : null}
+                      </td>
                     </tr>
                   );
                 })}
