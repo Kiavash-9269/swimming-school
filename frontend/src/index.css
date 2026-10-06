@@ -1,7 +1,7 @@
-@import "tailwindcss";
+@import "tailwindcss" important;
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Keep breakpoints aligned; media queries in layout CSS also use px for reliability */
+/* Align Tailwind rem breakpoints with layout CSS (768px = 48rem at 16px root) */
 @theme {
   --breakpoint-sm: 40rem;
   --breakpoint-md: 48rem;
