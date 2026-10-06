@@ -1,5 +1,5 @@
 const { env } = require("../../config/env");
-const { logEvent, logError } = require("../../services/logging");
+const { logEvent, logDebug, logError } = require("../../services/logging");
 const { tryAcquireJobLock, releaseJobLock } = require("./schedulerLock.model");
 const { expireHeldReservations, promoteWaitlist } = require("../enrollments/enrollment.service");
 const { expireOpenPayments } = require("../billing/checkout.service");
@@ -17,17 +17,23 @@ const { randomUUID } = require("crypto");
 
 const workerId = `w_${process.pid}_${randomUUID().slice(0, 8)}`;
 
+function didWork(result) {
+  if (!result || typeof result !== "object") return false;
+  return Object.values(result).some((v) => typeof v === "number" && v > 0);
+}
+
 async function withJobLock(jobName, ttlMs, fn) {
   const lock = await tryAcquireJobLock(jobName, ttlMs, workerId);
   if (!lock) {
-    logEvent("JOB_SKIPPED_LOCKED", { jobName, workerId });
+    logDebug("JOB_SKIPPED_LOCKED", { jobName, workerId });
     return { skipped: true };
   }
-  logEvent("JOB_STARTED", { jobName, workerId });
+  logDebug("JOB_STARTED", { jobName, workerId });
   try {
     const result = await fn();
     await releaseJobLock(jobName, workerId);
-    logEvent("JOB_COMPLETED", { jobName, workerId, result });
+    // Idle ticks run every minute; only log at info when the job actually changed something.
+    (didWork(result) ? logEvent : logDebug)("JOB_COMPLETED", { jobName, workerId, result });
     return { skipped: false, result };
   } catch (error) {
     await releaseJobLock(jobName, workerId, error.message);
@@ -67,7 +73,13 @@ async function jobExpirePayments() {
     // After payment expiry, seats may free — promote waitlists for affected classes is best-effort
     // expireOpenPayments already releases holds; promote via a light scan of recently expired is complex —
     // rely on expire-reservations / cancel paths. Optionally promote all open classes with availability:
+    // Only classes that actually have people waiting can promote anyone.
+    const waitingClassIds = await WaitlistEntry.distinct("classId", {
+      status: WAITLIST_STATUSES.WAITING,
+    });
+    if (!waitingClassIds.length) return { promoted: 0 };
     const classes = await CourseClass.find({
+      _id: { $in: waitingClassIds },
       status: "REGISTRATION_OPEN",
       $expr: { $lt: [{ $add: ["$confirmedCount", "$heldCount"] }, "$capacity"] },
     })
@@ -194,7 +206,7 @@ async function jobCreateSessionReminders() {
       }
     }
 
-    logEvent("REMINDERS_CREATED", { created });
+    if (created > 0) logEvent("REMINDERS_CREATED", { created });
     return { created };
   });
 }

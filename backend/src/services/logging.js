@@ -49,6 +49,10 @@ function logEvent(event, meta = {}) {
   logger.info({ event, ...meta }, event);
 }
 
+function logDebug(event, meta = {}) {
+  logger.debug({ event, ...meta }, event);
+}
+
 function logError(event, error, meta = {}) {
   logger.error(
     {
@@ -68,5 +72,6 @@ function logError(event, error, meta = {}) {
 module.exports = {
   logger,
   logEvent,
+  logDebug,
   logError,
 };

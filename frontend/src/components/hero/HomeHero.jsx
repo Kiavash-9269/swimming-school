@@ -29,20 +29,37 @@ export default function HomeHero() {
 
   const isVisible = (id) => visibleIds.includes(id);
 
+  // The hero video is ~8 MB; phones and data-saver users get the poster image instead.
+  const [showVideo] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const saveData = navigator.connection?.saveData === true;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return !saveData && !reducedMotion && window.matchMedia("(min-width: 768px)").matches;
+  });
+
   return (
     <header className="relative min-h-screen overflow-hidden rtl">
-      
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-preload="metadata"        poster={heroPoster} 
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-
-        <source src="/videos/IMG_1215.mp4" type="video/mp4" />
-      </video>
+      {showVideo ? (
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={heroPoster}
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/videos/IMG_1215.mp4" type="video/mp4" />
+        </video>
+      ) : (
+        <img
+          src={heroPoster}
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
 
       {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-950/85 via-cyan-950/60 to-cyan-800/60" />

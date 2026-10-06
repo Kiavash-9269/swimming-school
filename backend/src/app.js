@@ -55,7 +55,14 @@ function createApp() {
   app.use(
     pinoHttp({
       logger,
-      autoLogging: env.NODE_ENV !== "test",
+      autoLogging:
+        env.NODE_ENV === "test" ? false : { ignore: (req) => req.url === "/api/health" },
+      // Nginx already keeps an access log; only problems are worth an app log line per request.
+      customLogLevel: (_req, res, err) => {
+        if (err || res.statusCode >= 500) return "error";
+        if (res.statusCode >= 400) return "warn";
+        return "debug";
+      },
       customProps: () => ({ service: "swimming-school-api" }),
     }),
   );
