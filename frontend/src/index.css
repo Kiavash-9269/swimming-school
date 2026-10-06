@@ -1,5 +1,14 @@
-@import "tailwindcss" important;
+@import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Keep breakpoints aligned; media queries in layout CSS also use px for reliability */
+@theme {
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 96rem;
+}
 
 * {
   padding: 0;
@@ -8,6 +17,7 @@
 }
 body {
   font-family: "yekan", sans-serif;
+  min-width: 320px;
 }
 
 html {

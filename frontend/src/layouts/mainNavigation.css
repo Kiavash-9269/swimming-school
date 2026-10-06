@@ -1,0 +1,35 @@
+/* Pixel breakpoints (not rem) so desktop/mobile switch stays reliable
+   even when root font-size or OS scaling changes rem media queries. */
+
+.main-nav-desktop,
+.main-nav-desktop-auth {
+  display: none !important;
+}
+
+.main-nav-burger {
+  display: inline-flex !important;
+}
+
+.main-nav-backdrop,
+.main-nav-drawer {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .main-nav-desktop {
+    display: flex !important;
+  }
+
+  .main-nav-desktop-auth {
+    display: flex !important;
+  }
+
+  .main-nav-burger {
+    display: none !important;
+  }
+
+  .main-nav-backdrop,
+  .main-nav-drawer {
+    display: none !important;
+  }
+}

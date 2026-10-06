@@ -293,7 +293,7 @@ export default function AuthCard() {
   };
 
   return (
-    <div className="relative w-[370px] min-h-[520px] bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-xl border border-white/30 shadow-2xl rounded-2xl flex justify-center items-center overflow-hidden p-4">
+    <div className="relative w-full max-w-md min-h-[520px] mx-4 sm:mx-0 bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-xl border border-white/30 shadow-2xl rounded-2xl flex justify-center items-center overflow-hidden p-4 sm:p-6">
       <button
         onClick={handleBackToHome}
         className="absolute top-4 left-4 z-20 bg-white/80 backdrop-blur-md border border-sky-200 text-sky-700 hover:bg-white hover:text-sky-900 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg"

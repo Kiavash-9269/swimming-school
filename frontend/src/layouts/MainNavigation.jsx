@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../services/useAuth";
 import { homePathForUser } from "../services/homePath";
+import "./mainNavigation.css";
 
 export default function EnhancedNavbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,6 +31,17 @@ export default function EnhancedNavbar() {
     const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close mobile drawer when viewport becomes desktop-width
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = (event) => {
+      if (event.matches) setIsOpen(false);
+    };
+    onChange(mq);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
   // Check if current route is active
@@ -67,7 +79,7 @@ export default function EnhancedNavbar() {
             </Link>
 
             {/* Desktop Navigation Menu - Hidden on mobile */}
-            <nav className="hidden md:flex gap-7">
+            <nav className="main-nav-desktop gap-7">
               {menuItems.map((item, i) => (
                 <Link
                   key={i}
@@ -90,7 +102,7 @@ export default function EnhancedNavbar() {
             </nav>
 
             {/* Desktop Auth Buttons - Hidden on mobile */}
-            <div className="hidden md:flex gap-3 items-center">
+            <div className="main-nav-desktop-auth gap-3 items-center">
               {!isLoading && isAuthenticated ? (
                 <>
                   <Link
@@ -130,8 +142,10 @@ export default function EnhancedNavbar() {
 
             {/* Mobile Menu Toggle Button */}
             <button
+              type="button"
               onClick={() => setIsOpen(true)}
-              className="md:hidden p-2 rounded-xl hover:bg-white/10"
+              className="main-nav-burger p-2 rounded-xl hover:bg-white/10"
+              aria-label="باز کردن منو"
             >
               <div className="space-y-1.5">
                 <span className="block w-6 h-0.5 bg-white" />
@@ -146,19 +160,18 @@ export default function EnhancedNavbar() {
       {/* Backdrop Overlay - Closes menu when clicked */}
       <div
         onClick={() => setIsOpen(false)}
-        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition
+        className={`main-nav-backdrop fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition
   ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       />
 
       {/* Mobile Slide-up Menu */}
       <aside
-        className={`fixed bottom-0 inset-x-0 z-50
+        className={`main-nav-drawer fixed bottom-0 inset-x-0 z-50
   bg-white/95 backdrop-blur-2xl
   rounded-t-[2.5rem] shadow-2xl
   border-t border-white/30
   transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)]
-  ${isOpen ? "translate-y-0" : "translate-y-full"}
-  md:hidden`}
+  ${isOpen ? "translate-y-0" : "translate-y-full"}`}
       >
         {/* Drag Handle Bar */}
         <div className="flex justify-center pt-3 pb-2">
