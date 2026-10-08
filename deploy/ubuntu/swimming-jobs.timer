@@ -1,0 +1,12 @@
+[Unit]
+Description=Run swimming-school jobs hourly (low idle CPU)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+AccuracySec=5min
+Persistent=true
+RandomizedDelaySec=2min
+
+[Install]
+WantedBy=timers.target

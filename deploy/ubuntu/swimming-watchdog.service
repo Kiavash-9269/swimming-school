@@ -1,0 +1,10 @@
+[Unit]
+Description=Swimming-school stack watchdog (health + auto-restart)
+After=network-online.target mongod.service nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Nice=10
+ExecStart=/var/www/swimming-school/deploy/ubuntu/watchdog.sh
+TimeoutStartSec=120

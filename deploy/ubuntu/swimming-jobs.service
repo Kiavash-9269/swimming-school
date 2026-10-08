@@ -1,0 +1,14 @@
+[Unit]
+Description=Swimming-school background jobs (hourly, out-of-process)
+After=network.target mongod.service
+Wants=mongod.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/www/swimming-school/backend
+Environment=NODE_ENV=production
+Nice=15
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+ExecStart=/usr/bin/node /var/www/swimming-school/backend/scripts/run-jobs-once.js
+TimeoutStartSec=180

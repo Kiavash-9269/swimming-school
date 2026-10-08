@@ -1,0 +1,31 @@
+# Swimming-school production jails (installed by harden-production.sh)
+
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+backend  = systemd
+
+[sshd]
+enabled  = true
+port     = ssh
+maxretry = 4
+bantime  = 24h
+
+[nginx-limit-req]
+enabled  = true
+filter   = nginx-limit-req
+port     = http,https
+logpath  = /var/log/nginx/*error*.log
+maxretry = 20
+findtime = 2m
+bantime  = 2h
+
+[nginx-botsearch]
+enabled  = true
+filter   = nginx-botsearch
+port     = http,https
+logpath  = /var/log/nginx/*error*.log
+maxretry = 2
+findtime = 5m
+bantime  = 48h

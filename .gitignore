@@ -9,6 +9,24 @@ backend/.data/
 deploy/ubuntu/.generated-secrets.txt
 deploy/ubuntu/.env.server.tmp
 deploy/ubuntu/.env.server
+# One-off local SSH helpers (never commit)
+deploy/ubuntu/_*.py
+deploy/ubuntu/apply_*.py
+deploy/ubuntu/pull_rebuild.py
+deploy/ubuntu/fix_api.py
+deploy/ubuntu/server_health.py
+deploy/ubuntu/verify_cpu.py
+deploy/ubuntu/verify_css.py
+deploy/ubuntu/sync_env_mock_payments.py
+deploy/ubuntu/ssh_probe*.py
+deploy/ubuntu/run_domain_*.py
+deploy/ubuntu/rebuild_*.py
+deploy/ubuntu/_plink*
+deploy/ubuntu/_cron_golive
+deploy/ubuntu/_remote_dns_check.sh
+deploy/ubuntu/go-live-domain.sh
+deploy/ubuntu/pull-and-domain.sh
+deploy/ubuntu/retry-domain.sh
 *.log
 .DS_Store
 *.tar

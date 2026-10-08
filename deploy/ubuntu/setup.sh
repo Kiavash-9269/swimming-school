@@ -314,14 +314,24 @@ prompt_secret() {
   echo "${out}"
 }
 
-log "Collecting production credentials (Niksms + Zarinpal)"
+log "Collecting production credentials (Niksms; Zarinpal optional)"
 NIK_USER="$(prompt_secret "NIKSMS_USERNAME" "${NIK_USER}")"
 NIK_PASS="$(prompt_secret "NIKSMS_PASSWORD" "${NIK_PASS}")"
-ZARIN_ID="$(prompt_secret "ZARINPAL_MERCHANT_ID" "${ZARIN_ID}")"
+ZARIN_ID="$(prompt_secret "ZARINPAL_MERCHANT_ID (leave empty for mock payments)" "${ZARIN_ID}")"
 
-if [[ -z "${NIK_USER}" || -z "${NIK_PASS}" || -z "${ZARIN_ID}" ]]; then
-  echo "WARN: NIKSMS_USERNAME / NIKSMS_PASSWORD / ZARINPAL_MERCHANT_ID are incomplete."
+if [[ -z "${NIK_USER}" || -z "${NIK_PASS}" ]]; then
+  echo "WARN: NIKSMS_USERNAME / NIKSMS_PASSWORD are incomplete."
   echo "      API will refuse to start until you set them in backend/.env and run: pm2 restart swimming-api"
+fi
+if [[ -z "${ZARIN_ID}" ]]; then
+  echo "INFO: No Zarinpal merchant — using PAYMENT_PROVIDER=mock until you add ZARINPAL_MERCHANT_ID."
+fi
+
+PAYMENT_PROVIDER="mock"
+ZARIN_SANDBOX="true"
+if [[ -n "${ZARIN_ID}" ]]; then
+  PAYMENT_PROVIDER="zarinpal"
+  ZARIN_SANDBOX="false"
 fi
 
 cat > "${ENV_FILE}" <<EOF
@@ -360,18 +370,19 @@ APP_TIMEZONE=Asia/Tehran
 RESERVATION_HOLD_SECONDS=900
 WAITLIST_OFFER_SECONDS=900
 
-PAYMENT_PROVIDER=zarinpal
+PAYMENT_PROVIDER=${PAYMENT_PROVIDER}
 PAYMENT_CALLBACK_URL=https://${DOMAIN}/api/payments/callback
 PAYMENT_CALLBACK_SECRET=${PAY_CB_SECRET}
 PAYMENT_TIMEOUT_MS=15000
 ZARINPAL_MERCHANT_ID=${ZARIN_ID}
-ZARINPAL_SANDBOX=false
+ZARINPAL_SANDBOX=${ZARIN_SANDBOX}
 
-SCHEDULER_ENABLED=true
-SCHEDULER_INTERVAL_MS=300000
-MONGO_MAX_POOL_SIZE=5
-JOB_BATCH_SIZE=20
-JOB_REMINDER_EVERY_N_TICKS=10
+SCHEDULER_ENABLED=false
+SCHEDULER_INTERVAL_MS=1800000
+MONGO_MAX_POOL_SIZE=3
+JOB_BATCH_SIZE=10
+JOB_REMINDER_EVERY_N_TICKS=100
+JOB_REMINDERS_ENABLED=false
 NOTIFICATION_MAX_ATTEMPTS=3
 NOTIFICATION_LEASE_SECONDS=60
 NOTIFICATION_DEFAULT_LOCALE=fa
@@ -519,7 +530,8 @@ REQUIRED before production traffic works fully:
      Fill at least:
        - NIKSMS_USERNAME
        - NIKSMS_PASSWORD
-       - ZARINPAL_MERCHANT_ID
+     Optional until live payments:
+       - ZARINPAL_MERCHANT_ID (then PAYMENT_PROVIDER=zarinpal)
 
   2) Restart API:
        pm2 restart swimming-api

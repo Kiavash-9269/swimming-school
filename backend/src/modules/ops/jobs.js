@@ -215,9 +215,9 @@ let tickCount = 0;
 
 async function runAllJobs() {
   tickCount += 1;
-  // Reminder scans are the heaviest job — run ~every 10th tick (e.g. every ~50 min at 5 min interval).
-  const reminderEvery = Math.max(1, Number(env.JOB_REMINDER_EVERY_N_TICKS) || 10);
-  const runReminders = tickCount % reminderEvery === 0;
+  // Reminder scans are the heaviest job — off unless JOB_REMINDERS_ENABLED=true.
+  const reminderEvery = Math.max(1, Number(env.JOB_REMINDER_EVERY_N_TICKS) || 100);
+  const runReminders = env.JOB_REMINDERS_ENABLED && tickCount % reminderEvery === 0;
 
   const jobs = [
     ["expire-reservations", jobExpireReservations],

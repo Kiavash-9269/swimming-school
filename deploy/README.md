@@ -43,7 +43,9 @@ git clone https://YOUR_GITHUB_USERNAME:YOUR_TOKEN@github.com/Kiavash-9269/swimmi
 
 ---
 
-## مرحله ۲ — یک فرمان نصب کامل
+## مرحله ۲ — نصب + سخت‌سازی
+
+### نصب اول
 
 ```bash
 cd /var/www/swimming-school
@@ -60,6 +62,17 @@ sudo bash deploy/ubuntu/setup.sh \
   --niksms-pass YOUR_NIK_PASS \
   --zarinpal-merchant YOUR_MERCHANT_ID
 ```
+
+`--zarinpal-merchant` اختیاری است؛ بدون آن پرداخت **mock** می‌ماند تا زرین‌پال را فعال کنی.
+
+### بعد از setup (پیشنهاد)
+
+```bash
+sudo bash deploy/ubuntu/optimize-server.sh --domain YOUR_DOMAIN.com
+sudo bash deploy/ubuntu/harden-production.sh --domain YOUR_DOMAIN.com
+```
+
+راهنمای go-live: `deploy/ubuntu/GO-LIVE.md` — امنیت: `deploy/ubuntu/HARDENING.md`
 
 اگر DNS آماده نیست: `--skip-ssl` بزن؛ بعداً:
 
@@ -119,6 +132,10 @@ sudo bash deploy/ubuntu/update.sh --skip-pull
 | `ubuntu/nginx/*.conf` | Nginx |
 | `ubuntu/pm2.ecosystem.config.cjs` | PM2 |
 | `ubuntu/env.production.example` | نمونه env |
+| `ubuntu/optimize-server.sh` | CPU/RAM + jobs timer |
+| `ubuntu/harden-production.sh` | UFW, fail2ban, watchdog, backup |
+| `ubuntu/GO-LIVE.md` | چک‌لیست تحویل |
+| `ubuntu/HARDENING.md` | امنیت + Cloudflare |
 
 رمزهای تولیدشده فقط روی سرور: `deploy/ubuntu/.generated-secrets.txt` (در گیت ignore است).
 

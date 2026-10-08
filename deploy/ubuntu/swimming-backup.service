@@ -1,0 +1,10 @@
+[Unit]
+Description=Swimming-school MongoDB backup
+After=mongod.service
+Wants=mongod.service
+
+[Service]
+Type=oneshot
+Nice=10
+ExecStart=/var/www/swimming-school/deploy/ubuntu/backup.sh
+TimeoutStartSec=600

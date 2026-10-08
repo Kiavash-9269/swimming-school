@@ -4,7 +4,7 @@
 #
 # What it does:
 #   1) 2 GB swap + low swappiness so builds/spikes do not OOM-kill the site
-#   2) Backend .env: scheduler every 60s, Mongo pool 10, LOG_LEVEL=info
+#   2) Backend .env: in-process scheduler OFF; hourly systemd jobs; tiny Mongo pool
 #   3) MongoDB WiredTiger cache capped (default 256 MB instead of ~50% of RAM), re-applied on every boot
 #   4) PM2 restarted with the memory-capped ecosystem file
 #   5) Log rotation for app logs + journald size cap
@@ -72,17 +72,29 @@ set_env() {
   fi
 }
 if [[ -f "${ENV_FILE}" ]]; then
-  log "Backend .env tuning"
+  log "Backend .env tuning (extreme low idle CPU)"
   cp -a "${ENV_FILE}" "${ENV_FILE}.bak.optimize.$(date +%Y%m%d%H%M%S)"
-  set_env SCHEDULER_INTERVAL_MS 300000
-  set_env MONGO_MAX_POOL_SIZE 5
-  set_env JOB_BATCH_SIZE 20
-  set_env JOB_REMINDER_EVERY_N_TICKS 10
+  # No in-process setInterval — jobs run via swimming-jobs.timer (hourly).
+  set_env SCHEDULER_ENABLED false
+  set_env SCHEDULER_INTERVAL_MS 1800000
+  set_env MONGO_MAX_POOL_SIZE 3
+  set_env JOB_BATCH_SIZE 10
+  set_env JOB_REMINDER_EVERY_N_TICKS 100
+  set_env JOB_REMINDERS_ENABLED false
   set_env LOG_LEVEL warn
   chmod 600 "${ENV_FILE}"
 else
   warn "${ENV_FILE} not found; skipping env tuning"
 fi
+
+########################################
+# 2b) Hourly out-of-process jobs (replaces Node setInterval)
+########################################
+log "Install swimming-jobs.timer (hourly)"
+cp -f "${DEPLOY_DIR}/swimming-jobs.service" /etc/systemd/system/swimming-jobs.service
+cp -f "${DEPLOY_DIR}/swimming-jobs.timer" /etc/systemd/system/swimming-jobs.timer
+systemctl daemon-reload
+systemctl enable --now swimming-jobs.timer >/dev/null 2>&1 || true
 
 ########################################
 # 3) MongoDB cache cap (persisted via a boot-time oneshot unit)
@@ -93,6 +105,8 @@ if systemctl list-unit-files mongod.service >/dev/null 2>&1; then
   cat > /etc/systemd/system/mongod.service.d/rseq.conf <<'RSEQ'
 [Service]
 Environment=GLIBC_TUNABLES=glibc.pthread.rseq=1
+Nice=10
+CPUSchedulingPolicy=batch
 RSEQ
   if [[ -f /etc/mongod.conf ]] && ! grep -q 'cacheSizeGB' /etc/mongod.conf; then
     # Inject under storage: without rewriting the whole file if possible
@@ -193,21 +207,32 @@ logrotate -f /etc/logrotate.d/swimming-school 2>/dev/null || true
 mkdir -p /etc/systemd/journald.conf.d
 cat > /etc/systemd/journald.conf.d/swimming-school.conf <<'EOF'
 [Journal]
-SystemMaxUse=200M
-RuntimeMaxUse=50M
+SystemMaxUse=80M
+RuntimeMaxUse=30M
 EOF
 systemctl restart systemd-journald || true
-journalctl --vacuum-size=200M >/dev/null 2>&1 || true
+journalctl --vacuum-size=80M >/dev/null 2>&1 || true
+
+# Unattended upgrades wake CPU/IO on small VPS — disable (security updates via manual apt).
+if systemctl list-unit-files unattended-upgrades.service >/dev/null 2>&1; then
+  log "Disable unattended-upgrades (idle CPU)"
+  systemctl disable --now unattended-upgrades.service >/dev/null 2>&1 || true
+fi
 
 ########################################
 # 6) Nginx
 ########################################
-# One nginx worker is enough for a 2–4 vCPU site and cuts idle CPU.
+# One nginx worker + quiet access logs = less idle wakeups.
 if [[ -f /etc/nginx/nginx.conf ]]; then
   sed -i 's/^worker_processes.*/worker_processes 1;/' /etc/nginx/nginx.conf || true
   if ! grep -q 'worker_connections 256' /etc/nginx/nginx.conf; then
     sed -i 's/worker_connections [0-9]\+/worker_connections 256/' /etc/nginx/nginx.conf || true
   fi
+  # Prefer warn-level error log; access logs off globally if not already set in http{}
+  if ! grep -qE '^\s*access_log\s+off;' /etc/nginx/nginx.conf; then
+    sed -i '/http {/a\    access_log off;' /etc/nginx/nginx.conf || true
+  fi
+  sed -i 's/error_log [^;]*;/error_log \/var\/log\/nginx\/error.log warn;/' /etc/nginx/nginx.conf || true
 fi
 
 log "Nginx site for ${DOMAIN}"

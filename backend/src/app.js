@@ -8,6 +8,7 @@ const { logger } = require("./services/logging");
 const { getDatabaseStatus } = require("./config/database");
 const { errorHandler } = require("./middleware/errorHandler");
 const { notFoundHandler } = require("./middleware/notFound");
+const { createLimiter } = require("./middleware/rateLimit");
 const authRoutes = require("./modules/auth/auth.routes");
 const coursesRoutes = require("./modules/courses/courses.routes");
 const enrollmentRoutes = require("./modules/enrollments/enrollment.routes");
@@ -21,6 +22,7 @@ function createApp() {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
+      hsts: env.NODE_ENV === "production" ? { maxAge: 63072000, includeSubDomains: true } : false,
     }),
   );
 
@@ -66,6 +68,12 @@ function createApp() {
       customProps: () => ({ service: "swimming-school-api" }),
     }),
   );
+
+  const globalApiLimiter = createLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: env.NODE_ENV === "production" ? 900 : 5000,
+  });
+  app.use("/api", globalApiLimiter);
 
   app.get("/api/health", (req, res) => {
     const db = getDatabaseStatus();
