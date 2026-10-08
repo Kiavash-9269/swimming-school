@@ -74,9 +74,10 @@ set_env() {
 if [[ -f "${ENV_FILE}" ]]; then
   log "Backend .env tuning"
   cp -a "${ENV_FILE}" "${ENV_FILE}.bak.optimize.$(date +%Y%m%d%H%M%S)"
-  set_env SCHEDULER_INTERVAL_MS 180000
+  set_env SCHEDULER_INTERVAL_MS 300000
   set_env MONGO_MAX_POOL_SIZE 5
   set_env JOB_BATCH_SIZE 20
+  set_env JOB_REMINDER_EVERY_N_TICKS 10
   set_env LOG_LEVEL warn
   chmod 600 "${ENV_FILE}"
 else
@@ -201,6 +202,14 @@ journalctl --vacuum-size=200M >/dev/null 2>&1 || true
 ########################################
 # 6) Nginx
 ########################################
+# One nginx worker is enough for a 2–4 vCPU site and cuts idle CPU.
+if [[ -f /etc/nginx/nginx.conf ]]; then
+  sed -i 's/^worker_processes.*/worker_processes 1;/' /etc/nginx/nginx.conf || true
+  if ! grep -q 'worker_connections 256' /etc/nginx/nginx.conf; then
+    sed -i 's/worker_connections [0-9]\+/worker_connections 256/' /etc/nginx/nginx.conf || true
+  fi
+fi
+
 log "Nginx site for ${DOMAIN}"
 SITE="/etc/nginx/sites-available/swimming-school"
 if [[ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]]; then

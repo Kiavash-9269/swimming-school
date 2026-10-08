@@ -211,15 +211,26 @@ async function jobCreateSessionReminders() {
   });
 }
 
+let tickCount = 0;
+
 async function runAllJobs() {
-  const results = {};
-  for (const [name, fn] of [
+  tickCount += 1;
+  // Reminder scans are the heaviest job — run ~every 10th tick (e.g. every ~50 min at 5 min interval).
+  const reminderEvery = Math.max(1, Number(env.JOB_REMINDER_EVERY_N_TICKS) || 10);
+  const runReminders = tickCount % reminderEvery === 0;
+
+  const jobs = [
     ["expire-reservations", jobExpireReservations],
     ["expire-payments", jobExpirePayments],
     ["expire-waitlist-offers", jobExpireWaitlistOffers],
-    ["create-session-reminders", jobCreateSessionReminders],
     ["process-notifications", jobProcessNotifications],
-  ]) {
+  ];
+  if (runReminders) {
+    jobs.push(["create-session-reminders", jobCreateSessionReminders]);
+  }
+
+  const results = { tick: tickCount, remindersThisTick: runReminders };
+  for (const [name, fn] of jobs) {
     try {
       results[name] = await fn();
     } catch (error) {

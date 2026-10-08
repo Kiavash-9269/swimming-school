@@ -14,7 +14,7 @@ function startScheduler() {
   if (timer) return { started: true, already: true };
 
   stopping = false;
-  const interval = env.SCHEDULER_INTERVAL_MS || 15000;
+  const interval = env.SCHEDULER_INTERVAL_MS || 300000;
 
   const tick = async () => {
     if (stopping || running) return;
@@ -28,7 +28,7 @@ function startScheduler() {
     }
   };
 
-  // Initial delayed tick so boot isn't blocked
+  // First tick after one full interval so boot/login traffic is not fighting jobs.
   timer = setInterval(tick, interval);
   if (typeof timer.unref === "function") timer.unref();
   logEvent("SCHEDULER_STARTED", { intervalMs: interval });

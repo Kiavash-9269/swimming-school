@@ -77,9 +77,11 @@ const envSchema = z.object({
 
   // Notifications / scheduler (Phase 5)
   SCHEDULER_ENABLED: z.string().optional(),
-  SCHEDULER_INTERVAL_MS: z.coerce.number().int().positive().default(180000),
+  SCHEDULER_INTERVAL_MS: z.coerce.number().int().positive().default(300000),
   MONGO_MAX_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(5),
   JOB_BATCH_SIZE: z.coerce.number().int().positive().max(500).default(20),
+  /** Session-reminder job runs every N scheduler ticks (heavy DB scan). */
+  JOB_REMINDER_EVERY_N_TICKS: z.coerce.number().int().positive().max(1000).default(10),
   NOTIFICATION_MAX_ATTEMPTS: z.coerce.number().int().positive().max(10).default(3),
   NOTIFICATION_LEASE_SECONDS: z.coerce.number().int().positive().default(60),
   NOTIFICATION_DEFAULT_LOCALE: z.enum(["fa", "en"]).default("fa"),
