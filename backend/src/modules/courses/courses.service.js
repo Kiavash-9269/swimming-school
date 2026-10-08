@@ -1,7 +1,16 @@
 const { env } = require("../../config/env");
 const { AppError } = require("../../utils/AppError");
 const { logEvent } = require("../../services/logging");
-const { CLASS_STATUSES, SESSION_STATUSES, ENROLLMENT_STATUSES, GENDERS } = require("./domain.constants");
+const {
+  CLASS_STATUSES,
+  SESSION_STATUSES,
+  ENROLLMENT_STATUSES,
+  RESERVATION_STATUSES,
+  WAITLIST_STATUSES,
+  PAYMENT_STATUSES,
+  DISCOUNT_SCOPES,
+  GENDERS,
+} = require("./domain.constants");
 const { CourseTemplate } = require("./courseTemplate.model");
 const { Instructor } = require("./instructor.model");
 const { CourseClass } = require("./courseClass.model");
@@ -15,6 +24,19 @@ const CANCEL_BLOCKING_ENROLLMENT_STATUSES = [
   ENROLLMENT_STATUSES.PAID,
   ENROLLMENT_STATUSES.ACTIVE,
   ENROLLMENT_STATUSES.PENDING_COMPLIANCE,
+];
+
+/** Hard-delete also blocked by history that must stay for audit. */
+const DELETE_BLOCKING_ENROLLMENT_STATUSES = [
+  ...CANCEL_BLOCKING_ENROLLMENT_STATUSES,
+  ENROLLMENT_STATUSES.COMPLETED,
+  ENROLLMENT_STATUSES.WAITLISTED,
+];
+
+const DELETE_BLOCKING_PAYMENT_STATUSES = [
+  PAYMENT_STATUSES.SUCCESS,
+  PAYMENT_STATUSES.REFUNDED,
+  PAYMENT_STATUSES.REFUND_REQUESTED,
 ];
 
 function toPublicTemplate(doc) {
@@ -381,6 +403,8 @@ async function closeRegistration(id) {
 
 async function cancelClass(id) {
   const { Enrollment } = require("../enrollments/enrollment.model");
+  const { Reservation } = require("../enrollments/reservation.model");
+  const { WaitlistEntry } = require("../enrollments/waitlist.model");
   const blocking = await Enrollment.countDocuments({
     classId: id,
     status: { $in: CANCEL_BLOCKING_ENROLLMENT_STATUSES },
@@ -400,8 +424,154 @@ async function cancelClass(id) {
     CLASS_STATUSES.REGISTRATION_CLOSED,
     CLASS_STATUSES.IN_PROGRESS,
   ]);
+
+  // Keep class row; clear open holds so capacity and waitlist stay consistent.
+  await Reservation.updateMany(
+    {
+      classId: id,
+      status: { $in: [RESERVATION_STATUSES.HELD, RESERVATION_STATUSES.CONFIRMED] },
+    },
+    { $set: { status: RESERVATION_STATUSES.RELEASED } },
+  );
+  await WaitlistEntry.updateMany(
+    {
+      classId: id,
+      status: { $in: [WAITLIST_STATUSES.WAITING, WAITLIST_STATUSES.OFFERED] },
+    },
+    { $set: { status: WAITLIST_STATUSES.CANCELLED } },
+  );
+  courseClass.heldCount = 0;
+  await courseClass.save();
+
   logEvent("CLASS_CANCELLED", { classId: String(id) });
   return toPublicClassEnriched(courseClass);
+}
+
+/**
+ * Hard-delete a class and linked operational rows.
+ * Blocked when enrollments/payments/attendance need retention.
+ */
+async function deleteClass(id) {
+  const courseClass = await CourseClass.findById(id);
+  if (!courseClass) {
+    throw new AppError("Class not found", { statusCode: 404, code: "CLASS_NOT_FOUND" });
+  }
+
+  const { Enrollment } = require("../enrollments/enrollment.model");
+  const { Reservation } = require("../enrollments/reservation.model");
+  const { WaitlistEntry } = require("../enrollments/waitlist.model");
+  const { AttendanceRecord } = require("../enrollments/attendance.model");
+  const { Payment } = require("../billing/payment.model");
+  const { Discount } = require("../billing/discount.model");
+
+  const blockingEnrollments = await Enrollment.countDocuments({
+    classId: id,
+    status: { $in: DELETE_BLOCKING_ENROLLMENT_STATUSES },
+  });
+  if (blockingEnrollments > 0) {
+    throw new AppError(
+      "حذف کلاس ممکن نیست: ثبت‌نام فعال، در جریان، تکمیل‌شده یا در لیست انتظار وجود دارد. ابتدا آن‌ها را لغو/تسویه کنید.",
+      {
+        statusCode: 409,
+        code: "CLASS_DELETE_BLOCKED_ENROLLMENTS",
+        details: { count: blockingEnrollments },
+      },
+    );
+  }
+
+  const blockingPayments = await Payment.countDocuments({
+    classId: id,
+    status: { $in: DELETE_BLOCKING_PAYMENT_STATUSES },
+  });
+  if (blockingPayments > 0) {
+    throw new AppError("حذف کلاس ممکن نیست: پرداخت موفق/عودت برای این کلاس ثبت شده است.", {
+      statusCode: 409,
+      code: "CLASS_DELETE_BLOCKED_PAYMENTS",
+      details: { count: blockingPayments },
+    });
+  }
+
+  const attendanceCount = await AttendanceRecord.countDocuments({ classId: id });
+  if (attendanceCount > 0) {
+    throw new AppError("حذف کلاس ممکن نیست: رکورد حضور و غیاب وجود دارد.", {
+      statusCode: 409,
+      code: "CLASS_DELETE_BLOCKED_ATTENDANCE",
+      details: { count: attendanceCount },
+    });
+  }
+
+  const enrollmentIds = (
+    await Enrollment.find({ classId: id }).select("_id").lean()
+  ).map((e) => e._id);
+
+  const deleted = {
+    waitlist: (await WaitlistEntry.deleteMany({ classId: id })).deletedCount || 0,
+    reservations: (await Reservation.deleteMany({ classId: id })).deletedCount || 0,
+    payments: (
+      await Payment.deleteMany({
+        $or: [{ classId: id }, { enrollmentId: { $in: enrollmentIds } }],
+      })
+    ).deletedCount || 0,
+    enrollments: (await Enrollment.deleteMany({ classId: id })).deletedCount || 0,
+    sessions: (await ClassSession.deleteMany({ classId: id })).deletedCount || 0,
+    discounts:
+      (
+        await Discount.deleteMany({
+          classId: id,
+          scope: DISCOUNT_SCOPES.SPECIFIC_CLASS,
+        })
+      ).deletedCount || 0,
+  };
+
+  await CourseClass.deleteOne({ _id: id });
+  logEvent("CLASS_DELETED", { classId: String(id), deleted });
+  return {
+    id: String(id),
+    courseTemplateId: String(courseClass.courseTemplateId),
+    deleted: true,
+    cascade: deleted,
+  };
+}
+
+/**
+ * Hard-delete a course template after deleting all linked classes (same guards).
+ */
+async function deleteCourseTemplate(id) {
+  const template = await CourseTemplate.findById(id);
+  if (!template) {
+    throw new AppError("Course template not found", { statusCode: 404, code: "COURSE_NOT_FOUND" });
+  }
+
+  const { Discount } = require("../billing/discount.model");
+  const linkedClasses = await CourseClass.find({ courseTemplateId: id }).select("_id title").lean();
+  const cascadeClasses = [];
+
+  for (const row of linkedClasses) {
+    const result = await deleteClass(row._id);
+    cascadeClasses.push({ id: result.id, title: row.title, cascade: result.cascade });
+  }
+
+  await CourseTemplate.updateMany({ prerequisites: id }, { $pull: { prerequisites: id } });
+  const discountsRemoved = (
+    await Discount.deleteMany({
+      courseTemplateId: id,
+      scope: DISCOUNT_SCOPES.SPECIFIC_COURSE_TEMPLATE,
+    })
+  ).deletedCount || 0;
+
+  await CourseTemplate.deleteOne({ _id: id });
+  logEvent("COURSE_TEMPLATE_DELETED", {
+    templateId: String(id),
+    classesRemoved: cascadeClasses.length,
+    discountsRemoved,
+  });
+
+  return {
+    id: String(id),
+    deleted: true,
+    classesRemoved: cascadeClasses,
+    discountsRemoved,
+  };
 }
 
 /** REGISTRATION_CLOSED → IN_PROGRESS */
@@ -545,6 +715,8 @@ module.exports = {
   openRegistration,
   closeRegistration,
   cancelClass,
+  deleteClass,
+  deleteCourseTemplate,
   startClass,
   completeClass,
   archiveClass,

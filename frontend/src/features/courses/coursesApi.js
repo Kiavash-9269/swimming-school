@@ -43,6 +43,14 @@ export function updateCourseTemplate(templateId, body, { signal } = {}) {
   });
 }
 
+export function deleteCourseTemplate(templateId, { signal } = {}) {
+  return apiRequest(`/courses/templates/${templateId}`, {
+    method: "DELETE",
+    auth: true,
+    signal,
+  });
+}
+
 /* -------------------- Classes -------------------- */
 
 /**
@@ -67,6 +75,10 @@ export function createCourseClass(body, { signal } = {}) {
 
 export function updateCourseClass(classId, body, { signal } = {}) {
   return apiRequest(`/courses/classes/${classId}`, { method: "PATCH", auth: true, body, signal });
+}
+
+export function deleteCourseClass(classId, { signal } = {}) {
+  return apiRequest(`/courses/classes/${classId}`, { method: "DELETE", auth: true, signal });
 }
 
 export function publishCourseClass(classId, { signal } = {}) {

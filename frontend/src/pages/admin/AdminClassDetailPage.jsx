@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getCourseClassById,
   getClassCapacity,
@@ -10,6 +10,7 @@ import {
   openClassRegistration,
   closeClassRegistration,
   cancelCourseClass,
+  deleteCourseClass,
   startCourseClass,
   completeCourseClass,
   archiveCourseClass,
@@ -46,6 +47,7 @@ const TAB_IDS = ["overview", "sessions", "participants", "attendance", "links"];
 
 export default function AdminClassDetailPage() {
   const { classId } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
   const rawTab = searchParams.get("tab") || "overview";
@@ -126,14 +128,14 @@ export default function AdminClassDetailPage() {
     );
   }, [roster, rosterQ]);
 
-  async function runAction(fn, okMessage) {
+  async function runAction(fn, okMessage, { reload = true } = {}) {
     if (busy) return;
     setBusy(true);
     try {
       await fn();
       toast.success(okMessage);
       setConfirm(null);
-      await load();
+      if (reload) await load();
     } catch (err) {
       toast.error(userMessageFromApiError(err, "عملیات ناموفق بود."));
     } finally {
@@ -191,7 +193,7 @@ export default function AdminClassDetailPage() {
 
       <DetailSection
         title="عملیات وضعیت"
-        hint="فقط اقدام‌های مجاز بعدی نمایش داده می‌شوند؛ سرور مرجع نهایی اعتبار انتقال است. حذف سخت کلاس وجود ندارد — لغو کلاس فیزیکی نیست."
+        hint="فقط اقدام‌های مجاز بعدی نمایش داده می‌شوند. «لغو» وضعیت را عوض می‌کند؛ «حذف» کلاس و وابستگی‌های عملیاتی را پاک می‌کند (اگر ثبت‌نام/پرداخت موفق/حضور نباشد)."
       >
         <ActionBar tone="primary">
           {st === "DRAFT" ? (
@@ -277,6 +279,14 @@ export default function AdminClassDetailPage() {
           <button
             type="button"
             disabled={busy}
+            onClick={() => setConfirm("delete")}
+            className="rounded-xl bg-rose-800 px-3 py-2 text-sm text-white disabled:opacity-50"
+          >
+            حذف کلاس
+          </button>
+          <button
+            type="button"
+            disabled={busy}
             onClick={() => setConfirm("sessions")}
             className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm text-amber-900"
           >
@@ -316,11 +326,32 @@ export default function AdminClassDetailPage() {
           <div className="mt-4">
             <ConfirmBanner
               title="لغو کلاس؟"
-              message="اگر ثبت‌نام فعال/در جریان وجود داشته باشد سرور لغو را رد می‌کند. حذف فیزیکی نیست."
+              message="اگر ثبت‌نام فعال/در جریان وجود داشته باشد سرور لغو را رد می‌کند. رزرو و لیست انتظار باز آزاد می‌شوند؛ رکورد کلاس می‌ماند."
               confirmLabel="تأیید لغو"
               busy={busy}
               onCancel={() => setConfirm(null)}
               onConfirm={() => runAction(() => cancelCourseClass(classId), "کلاس لغو شد.")}
+            />
+          </div>
+        ) : null}
+        {confirm === "delete" ? (
+          <div className="mt-4">
+            <ConfirmBanner
+              title="حذف قطعی کلاس؟"
+              message="جلسات، رزرو، لیست انتظار و ثبت‌نام‌های خاتمه‌یافته پاک می‌شوند. اگر ثبت‌نام فعال، پرداخت موفق یا حضور ثبت شده باشد، سرور حذف را رد می‌کند."
+              confirmLabel="حذف قطعی"
+              busy={busy}
+              onCancel={() => setConfirm(null)}
+              onConfirm={() =>
+                runAction(
+                  async () => {
+                    await deleteCourseClass(classId);
+                    navigate("/admin/classes");
+                  },
+                  "کلاس حذف شد.",
+                  { reload: false },
+                )
+              }
             />
           </div>
         ) : null}

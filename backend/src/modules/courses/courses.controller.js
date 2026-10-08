@@ -84,6 +84,16 @@ const closeRegistration = asyncHandler(async (req, res) => {
   return success(res, data);
 });
 
+const deleteTemplate = asyncHandler(async (req, res) => {
+  const data = await coursesService.deleteCourseTemplate(req.params.id);
+  return success(res, data);
+});
+
+const deleteClass = asyncHandler(async (req, res) => {
+  const data = await coursesService.deleteClass(req.params.id);
+  return success(res, data);
+});
+
 const cancelClass = asyncHandler(async (req, res) => {
   const data = await coursesService.cancelClass(req.params.id);
   return success(res, data);
@@ -137,6 +147,7 @@ const listMyClasses = asyncHandler(async (req, res) => {
 module.exports = {
   createTemplate,
   updateTemplate,
+  deleteTemplate,
   getTemplate,
   listTemplates,
   createInstructor,
@@ -152,6 +163,7 @@ module.exports = {
   openRegistration,
   closeRegistration,
   cancelClass,
+  deleteClass,
   startClass,
   completeClass,
   archiveClass,

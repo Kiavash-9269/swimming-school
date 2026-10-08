@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { getCourseTemplateById, getCourseClasses } from "../../features/courses/coursesApi";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  getCourseTemplateById,
+  getCourseClasses,
+  deleteCourseTemplate,
+} from "../../features/courses/coursesApi";
 import {
   CLASS_STATUS_LABELS,
   GENDER_RESTRICTION_LABELS,
@@ -9,17 +13,22 @@ import {
   classStatusTone,
   userMessageFromApiError,
 } from "../../features/courses/courseLabels";
-import { StatusPill } from "../../features/courses/components/AdminCourseUi";
+import { StatusPill, ConfirmBanner } from "../../features/courses/components/AdminCourseUi";
 import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import EmptyState from "../../components/Ui/EmptyState";
+import { useToast } from "../../components/feedback/useToast";
 
 export default function AdminCourseDetailPage() {
   const { courseId } = useParams();
+  const navigate = useNavigate();
+  const toast = useToast();
   const [template, setTemplate] = useState(null);
   const [classes, setClasses] = useState([]);
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const load = useCallback(
     async (signal) => {
@@ -83,8 +92,40 @@ export default function AdminCourseDetailPage() {
           >
             کلاس جدید
           </Link>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setConfirmDelete(true)}
+            className="rounded-xl bg-rose-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          >
+            حذف دوره
+          </button>
         </div>
       </div>
+
+      {confirmDelete ? (
+        <ConfirmBanner
+          title="حذف قطعی دوره و کلاس‌هایش؟"
+          message={`این دوره و همه کلاس‌های مرتبط (${Number(classes.length).toLocaleString("fa-IR")} کلاس) حذف می‌شوند. اگر هر کلاس ثبت‌نام فعال، پرداخت موفق یا حضور داشته باشد، سرور کل عملیات را رد می‌کند.`}
+          confirmLabel="حذف دوره و کلاس‌ها"
+          busy={busy}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async () => {
+            if (busy) return;
+            setBusy(true);
+            try {
+              await deleteCourseTemplate(courseId);
+              toast.success("دوره و کلاس‌های مرتبط حذف شدند.");
+              navigate("/admin/courses");
+            } catch (err) {
+              toast.error(userMessageFromApiError(err, "حذف دوره ناموفق بود."));
+              setConfirmDelete(false);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+      ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="font-bold text-slate-900">نمای کلی</h2>

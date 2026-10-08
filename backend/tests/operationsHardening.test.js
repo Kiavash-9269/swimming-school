@@ -266,4 +266,81 @@ describe("Phase F16 operations hardening", () => {
     const stillThere = await ClassSession.countDocuments({ classId });
     expect(stillThere).toBe(4);
   });
+
+  test("DELETE class cascades sessions; DELETE course removes linked classes", async () => {
+    const { classId, templateId } = await seedClassPipeline();
+    await request(app)
+      .post(`/api/courses/classes/${classId}/generate-sessions`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(await ClassSession.countDocuments({ classId })).toBe(4);
+
+    const delClass = await request(app)
+      .delete(`/api/courses/classes/${classId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(delClass.status).toBe(200);
+    expect(delClass.body.data.deleted).toBe(true);
+    expect(await ClassSession.countDocuments({ classId })).toBe(0);
+
+    const instructor = await request(app)
+      .post("/api/courses/instructors")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "مربی حذف", phone: "09120000916" });
+    const cls2 = await request(app)
+      .post("/api/courses/classes")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        courseTemplateId: templateId,
+        title: "کلاس دوم",
+        instructorId: instructor.body.data.id,
+        startDate: "2026-10-03T00:00:00.000Z",
+        endDate: "2026-11-30T00:00:00.000Z",
+        daysOfWeek: [6],
+        startTime: "18:00",
+        endTime: "19:00",
+        totalSessions: 2,
+        price: 500000,
+        capacity: 8,
+      });
+    expect(cls2.status).toBe(201);
+
+    const delCourse = await request(app)
+      .delete(`/api/courses/templates/${templateId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(delCourse.status).toBe(200);
+    expect(delCourse.body.data.deleted).toBe(true);
+    expect(delCourse.body.data.classesRemoved.length).toBe(1);
+
+    const gone = await request(app)
+      .get(`/api/courses/templates/${templateId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(gone.status).toBe(404);
+  });
+
+  test("DELETE class blocked when active enrollment exists", async () => {
+    const { classId } = await seedClassPipeline();
+    const admin = await User.findOne({ phone: "09121111016" });
+    const participant = await Participant.create({
+      ownerUserId: admin._id,
+      firstName: "شاگرد",
+      lastName: "حذف",
+      birthDate: new Date("2015-01-01"),
+      gender: "MALE",
+      phone: "09127777016",
+    });
+    await Enrollment.create({
+      userId: admin._id,
+      participantId: participant._id,
+      classId,
+      status: ENROLLMENT_STATUSES.ACTIVE,
+      priceCharged: 1000000,
+      basePrice: 1000000,
+      finalAmount: 1000000,
+    });
+
+    const res = await request(app)
+      .delete(`/api/courses/classes/${classId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("CLASS_DELETE_BLOCKED_ENROLLMENTS");
+  });
 });

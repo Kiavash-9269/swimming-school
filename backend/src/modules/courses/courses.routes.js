@@ -36,6 +36,13 @@ router.patch(
   validate(courseTemplateUpdate),
   controller.updateTemplate,
 );
+router.delete(
+  "/templates/:id",
+  authenticate,
+  authorize("ADMIN"),
+  adminWriteLimiter,
+  controller.deleteTemplate,
+);
 
 router.get("/instructors/me", authenticate, controller.getMyInstructor);
 router.get(
@@ -89,6 +96,13 @@ router.patch(
   adminWriteLimiter,
   validate(classUpdate),
   controller.updateClass,
+);
+router.delete(
+  "/classes/:id",
+  authenticate,
+  authorize("ADMIN"),
+  adminWriteLimiter,
+  controller.deleteClass,
 );
 router.post(
   "/classes/:id/publish",
