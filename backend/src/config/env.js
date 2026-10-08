@@ -77,9 +77,9 @@ const envSchema = z.object({
 
   // Notifications / scheduler (Phase 5)
   SCHEDULER_ENABLED: z.string().optional(),
-  SCHEDULER_INTERVAL_MS: z.coerce.number().int().positive().default(60000),
-  MONGO_MAX_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(10),
-  JOB_BATCH_SIZE: z.coerce.number().int().positive().max(500).default(50),
+  SCHEDULER_INTERVAL_MS: z.coerce.number().int().positive().default(180000),
+  MONGO_MAX_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(5),
+  JOB_BATCH_SIZE: z.coerce.number().int().positive().max(500).default(20),
   NOTIFICATION_MAX_ATTEMPTS: z.coerce.number().int().positive().max(10).default(3),
   NOTIFICATION_LEASE_SECONDS: z.coerce.number().int().positive().default(60),
   NOTIFICATION_DEFAULT_LOCALE: z.enum(["fa", "en"]).default("fa"),

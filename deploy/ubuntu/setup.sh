@@ -167,7 +167,36 @@ install_mongodb() {
     echo "deb [ signed-by=/etc/apt/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu ${codename}/mongodb-org/8.0 multiverse" \
       > /etc/apt/sources.list.d/mongodb-org-8.0.list
     if apt-get update -y && apt-get install -y mongodb-org; then
+      # Ubuntu 26.04 / kernel 6.19–7.0.13: MongoDB refuses to start without this (SERVER-121912).
+      mkdir -p /etc/systemd/system/mongod.service.d
+      cat > /etc/systemd/system/mongod.service.d/rseq.conf <<'RSEQ'
+[Service]
+Environment=GLIBC_TUNABLES=glibc.pthread.rseq=1
+RSEQ
+      # Cap WiredTiger cache (~256 MB) so Mongo does not take half of a 4 GB VPS.
+      cat > /etc/mongod.conf <<'MONGOCONF'
+storage:
+  dbPath: /var/lib/mongodb
+  wiredTiger:
+    engineConfig:
+      cacheSizeGB: 0.25
+
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/log/mongodb/mongod.log
+  verbosity: 0
+
+net:
+  port: 27017
+  bindIp: 127.0.0.1
+
+processManagement:
+  timeZoneInfo: /usr/share/zoneinfo
+MONGOCONF
+      systemctl daemon-reload
       systemctl enable --now mongod
+      systemctl restart mongod || true
       return 0
     fi
     rm -f /etc/apt/sources.list.d/mongodb-org-8.0.list
@@ -309,7 +338,7 @@ JWT_PASSWORD_RESET_EXPIRES_IN=15m
 
 FRONTEND_URL=https://${DOMAIN}
 COOKIE_SECURE=true
-LOG_LEVEL=info
+LOG_LEVEL=warn
 
 OTP_TTL_SECONDS=120
 OTP_RESEND_COOLDOWN_SECONDS=60
@@ -339,9 +368,9 @@ ZARINPAL_MERCHANT_ID=${ZARIN_ID}
 ZARINPAL_SANDBOX=false
 
 SCHEDULER_ENABLED=true
-SCHEDULER_INTERVAL_MS=60000
-MONGO_MAX_POOL_SIZE=10
-JOB_BATCH_SIZE=50
+SCHEDULER_INTERVAL_MS=180000
+MONGO_MAX_POOL_SIZE=5
+JOB_BATCH_SIZE=20
 NOTIFICATION_MAX_ATTEMPTS=3
 NOTIFICATION_LEASE_SECONDS=60
 NOTIFICATION_DEFAULT_LOCALE=fa
@@ -349,7 +378,7 @@ CLASS_REMINDER_HOURS=24
 SESSION_REMINDER_HOURS=1
 EMAIL_PROVIDER=mock
 
-EXPORT_MAX_ROWS=5000
+EXPORT_MAX_ROWS=3000
 
 DOCUMENT_STORAGE_PROVIDER=local
 DOCUMENT_STORAGE_ROOT=${BACKEND_DIR}/.data/documents

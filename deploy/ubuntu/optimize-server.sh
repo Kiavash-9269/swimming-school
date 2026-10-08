@@ -74,9 +74,10 @@ set_env() {
 if [[ -f "${ENV_FILE}" ]]; then
   log "Backend .env tuning"
   cp -a "${ENV_FILE}" "${ENV_FILE}.bak.optimize.$(date +%Y%m%d%H%M%S)"
-  set_env SCHEDULER_INTERVAL_MS 60000
-  set_env MONGO_MAX_POOL_SIZE 10
-  set_env LOG_LEVEL info
+  set_env SCHEDULER_INTERVAL_MS 180000
+  set_env MONGO_MAX_POOL_SIZE 5
+  set_env JOB_BATCH_SIZE 20
+  set_env LOG_LEVEL warn
   chmod 600 "${ENV_FILE}"
 else
   warn "${ENV_FILE} not found; skipping env tuning"
@@ -85,6 +86,33 @@ fi
 ########################################
 # 3) MongoDB cache cap (persisted via a boot-time oneshot unit)
 ########################################
+# Ubuntu 26.04 / kernel 6.19–7.0.13: MongoDB hard-exits without this (SERVER-121912).
+if systemctl list-unit-files mongod.service >/dev/null 2>&1; then
+  mkdir -p /etc/systemd/system/mongod.service.d
+  cat > /etc/systemd/system/mongod.service.d/rseq.conf <<'RSEQ'
+[Service]
+Environment=GLIBC_TUNABLES=glibc.pthread.rseq=1
+RSEQ
+  if [[ -f /etc/mongod.conf ]] && ! grep -q 'cacheSizeGB' /etc/mongod.conf; then
+    # Inject under storage: without rewriting the whole file if possible
+    if grep -q '^storage:' /etc/mongod.conf; then
+      python3 - <<'PY' || true
+from pathlib import Path
+p = Path("/etc/mongod.conf")
+t = p.read_text()
+if "cacheSizeGB" not in t:
+    needle = "storage:\n"
+    insert = "storage:\n  wiredTiger:\n    engineConfig:\n      cacheSizeGB: 0.25\n"
+    if needle in t and "wiredTiger:" not in t:
+        t = t.replace(needle, insert, 1)
+        p.write_text(t)
+PY
+    fi
+  fi
+  systemctl daemon-reload
+  systemctl restart mongod 2>/dev/null || true
+fi
+
 log "MongoDB WiredTiger cache -> ${MONGO_CACHE_MB} MB"
 cat > /usr/local/sbin/swimming-mongo-tune.sh <<EOF
 #!/usr/bin/env bash
