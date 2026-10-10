@@ -68,6 +68,8 @@ net.ipv4.tcp_keepalive_intvl = 30
 net.ipv4.tcp_keepalive_probes = 5
 fs.protected_hardlinks = 1
 fs.protected_symlinks = 1
+# Reboot automatically 10s after a kernel panic instead of hanging forever.
+kernel.panic = 10
 EOF
 sysctl --system >/dev/null 2>&1 || sysctl -p /etc/sysctl.d/99-swimming-hardening.conf >/dev/null
 
@@ -215,6 +217,43 @@ OOMScoreAdjust=-500
 EOF
 fi
 systemctl daemon-reload
+
+########################################
+# 6d) MongoDB log rotation (mongod never rotates its own log)
+########################################
+if [[ -f /etc/mongod.conf ]]; then
+  log "MongoDB log rotation"
+  cat > /etc/logrotate.d/mongod <<'EOF'
+/var/log/mongodb/*.log {
+    daily
+    rotate 7
+    maxsize 50M
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}
+EOF
+fi
+
+########################################
+# 6e) Unattended security upgrades (+ reboot at 04:30 only when required)
+########################################
+log "Unattended security upgrades with night-time reboot when needed"
+apt-get install -y unattended-upgrades >/dev/null 2>&1 || true
+cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+EOF
+cat > /etc/apt/apt.conf.d/52swimming-unattended <<'EOF'
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:30";
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+EOF
+systemctl enable --now unattended-upgrades >/dev/null 2>&1 || true
 
 ########################################
 # 7) App secrets file permissions

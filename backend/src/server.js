@@ -8,7 +8,7 @@ async function startServer() {
   await connectDatabase();
 
   const app = createApp();
-  const server = app.listen(env.PORT, () => {
+  const server = app.listen(env.PORT, env.HOST, () => {
     logEvent("SERVER_STARTED", {
       port: env.PORT,
       environment: env.NODE_ENV,

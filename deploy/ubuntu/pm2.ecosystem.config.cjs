@@ -21,7 +21,8 @@ module.exports = {
       kill_timeout: 10000,
       env: {
         NODE_ENV: "production",
-        UV_THREADPOOL_SIZE: "1",
+        HOST: "127.0.0.1",
+        UV_THREADPOOL_SIZE: "2",
         LOG_LEVEL: "warn",
       },
       error_file: "/var/log/swimming-school/pm2-error.log",

@@ -1,4 +1,6 @@
 # Swimming-school production jails (installed by harden-production.sh)
+# Iranian mobile carriers put many users behind one CGNAT IP, so web jails
+# use high thresholds and short bans to avoid locking out real visitors.
 
 [DEFAULT]
 bantime  = 1h
@@ -17,15 +19,15 @@ enabled  = true
 filter   = nginx-limit-req
 port     = http,https
 logpath  = /var/log/nginx/*error*.log
-maxretry = 20
+maxretry = 60
 findtime = 2m
-bantime  = 2h
+bantime  = 30m
 
 [nginx-botsearch]
 enabled  = true
 filter   = nginx-botsearch
 port     = http,https
 logpath  = /var/log/nginx/*error*.log
-maxretry = 2
+maxretry = 5
 findtime = 5m
-bantime  = 48h
+bantime  = 6h
