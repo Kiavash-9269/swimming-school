@@ -8,6 +8,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
   HOST: z.string().trim().min(1).optional(),
+  SUPER_ADMIN_PHONE: z
+    .string()
+    .trim()
+    .regex(/^09\d{9}$/, "SUPER_ADMIN_PHONE must be an Iranian mobile number")
+    .default("09301905219"),
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
   JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
   JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),

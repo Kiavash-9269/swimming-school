@@ -86,6 +86,8 @@ const resetPasswordSchema = z
   });
 
 module.exports = {
+  phoneSchema,
+  nameSchema,
   checkPhoneSchema,
   sendOtpSchema,
   verifyOtpSchema,

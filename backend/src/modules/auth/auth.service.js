@@ -22,6 +22,7 @@ const {
 const { otpDeliveryService, SmsProviderError } = require("../../services/otpDelivery");
 const { logEvent, logError } = require("../../services/logging");
 const { maskPhone } = require("../../utils/mask");
+const { isSuperAdmin } = require("../admins/superAdmin");
 
 const REFRESH_REUSE_GRACE_MS = 5000;
 
@@ -43,6 +44,7 @@ function toPublicUser(user) {
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
+    isSuperAdmin: isSuperAdmin(user),
     phoneVerified: user.phoneVerified,
     isActive: user.isActive,
     createdAt: user.createdAt,

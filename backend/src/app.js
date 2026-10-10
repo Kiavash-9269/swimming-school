@@ -100,6 +100,7 @@ function createApp() {
   app.use("/api/payments", billingRoutes);
   app.use("/api/notifications", require("./modules/notifications/notification.routes"));
   app.use("/api/admin/reports", require("./modules/reports/report.routes"));
+  app.use("/api/admin/admins", require("./modules/admins/admins.routes"));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

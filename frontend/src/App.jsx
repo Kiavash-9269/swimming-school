@@ -27,6 +27,7 @@ const AdminClassNewPage = lazy(() => import("./pages/admin/AdminClassNewPage.jsx
 const AdminClassDetailPage = lazy(() => import("./pages/admin/AdminClassDetailPage.jsx"));
 const AdminClassEditPage = lazy(() => import("./pages/admin/AdminClassEditPage.jsx"));
 const AdminInstructorsPage = lazy(() => import("./pages/admin/AdminInstructorsPage.jsx"));
+const AdminAdminsPage = lazy(() => import("./pages/admin/AdminAdminsPage.jsx"));
 const AdminPaymentsPage = lazy(() => import("./pages/admin/AdminPaymentsPage.jsx"));
 const AdminPaymentDetailPage = lazy(() => import("./pages/admin/AdminPaymentDetailPage.jsx"));
 const AdminNotificationsPage = lazy(() => import("./pages/admin/AdminNotificationsPage.jsx"));
@@ -156,6 +157,7 @@ const route = createBrowserRouter([
           { path: "documents/:kind/:documentId", element: <AdminDocumentReviewPage /> },
           { path: "reports", element: <AdminReportsPage /> },
           { path: "attendance", element: <AdminAttendancePage /> },
+          { path: "admins", element: <AdminAdminsPage /> },
         ],
       },
     ],

@@ -11,6 +11,7 @@ import {
   Layers,
   LayoutDashboard,
   Menu,
+  ShieldCheck,
   UserRound,
   Users,
   Waves,
@@ -45,6 +46,11 @@ const NAV = [
       { to: "/admin/notifications", label: "پیام‌ها", icon: Bell },
       { to: "/admin/reports", label: "گزارش مدیریت", icon: ChartColumn },
     ],
+  },
+  {
+    label: "دسترسی‌ها",
+    superAdminOnly: true,
+    items: [{ to: "/admin/admins", label: "مدیران", icon: ShieldCheck }],
   },
 ];
 
@@ -97,7 +103,7 @@ export default function AdminShell({ user, logout, children }) {
         </Link>
 
         <nav className="admin-nav">
-          {NAV.map((group) => (
+          {NAV.filter((group) => !group.superAdminOnly || user?.isSuperAdmin).map((group) => (
             <div key={group.label} className="admin-nav-group">
               <p className="admin-nav-label">{group.label}</p>
               {group.items.map((item) => {

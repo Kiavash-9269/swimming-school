@@ -1,5 +1,5 @@
 /**
- * Upserts ADMIN users. New admins get a strong random password (printed once);
+ * Upserts ADMIN users. New admins get password = phone number;
  * existing admins keep their password unless ADMIN_PASSWORD_<phone> is set.
  *
  * Usage (on server):
@@ -8,7 +8,6 @@
  *   ADMIN_PASSWORD_09301905219='...' node ../deploy/ubuntu/fix-mongo-and-admins.js
  */
 const path = require("path");
-const crypto = require("crypto");
 const backendRoot = path.join(__dirname, "../../backend");
 module.paths.unshift(path.join(backendRoot, "node_modules"));
 require("dotenv").config({ path: path.join(backendRoot, ".env") });
@@ -28,10 +27,6 @@ const ARGON2_OPTIONS = {
   timeCost: 2,
   parallelism: 1,
 };
-
-function randomPassword() {
-  return crypto.randomBytes(12).toString("base64url");
-}
 
 async function main() {
   const uri = process.env.MONGODB_URI;
@@ -56,7 +51,7 @@ async function main() {
       await users.updateOne({ phone: a.phone }, { $set });
       console.log(`updated ADMIN ${a.phone}${override ? " (password changed)" : ""}`);
     } else {
-      const password = override || randomPassword();
+      const password = override || a.phone;
       await users.insertOne({
         phone: a.phone,
         firstName: a.firstName,
@@ -68,7 +63,7 @@ async function main() {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      console.log(`created ADMIN ${a.phone} password=${password}`);
+      console.log(`created ADMIN ${a.phone}`);
     }
   }
 
