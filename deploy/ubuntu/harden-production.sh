@@ -163,6 +163,56 @@ PY
 fi
 
 ########################################
+# 6b) MongoDB authorization (root password in /root/.swimming-mongo-pass)
+########################################
+MONGO_PASS_FILE="/root/.swimming-mongo-pass"
+if [[ -f /etc/mongod.conf ]] && ! grep -qE '^\s*authorization:\s*enabled' /etc/mongod.conf; then
+  MS="$(command -v mongosh || true)"
+  if [[ -n "${MS}" ]] && ! grep -q '^security:' /etc/mongod.conf; then
+    log "MongoDB: enable authorization"
+    [[ -s "${MONGO_PASS_FILE}" ]] || { openssl rand -hex 24 > "${MONGO_PASS_FILE}"; }
+    chmod 600 "${MONGO_PASS_FILE}"
+    ROOT_PASS="$(cat "${MONGO_PASS_FILE}")"
+    "${MS}" --quiet admin --eval "
+      if (db.getUser('root')) { db.changeUserPassword('root', '${ROOT_PASS}'); }
+      else { db.createUser({ user: 'root', pwd: '${ROOT_PASS}', roles: [{ role: 'root', db: 'admin' }] }); }
+    " >/dev/null
+    printf '\nsecurity:\n  authorization: enabled\n' >> /etc/mongod.conf
+    systemctl restart mongod
+  else
+    echo "WARN: mongosh missing or custom security: block in /etc/mongod.conf — enable authorization manually."
+  fi
+fi
+
+########################################
+# 6c) Self-healing + OOM priority for core services
+########################################
+log "systemd auto-restart + OOM protection (nginx, mongod)"
+mkdir -p /etc/systemd/system/nginx.service.d
+cat > /etc/systemd/system/nginx.service.d/10-swimming-resilience.conf <<'EOF'
+[Unit]
+StartLimitIntervalSec=0
+
+[Service]
+Restart=always
+RestartSec=3
+OOMScoreAdjust=-900
+EOF
+if [[ -f /etc/mongod.conf ]]; then
+  mkdir -p /etc/systemd/system/mongod.service.d
+  cat > /etc/systemd/system/mongod.service.d/10-swimming-resilience.conf <<'EOF'
+[Unit]
+StartLimitIntervalSec=0
+
+[Service]
+Restart=always
+RestartSec=5
+OOMScoreAdjust=-500
+EOF
+fi
+systemctl daemon-reload
+
+########################################
 # 7) App secrets file permissions
 ########################################
 log "File permissions"

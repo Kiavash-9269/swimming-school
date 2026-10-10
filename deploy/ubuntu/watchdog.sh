@@ -19,6 +19,12 @@ if ! systemctl is-active --quiet mongod 2>/dev/null; then
   sleep 3
 fi
 
+if ! systemctl is-active --quiet nginx 2>/dev/null; then
+  log "nginx down — restarting"
+  systemctl reset-failed nginx 2>/dev/null || true
+  systemctl restart nginx || true
+fi
+
 if ! health_ok; then
   log "API health failed — restarting PM2 swimming-api"
   if command -v pm2 >/dev/null 2>&1; then

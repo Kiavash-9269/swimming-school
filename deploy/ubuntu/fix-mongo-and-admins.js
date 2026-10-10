@@ -1,12 +1,14 @@
 /**
- * Fix Mongo auth (if needed) is done in the shell wrapper.
- * This script upserts ADMIN users with given phones/passwords.
+ * Upserts ADMIN users. New admins get a strong random password (printed once);
+ * existing admins keep their password unless ADMIN_PASSWORD_<phone> is set.
  *
  * Usage (on server):
  *   cd /var/www/swimming-school/backend
  *   node ../deploy/ubuntu/fix-mongo-and-admins.js
+ *   ADMIN_PASSWORD_09301905219='...' node ../deploy/ubuntu/fix-mongo-and-admins.js
  */
 const path = require("path");
+const crypto = require("crypto");
 const backendRoot = path.join(__dirname, "../../backend");
 module.paths.unshift(path.join(backendRoot, "node_modules"));
 require("dotenv").config({ path: path.join(backendRoot, ".env") });
@@ -16,8 +18,8 @@ const argon2 = require("argon2");
 const ROLES = { USER: "USER", ADMIN: "ADMIN" };
 
 const admins = [
-  { phone: "09301905219", password: "09301905219", firstName: "Admin", lastName: "One" },
-  { phone: "09379579269", password: "09379579269", firstName: "Admin", lastName: "Two" },
+  { phone: "09301905219", firstName: "Admin", lastName: "One" },
+  { phone: "09379579269", firstName: "Admin", lastName: "Two" },
 ];
 
 const ARGON2_OPTIONS = {
@@ -27,6 +29,10 @@ const ARGON2_OPTIONS = {
   parallelism: 1,
 };
 
+function randomPassword() {
+  return crypto.randomBytes(12).toString("base64url");
+}
+
 async function main() {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error("MONGODB_URI missing");
@@ -35,38 +41,34 @@ async function main() {
   const users = db.collection("users");
 
   for (const a of admins) {
-    const passwordHash = await argon2.hash(a.password, ARGON2_OPTIONS);
+    const override = process.env[`ADMIN_PASSWORD_${a.phone}`];
     const existing = await users.findOne({ phone: a.phone });
     if (existing) {
-      await users.updateOne(
-        { phone: a.phone },
-        {
-          $set: {
-            role: ROLES.ADMIN,
-            passwordHash,
-            isActive: true,
-            phoneVerified: true,
-            firstName: existing.firstName || a.firstName,
-            lastName: existing.lastName || a.lastName,
-            updatedAt: new Date(),
-          },
-        },
-      );
-      console.log(`updated ADMIN ${a.phone}`);
+      const $set = {
+        role: ROLES.ADMIN,
+        isActive: true,
+        phoneVerified: true,
+        firstName: existing.firstName || a.firstName,
+        lastName: existing.lastName || a.lastName,
+        updatedAt: new Date(),
+      };
+      if (override) $set.passwordHash = await argon2.hash(override, ARGON2_OPTIONS);
+      await users.updateOne({ phone: a.phone }, { $set });
+      console.log(`updated ADMIN ${a.phone}${override ? " (password changed)" : ""}`);
     } else {
-      // Avoid unique full-name collisions between the two seed admins
+      const password = override || randomPassword();
       await users.insertOne({
         phone: a.phone,
         firstName: a.firstName,
         lastName: a.lastName,
-        passwordHash,
+        passwordHash: await argon2.hash(password, ARGON2_OPTIONS),
         phoneVerified: true,
         role: ROLES.ADMIN,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      console.log(`created ADMIN ${a.phone}`);
+      console.log(`created ADMIN ${a.phone} password=${password}`);
     }
   }
 

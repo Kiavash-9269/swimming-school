@@ -213,10 +213,10 @@ EOF
 systemctl restart systemd-journald || true
 journalctl --vacuum-size=80M >/dev/null 2>&1 || true
 
-# Unattended upgrades wake CPU/IO on small VPS — disable (security updates via manual apt).
+# Security patches outweigh the once-a-day apt wake-up; keep unattended security upgrades on.
 if systemctl list-unit-files unattended-upgrades.service >/dev/null 2>&1; then
-  log "Disable unattended-upgrades (idle CPU)"
-  systemctl disable --now unattended-upgrades.service >/dev/null 2>&1 || true
+  log "Keep unattended security upgrades enabled"
+  systemctl enable --now unattended-upgrades.service >/dev/null 2>&1 || true
 fi
 
 ########################################
