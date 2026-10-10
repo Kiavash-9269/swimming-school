@@ -173,6 +173,10 @@ if [[ -f /etc/mongod.conf ]] && ! grep -qE '^\s*authorization:\s*enabled' /etc/m
     [[ -s "${MONGO_PASS_FILE}" ]] || { openssl rand -hex 24 > "${MONGO_PASS_FILE}"; }
     chmod 600 "${MONGO_PASS_FILE}"
     ROOT_PASS="$(cat "${MONGO_PASS_FILE}")"
+    for _ in $(seq 1 30); do
+      "${MS}" --quiet --eval 'db.runCommand({ ping: 1 })' >/dev/null 2>&1 && break
+      sleep 2
+    done
     "${MS}" --quiet admin --eval "
       if (db.getUser('root')) { db.changeUserPassword('root', '${ROOT_PASS}'); }
       else { db.createUser({ user: 'root', pwd: '${ROOT_PASS}', roles: [{ role: 'root', db: 'admin' }] }); }
