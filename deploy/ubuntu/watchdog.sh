@@ -54,7 +54,9 @@ if ! health_ok; then
   nginx -t >/dev/null 2>&1 && systemctl reload nginx || true
 fi
 
-if ! curl -fsS -m 5 -o /dev/null -k "https://127.0.0.1/api/health" -H "Host: iranaustraliaswimming.ir" 2>/dev/null; then
+# Must send SNI: the default 443 server rejects handshakes without a known host name.
+if ! curl -fsS -m 5 -o /dev/null --resolve "iranaustraliaswimming.ir:443:127.0.0.1" \
+    "https://iranaustraliaswimming.ir/api/health" 2>/dev/null; then
   log "HTTPS proxy health failed (may be cert/host) — nginx restart"
   systemctl restart nginx >/dev/null 2>&1 || true
 fi
