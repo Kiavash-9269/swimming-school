@@ -279,9 +279,8 @@ systemctl start certbot.timer 2>/dev/null || true
 # 12) Hide version tokens
 ########################################
 if [[ -f /etc/nginx/nginx.conf ]]; then
-  if ! grep -qE '^\s*server_tokens\s+off\s*;' /etc/nginx/nginx.conf; then
-    sed -i '/http {/a\    server_tokens off;' /etc/nginx/nginx.conf
-  fi
+  sed -i -E '/^\s*server_tokens\s/d' /etc/nginx/nginx.conf
+  sed -i '/http {/a\    server_tokens off;' /etc/nginx/nginx.conf
   nginx -t && systemctl reload nginx
 fi
 
