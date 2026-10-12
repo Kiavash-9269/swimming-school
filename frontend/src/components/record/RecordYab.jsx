@@ -12,56 +12,65 @@ import {
 import { FaSwimmer, FaGlobe } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-// RECORDS DATA //
+// ─────────────────────────────────────────────
+// RECORDS DATA — آخرین بروزرسانی: مهر ۱۴۰۵ (2026-10)
+// منبع خارجی: World Aquatics / Olympics.com
+// منبع داخلی: فدراسیون شنا ایران
+// ─────────────────────────────────────────────
 
 const records = [
-  // WORLD RECORDS - FREESTYLE //
-  { event: "50m آزاد", time: 20.91, distance: 50, holder: "Cesar Cielo", type: "خارجی", discipline: "آزاد" },
-  { event: "100m آزاد", time: 46.4, distance: 100, holder: "Pan Zhanle", type: "خارجی", discipline: "آزاد" },
-  { event: "200m آزاد", time: 102.0, distance: 200, holder: "Paul Biedermann", type: "خارجی", discipline: "آزاد" },
-  { event: "400m آزاد", time: 219.96, distance: 400, holder: "Lukas Märtens", type: "خارجی", discipline: "آزاد" },
-  { event: "800m آزاد", time: 452.12, distance: 800, holder: "Zhang Lin", type: "خارجی", discipline: "آزاد" },
-  { event: "1500m آزاد", time: 870.67, distance: 1500, holder: "Bobby Finke", type: "خارجی", discipline: "آزاد" },
+  // ============ رکورد جهانی — آزاد ============
+  { event: "50m آزاد", time: 20.88, distance: 50, holder: "کامرون مک‌اووی", type: "خارجی", discipline: "آزاد" },
+  { event: "100m آزاد", time: 46.40, distance: 100, holder: "پان ژانله", type: "خارجی", discipline: "آزاد" },
+  { event: "200m آزاد", time: 102.00, distance: 200, holder: "پاول بیدرمان", type: "خارجی", discipline: "آزاد" },
+  { event: "400m آزاد", time: 219.96, distance: 400, holder: "لوکاس مارتنس", type: "خارجی", discipline: "آزاد" },
+  { event: "800m آزاد", time: 452.12, distance: 800, holder: "ژانگ لین", type: "خارجی", discipline: "آزاد" },
+  { event: "1500m آزاد", time: 866.79, distance: 1500, holder: "یوهانس لیبمان", type: "خارجی", discipline: "آزاد" },
 
-  // NATIONAL RECORDS - FREESTYLE //
+  // ============ رکورد ملی ایران — آزاد ============
   { event: "50m آزاد ایران", time: 22.41, distance: 50, holder: "سامیار عبدلی", type: "داخلی", discipline: "آزاد" },
   { event: "100m آزاد ایران", time: 50.34, distance: 100, holder: "سامیار عبدلی", type: "داخلی", discipline: "آزاد" },
-  { event: "200m آزاد ایران", time: 110.3, distance: 200, holder: "محمد قاسمی", type: "داخلی", discipline: "آزاد" },
+  { event: "200m آزاد ایران", time: 110.30, distance: 200, holder: "محمد قاسمی", type: "داخلی", discipline: "آزاد" },
   { event: "400m آزاد ایران", time: 233.16, distance: 400, holder: "محمد قاسمی", type: "داخلی", discipline: "آزاد" },
   { event: "800m آزاد ایران", time: 491.83, distance: 800, holder: "محمد قاسمی", type: "داخلی", discipline: "آزاد" },
   { event: "1500m آزاد ایران", time: 966.66, distance: 1500, holder: "علی جعفری", type: "داخلی", discipline: "آزاد" },
 
-  // WORLD RECORDS - BUTTERFLY //
-  { event: "50m پروانه", time: 22.27, distance: 50, holder: "Andriy Govorov", type: "خارجی", discipline: "پروانه" },
-  { event: "100m پروانه", time: 49.45, distance: 100, holder: "Caeleb Dressel", type: "خارجی", discipline: "پروانه" },
-  { event: "200m پروانه", time: 110.34, distance: 200, holder: "Kristóf Milák", type: "خارجی", discipline: "پروانه" },
+  // ============ رکورد جهانی — پروانه ============
+  { event: "50m پروانه", time: 22.27, distance: 50, holder: "آندری گووروف", type: "خارجی", discipline: "پروانه" },
+  { event: "100m پروانه", time: 49.45, distance: 100, holder: "کیلیب درسل", type: "خارجی", discipline: "پروانه" },
+  { event: "200m پروانه", time: 110.34, distance: 200, holder: "کریستوف میلاک", type: "خارجی", discipline: "پروانه" },
 
-  // NATIONAL RECORDS - BUTTERFLY //
-  { event: "50m پروانه ایران", time: 24.15, distance: 50, holder: "مهردشاد افقری", type: "داخلی", discipline: "پروانه" },
-  { event: "100m پروانه ایران", time: 53.32, distance: 100, holder: "مهردشاد افقری", type: "داخلی", discipline: "پروانه" },
+  // ============ رکورد ملی ایران — پروانه ============
+  { event: "50m پروانه ایران", time: 24.15, distance: 50, holder: "مهرشاد افقری", type: "داخلی", discipline: "پروانه" },
+  { event: "100m پروانه ایران", time: 53.32, distance: 100, holder: "مهرشاد افقری", type: "داخلی", discipline: "پروانه" },
   { event: "200m پروانه ایران", time: 119.97, distance: 200, holder: "متین بالسینی", type: "داخلی", discipline: "پروانه" },
 
-  // WORLD RECORDS - BACKSTROKE //
-  { event: "50m کرال پشت", time: 23.55, distance: 50, holder: "Kliment Kolesnikov", type: "خارجی", discipline: "کرال پشت" },
-  { event: "100m کرال پشت", time: 51.6, distance: 100, holder: "Thomas Ceccon", type: "خارجی", discipline: "کرال پشت" },
-  { event: "200m کرال پشت", time: 111.92, distance: 200, holder: "Aaron Peirsol", type: "خارجی", discipline: "کرال پشت" },
+  // ============ رکورد جهانی — کرال پشت ============
+  { event: "50m کرال پشت", time: 23.55, distance: 50, holder: "کلیمنت کولسنیکوف", type: "خارجی", discipline: "کرال پشت" },
+  { event: "100m کرال پشت", time: 51.60, distance: 100, holder: "توماس چکون", type: "خارجی", discipline: "کرال پشت" },
+  { event: "200m کرال پشت", time: 111.92, distance: 200, holder: "آرون پیرسول", type: "خارجی", discipline: "کرال پشت" },
 
-  // NATIONAL RECORDS - BACKSTROKE //
-  { event: "50m کرال پشت ایران", time: 25.9, distance: 50, holder: "هومر عباسی", type: "داخلی", discipline: "کرال پشت" },
-  { event: "100m کرال پشت ایران", time: 56.36, distance: 100, holder: "ابوالفضل سام", type: "داخلی", discipline: "کرال پشت" },
+  // ============ رکورد ملی ایران — کرال پشت ============
+  // ⭐ رکورد پارسا صفایی (جدیدترین رکورد ملی — استخر کوتاه)
+  { event: "50m کرال پشت ایران", time: 24.10, distance: 50, holder: "پارسا صفایی", type: "داخلی", discipline: "کرال پشت", highlight: true },
+  { event: "100m کرال پشت ایران", time: 52.84, distance: 100, holder: "پارسا صفایی", type: "داخلی", discipline: "کرال پشت", highlight: true },
   { event: "200m کرال پشت ایران", time: 124.67, distance: 200, holder: "ابوالفضل سام", type: "داخلی", discipline: "کرال پشت" },
 
-  // WORLD RECORDS - BREASTSTROKE //
-  { event: "50m غورباقه", time: 25.95, distance: 50, holder: "Adam Peaty", type: "خارجی", discipline: "غورباقه" },
-  { event: "100m غورباقه", time: 56.88, distance: 100, holder: "Adam Peaty", type: "خارجی", discipline: "غورباقه" },
-  { event: "200m غورباقه", time: 126.0, distance: 200, holder: "Anton Chupkov", type: "خارجی", discipline: "غورباقه" },
+  // ============ رکورد جهانی — غورباقه ============
+  { event: "50m غورباقه", time: 25.95, distance: 50, holder: "آدام پیتی", type: "خارجی", discipline: "غورباقه" },
+  { event: "100m غورباقه", time: 56.88, distance: 100, holder: "آدام پیتی", type: "خارجی", discipline: "غورباقه" },
+  { event: "200m غورباقه", time: 124.83, distance: 200, holder: "شین اوهاشی", type: "خارجی", discipline: "غورباقه" },
 
-  // NATIONAL RECORDS - BREASTSTROKE //
-  { event: "50m غورباقه ایران", time: 27.95, distance: 50, holder: "محمد علیرضایی دریزچه", type: "داخلی", discipline: "غورباقه" },
+  // ============ رکورد ملی ایران — غورباقه ============
+  { event: "50m غورباقه ایران", time: 27.95, distance: 50, holder: "محمد علیرضایی دیزیچه", type: "داخلی", discipline: "غورباقه" },
   { event: "100m غورباقه ایران", time: 62.12, distance: 100, holder: "امیر مطاعی", type: "داخلی", discipline: "غورباقه" },
-  { event: "200m غورباقه ایران", time: 137.67, distance: 200, holder: "علیرضا عرب", type: "داخلی", discipline: "غورباقه" },
+  { event: "200m غورباقه ایران", time: 135.23, distance: 200, holder: "امیر مطاعی", type: "داخلی", discipline: "غورباقه" },
 
-  // NATIONAL RECORDS - INDIVIDUAL MEDLEY //
+  // ============ رکورد جهانی — مختلط انفرادی ============
+  { event: "200m مختلط", time: 112.69, distance: 200, holder: "لئون مارشان", type: "خارجی", discipline: "مختلط" },
+  { event: "400m مختلط", time: 242.50, distance: 400, holder: "لئون مارشان", type: "خارجی", discipline: "مختلط" },
+
+  // ============ رکورد ملی ایران — مختلط انفرادی ============
   { event: "200m مختلط ایران", time: 125.87, distance: 200, holder: "متین سهران", type: "داخلی", discipline: "مختلط" },
   { event: "400m مختلط ایران", time: 275.34, distance: 400, holder: "محمد قاسمی", type: "داخلی", discipline: "مختلط" },
 ];
@@ -78,10 +87,8 @@ export default function SwimmingPerformancePro() {
   const [error, setError] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // DISCIPLINES LIST //
   const disciplines = [...new Set(records.map((r) => r.discipline))];
 
-  // HANDLE EVENT SELECTION //
   const handleEventChange = useCallback((eventName) => {
     setSelectedEvent(eventName);
     setSwimmerTime("");
@@ -89,7 +96,6 @@ export default function SwimmingPerformancePro() {
     setError("");
   }, []);
 
-  // FILTERED RECORDS //
   const selectableRecords = useMemo(
     () =>
       records.filter(
@@ -105,7 +111,6 @@ export default function SwimmingPerformancePro() {
     [filterType]
   );
 
-  // CHART COLORS //
   const COLORS = ["#3B82F6", "#E5E7EB"];
   const COLORS_NAT = ["#10B981", "#FEEBC8"];
 
@@ -117,7 +122,6 @@ export default function SwimmingPerformancePro() {
         ]
       : [];
 
-  // CALCULATE PERFORMANCE //
   const calculate = async () => {
     setError("");
 
@@ -142,6 +146,7 @@ export default function SwimmingPerformancePro() {
         return;
       }
 
+      // رکورد جهانی متناظر
       const worldRecord = records.find(
         (r) =>
           r.discipline === selectedRecord.discipline &&
@@ -149,14 +154,23 @@ export default function SwimmingPerformancePro() {
           r.type === "خارجی"
       ) ?? null;
 
-      const nationalRecord = records.find(
-        (r) =>
-          r.discipline === selectedRecord.discipline &&
-          r.distance === selectedRecord.distance &&
-          r.type === "داخلی"
-      ) ?? null;
+      // ⭐ رکورد ملی متناظر — اگر کاربر رکورد پارسا رو انتخاب کرده، همون رو مبنا می‌گیریم
+      // در غیر این صورت، رکورد ملی متناظر با همون distance رو پیدا می‌کنیم
+      let nationalRecord = null;
+      if (selectedRecord.type === "داخلی") {
+        // اگر کاربر خودش یه رکورد داخلی انتخاب کرده، همون رو مبنای محاسبه می‌کنیم
+        nationalRecord = selectedRecord;
+      } else {
+        // اگر کاربر رکورد خارجی انتخاب کرده، رکورد ملی متناظر رو پیدا می‌کنیم
+        nationalRecord = records.find(
+          (r) =>
+            r.discipline === selectedRecord.discipline &&
+            r.distance === selectedRecord.distance &&
+            r.type === "داخلی"
+        ) ?? null;
+      }
 
-      // WORLD RECORD CALCULATION //
+      // WORLD RECORD CALCULATION
       let world = null;
       if (worldRecord) {
         const wr = worldRecord.time;
@@ -193,7 +207,7 @@ export default function SwimmingPerformancePro() {
         world = { exists: false, message: "رکورد جهانی متناظری برای این ماده در داده‌ها وجود ندارد." };
       }
 
-      // NATIONAL RECORD CALCULATION //
+      // NATIONAL RECORD CALCULATION
       let national = null;
       if (nationalRecord) {
         const nr = nationalRecord.time;
@@ -206,11 +220,11 @@ export default function SwimmingPerformancePro() {
         let messageNat = "";
         const deltaNat = nr - st;
         if (deltaNat > 0) {
-          messageNat = `تبریک! شما رکورد داخلی ${nationalRecord.holder} در ${nationalRecord.event} را با اختلاف ${deltaNat.toFixed(2)} ثانیه شکستید!`;
+          messageNat = `تبریک! شما رکورد ملی ${nationalRecord.holder} در ${nationalRecord.event} را با اختلاف ${deltaNat.toFixed(2)} ثانیه شکستید!`;
         } else if (deltaNat === 0) {
-          messageNat = `برابر رکورد داخلی! زمان شما دقیقاً با رکورد متناظر است.`;
+          messageNat = `برابر رکورد ملی! زمان شما دقیقاً با رکورد ${nationalRecord.holder} هماهنگ است.`;
         } else {
-          messageNat = `برای رسیدن به رکورد داخلی ${nationalRecord.holder} هنوز ${Math.abs(deltaNat).toFixed(2)} ثانیه نیاز دارید.`;
+          messageNat = `برای رسیدن به رکورد ملی ${nationalRecord.holder} هنوز ${Math.abs(deltaNat).toFixed(2)} ثانیه نیاز دارید.`;
         }
 
         national = {
@@ -223,9 +237,10 @@ export default function SwimmingPerformancePro() {
           timeDiff: timeDiffNat.toFixed(2),
           speed: speedNat.toFixed(2),
           message: messageNat,
+          highlight: nationalRecord.highlight || false,
         };
       } else {
-        national = { exists: false, message: "رکورد داخلی متناظری برای این ماده در داده‌ها وجود ندارد." };
+        national = { exists: false, message: "رکورد ملی متناظری برای این ماده در داده‌ها وجود ندارد." };
       }
 
       setResults({
@@ -317,7 +332,6 @@ export default function SwimmingPerformancePro() {
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  {/* DISCIPLINE FILTER */}
                   <div className="flex flex-col">
                     <label className="flex items-center text-gray-600 mb-2 font-medium tracking-wide text-sm sm:text-base">
                       <FaSwimmer className="ml-2 text-blue-500" />
@@ -341,7 +355,6 @@ export default function SwimmingPerformancePro() {
                     </select>
                   </div>
 
-                  {/* RECORD TYPE FILTER */}
                   <div className="flex flex-col">
                     <label className="text-gray-600 mb-2 font-medium tracking-wide text-right flex items-center gap-2 text-sm sm:text-base">
                       <FaGlobe className="text-blue-500" />
@@ -375,15 +388,20 @@ export default function SwimmingPerformancePro() {
                   {selectableRecords.map((r) => (
                     <button
                       key={r.event}
-                      className={`p-3 sm:p-4 rounded-xl shadow-sm border transition-transform duration-200 transform text-center font-medium text-sm sm:text-base ${
+                      className={`p-3 sm:p-4 rounded-xl shadow-sm border transition-transform duration-200 transform text-center text-sm sm:text-base ${
                         selectedEvent === r.event
                           ? "bg-blue-600 text-white border-blue-600 shadow-md scale-105"
-                          : "bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300"
+                          : r.highlight
+                            ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 hover:border-amber-400 font-bold"
+                            : "bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300 font-medium"
                       }`}
                       onClick={() => handleEventChange(r.event)}
                     >
-                      <div className="font-semibold">{r.event}</div>
-                      <div className="text-xs mt-1 opacity-80">{r.type}</div>
+                      <div className={r.highlight ? "font-bold" : "font-semibold"}>
+                        {r.event}
+                        {r.highlight && " ⭐"}
+                      </div>
+                      <div className="text-xs mt-1 opacity-80">{r.holder}</div>
                     </button>
                   ))}
                 </div>
@@ -473,7 +491,6 @@ export default function SwimmingPerformancePro() {
               {/* RESULTS SECTION */}
               {results && (
                 <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
-                  {/* COMPARISON CARDS */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {/* WORLD RECORD */}
                     <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm border border-blue-200 text-right">
@@ -511,14 +528,19 @@ export default function SwimmingPerformancePro() {
                     </div>
 
                     {/* NATIONAL RECORD */}
-                    <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 shadow-sm border border-green-200 text-right">
+                    <div className={`p-3 sm:p-4 rounded-xl shadow-sm border text-right ${
+                      results.national.highlight
+                        ? "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300"
+                        : "bg-gradient-to-br from-green-50 to-green-100 border-green-200"
+                    }`}>
                       <h4 className="font-semibold text-sky-950 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
                         <div className="flex items-center text-base sm:text-xl">
                           <span className="text-green-500">●</span>
                           <span className="text-white mx-1">●</span>
                           <span className="text-red-500">●</span>
                         </div>
-                        مقایسه با رکورد داخلی
+                        مقایسه با رکورد ملی
+                        {results.national.highlight && <span className="text-amber-600">⭐</span>}
                       </h4>
                       {results.national.exists ? (
                         <>
@@ -528,7 +550,9 @@ export default function SwimmingPerformancePro() {
                           <div className="flex flex-wrap gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
                             <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-green-200">
                               <span className="text-green-700 font-medium">رکورددار: </span>
-                              <span>{results.national.holder}</span>
+                              <span className={results.national.highlight ? "font-bold text-amber-900" : ""}>
+                                {results.national.holder}
+                              </span>
                             </div>
                             <div className="bg-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-green-200">
                               <span className="text-green-700 font-medium">زمان رکورد: </span>
@@ -548,7 +572,6 @@ export default function SwimmingPerformancePro() {
 
                   {/* CHARTS */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    {/* WORLD CHART */}
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col items-center shadow-sm border border-blue-200 text-right">
                       <h3 className="text-base sm:text-lg font-semibold text-sky-900 mb-3 sm:mb-4 flex items-center gap-2">
                         <FiTrendingUp className="text-sky-600" />
@@ -591,11 +614,15 @@ export default function SwimmingPerformancePro() {
                       </div>
                     </div>
 
-                    {/* NATIONAL CHART */}
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col items-center shadow-sm border border-green-200 text-right">
+                    <div className={`rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col items-center shadow-sm border text-right ${
+                      results.national.highlight
+                        ? "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300"
+                        : "bg-gradient-to-br from-green-50 to-green-100 border-green-200"
+                    }`}>
                       <h3 className="text-base sm:text-lg font-semibold text-sky-950 mb-3 sm:mb-4 flex items-center gap-2">
                         <FiTrendingUp className="text-green-800" />
-                        عملکرد نسبت به رکورد داخلی
+                        عملکرد نسبت به رکورد ملی
+                        {results.national.highlight && <span className="text-amber-600">⭐</span>}
                       </h3>
                       <div className="relative h-40 sm:h-56 w-full max-w-xs">
                         {results.national.exists ? (
@@ -611,14 +638,14 @@ export default function SwimmingPerformancePro() {
                                 stroke="none"
                               >
                                 {chartDataFor(results.national.performance).map((entry, index) => (
-                                  <Cell key={index} fill={COLORS_NAT[index]} />
+                                  <Cell key={index} fill={results.national.highlight ? ["#F59E0B", "#FEF3C7"] : COLORS_NAT} />
                                 ))}
                               </Pie>
                             </PieChart>
                           </ResponsiveContainer>
                         ) : (
                           <div className="text-xs sm:text-sm text-gray-600 flex items-center justify-center h-full">
-                            رکورد داخلی موجود نیست
+                            رکورد ملی موجود نیست
                           </div>
                         )}
                         {results.national.exists && (
@@ -627,7 +654,7 @@ export default function SwimmingPerformancePro() {
                               {results.national.performance}%
                             </span>
                             <span className="text-xs sm:text-sm text-gray-600 mt-1">
-                              عملکرد نسبت به داخلی
+                              عملکرد نسبت به ملی
                             </span>
                           </div>
                         )}
@@ -653,8 +680,12 @@ export default function SwimmingPerformancePro() {
                           {results.world.exists ? `${results.world.performance}%` : "—"}
                         </span>
                       </div>
-                      <div className="flex flex-col p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
-                        <span className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2">عملکرد داخلی</span>
+                      <div className={`flex flex-col p-3 sm:p-4 rounded-xl shadow-sm border text-center ${
+                        results.national.highlight ? "bg-amber-50 border-amber-200" : "bg-white border-blue-100"
+                      }`}>
+                        <span className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2">
+                          عملکرد ملی {results.national.highlight && "⭐"}
+                        </span>
                         <span className="font-bold text-blue-700 text-lg sm:text-xl">
                           {results.national.exists ? `${results.national.performance}%` : "—"}
                         </span>
@@ -673,9 +704,11 @@ export default function SwimmingPerformancePro() {
                           {results.world.exists && (results.world.timeDiff > 0 ? "کندتر از رکورد" : "سریع‌تر از رکورد")}
                         </div>
                       </div>
-                      <div className="p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100 text-center">
+                      <div className={`p-3 sm:p-4 rounded-xl shadow-sm border text-center ${
+                        results.national.highlight ? "bg-amber-50 border-amber-200" : "bg-white border-blue-100"
+                      }`}>
                         <span className="text-gray-600 text-xs sm:text-sm block mb-1 sm:mb-2">
-                          اختلاف با رکورد داخلی
+                          اختلاف با رکورد ملی {results.national.highlight && "⭐"}
                         </span>
                         <div className={`font-bold text-base sm:text-lg ${results.national.timeDiff > 0 ? "text-red-600" : "text-green-600"}`}>
                           {results.national.exists ? `${results.national.timeDiff > 0 ? "+" : ""}${results.national.timeDiff} ثانیه` : "—"}
@@ -686,7 +719,6 @@ export default function SwimmingPerformancePro() {
                       </div>
                     </div>
 
-                    {/* FINA POINTS */}
                     {results.world.exists && (
                       <div className="p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-blue-100">
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 text-right">
@@ -717,7 +749,6 @@ export default function SwimmingPerformancePro() {
                     )}
                   </div>
 
-                  {/* FINA INFO MODAL */}
                   {showFinaInfo && (
                     <div className="mt-4 sm:mt-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-300 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm text-right">
                       <h4 className="text-base sm:text-lg font-bold text-yellow-800 mb-3 sm:mb-4 flex items-center gap-2">
@@ -763,7 +794,6 @@ export default function SwimmingPerformancePro() {
                 جدول رکوردهای شنا
               </h2>
 
-              {/* FILTER BUTTONS */}
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
                 {["همه", "داخلی", "خارجی"].map((t) => (
                   <button
@@ -780,7 +810,6 @@ export default function SwimmingPerformancePro() {
                 ))}
               </div>
 
-              {/* RECORDS TABLE */}
               <div className="bg-white overflow-x-auto rounded-xl border border-gray-200 shadow-xs sm:shadow-2xs">
                 <table className="w-full border-collapse min-w-[640px]">
                   <thead className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
@@ -796,15 +825,22 @@ export default function SwimmingPerformancePro() {
                     {filteredRecords.map((r) => (
                       <tr
                         key={r.event}
-                        className="text-center hover:bg-blue-50 transition cursor-pointer text-xs sm:text-sm"
+                        className={`text-center transition cursor-pointer text-xs sm:text-sm ${
+                          r.highlight
+                            ? "bg-amber-50 hover:bg-amber-100 font-bold text-amber-900"
+                            : "hover:bg-blue-50"
+                        }`}
                         onClick={() => {
                           setActiveTab("calculator");
                           handleEventChange(r.event);
                         }}
                       >
-                        <td className="border-b p-2 sm:p-3 font-medium">{r.event}</td>
+                        <td className={`border-b p-2 sm:p-3 ${r.highlight ? "font-bold" : "font-medium"}`}>
+                          {r.event}
+                          {r.highlight && " ⭐"}
+                        </td>
                         <td className="border-b p-2 sm:p-3">{r.time}</td>
-                        <td className="border-b p-2 sm:p-3">{r.holder}</td>
+                        <td className={`border-b p-2 sm:p-3 ${r.highlight ? "font-bold" : ""}`}>{r.holder}</td>
                         <td className="border-b p-2 sm:p-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${r.type === "خارجی" ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
                             {r.type}
@@ -817,9 +853,8 @@ export default function SwimmingPerformancePro() {
                 </table>
               </div>
 
-              {/* UPDATE DATE */}
               <div className="text-center mt-6 text-gray-500 text-xs sm:text-sm">
-                آخرین بروزرسانی: بهمن ۱۴۰۴
+                آخرین بروزرسانی: مهر ۱۴۰۵
               </div>
             </div>
           </div>
