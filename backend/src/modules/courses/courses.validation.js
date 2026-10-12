@@ -74,6 +74,16 @@ const listInstructorsQuery = z
   })
   .strict();
 
+const catalogCategoryEnum = z.enum(["men", "women", "public", "hydro"]);
+
+const optionalCatalogKey = z
+  .preprocess((value) => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    if (typeof value === "string" && value.trim() === "") return null;
+    return value;
+  }, z.string().trim().min(2).max(120).nullable().optional());
+
 const classBody = z
   .object({
     courseTemplateId: objectId,
@@ -87,7 +97,14 @@ const classBody = z
     timezone: z.string().trim().min(1).optional(),
     totalSessions: z.coerce.number().int().min(1).max(200),
     price: z.coerce.number().min(0),
+    listPrice: z.coerce.number().min(0).nullable().optional(),
     capacity: z.coerce.number().int().min(1).max(500),
+    catalogKey: optionalCatalogKey,
+    catalogGroupKey: z.string().trim().max(80).optional().nullable(),
+    catalogCategory: catalogCategoryEnum.optional().nullable(),
+    pool: z.string().trim().max(120).optional().default(""),
+    location: z.string().trim().max(200).optional().default(""),
+    audienceLabel: z.string().trim().max(200).optional().default(""),
   })
   .superRefine((data, ctx) => {
     if (!data.daysOfWeek.every((d) => DAYS_OF_WEEK.includes(d))) {
@@ -106,7 +123,14 @@ const classUpdate = z.object({
   timezone: z.string().trim().min(1).optional(),
   totalSessions: z.coerce.number().int().min(1).max(200).optional(),
   price: z.coerce.number().min(0).optional(),
+  listPrice: z.coerce.number().min(0).nullable().optional(),
   capacity: z.coerce.number().int().min(1).max(500).optional(),
+  catalogKey: optionalCatalogKey,
+  catalogGroupKey: z.string().trim().max(80).optional().nullable(),
+  catalogCategory: catalogCategoryEnum.optional().nullable(),
+  pool: z.string().trim().max(120).optional(),
+  location: z.string().trim().max(200).optional(),
+  audienceLabel: z.string().trim().max(200).optional(),
 });
 
 const listClassesQuery = z.object({

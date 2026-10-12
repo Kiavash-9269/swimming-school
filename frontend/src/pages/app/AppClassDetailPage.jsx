@@ -21,7 +21,8 @@ import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import EmptyState from "../../components/Ui/EmptyState";
 
-const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
+/** Mongo ObjectId or marketing catalogKey (e.g. men-sajjad-01:evening-1:s1) */
+const CLASS_REF_RE = /^([a-f\d]{24}|[a-z0-9][\w:.-]{1,119})$/i;
 
 const BADGE = {
   open: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -35,7 +36,7 @@ const BADGE = {
  */
 export default function AppClassDetailPage() {
   const { classId } = useParams();
-  const validId = OBJECT_ID_RE.test(classId || "");
+  const validId = CLASS_REF_RE.test(classId || "");
 
   const [courseClass, setCourseClass] = useState(null);
   const [template, setTemplate] = useState(null);

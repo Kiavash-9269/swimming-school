@@ -72,11 +72,18 @@ function toPublicClass(doc, { genderRestriction } = {}) {
     timezone: doc.timezone,
     totalSessions: doc.totalSessions,
     price: doc.price,
+    listPrice: doc.listPrice ?? null,
     capacity: doc.capacity,
     confirmedCount: doc.confirmedCount,
     heldCount: doc.heldCount,
     availableSeats: available,
     status: doc.status,
+    catalogKey: doc.catalogKey || null,
+    catalogGroupKey: doc.catalogGroupKey || null,
+    catalogCategory: doc.catalogCategory || null,
+    pool: doc.pool || "",
+    location: doc.location || "",
+    audienceLabel: doc.audienceLabel || "",
     genderRestriction: genderRestriction || null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -321,8 +328,16 @@ async function updateClass(id, payload) {
   return toPublicClassEnriched(courseClass);
 }
 
+async function findClassDocByIdOrKey(id) {
+  const raw = String(id || "");
+  if (/^[a-f\d]{24}$/i.test(raw)) {
+    return CourseClass.findById(raw);
+  }
+  return CourseClass.findOne({ catalogKey: raw });
+}
+
 async function getClass(id, { isAdmin = false } = {}) {
-  const courseClass = await CourseClass.findById(id);
+  const courseClass = await findClassDocByIdOrKey(id);
   if (!courseClass) {
     throw new AppError("Class not found", { statusCode: 404, code: "CLASS_NOT_FOUND" });
   }
@@ -603,10 +618,11 @@ async function archiveClass(id) {
 }
 
 async function generateSessionsForClass(classId) {
-  const courseClass = await CourseClass.findById(classId);
+  const courseClass = await findClassDocByIdOrKey(classId);
   if (!courseClass) {
     throw new AppError("Class not found", { statusCode: 404, code: "CLASS_NOT_FOUND" });
   }
+  const resolvedClassId = courseClass._id;
 
   const dates = generateSessionDates({
     startDate: courseClass.startDate,
@@ -623,7 +639,7 @@ async function generateSessionsForClass(classId) {
     });
   }
 
-  const existingSessions = await ClassSession.find({ classId }).select("_id").lean();
+  const existingSessions = await ClassSession.find({ classId: resolvedClassId }).select("_id").lean();
   if (existingSessions.length > 0) {
     const { AttendanceRecord } = require("../enrollments/attendance.model");
     const sessionIds = existingSessions.map((s) => s._id);
@@ -642,9 +658,9 @@ async function generateSessionsForClass(classId) {
     }
   }
 
-  await ClassSession.deleteMany({ classId });
+  await ClassSession.deleteMany({ classId: resolvedClassId });
   const docs = dates.map((date, index) => ({
-    classId,
+    classId: resolvedClassId,
     sessionNumber: index + 1,
     date,
     startTime: courseClass.startTime,
@@ -652,12 +668,16 @@ async function generateSessionsForClass(classId) {
     status: SESSION_STATUSES.SCHEDULED,
   }));
   await ClassSession.insertMany(docs);
-  logEvent("SESSIONS_GENERATED", { classId: String(classId), count: docs.length });
-  return listSessions(classId);
+  logEvent("SESSIONS_GENERATED", { classId: String(resolvedClassId), count: docs.length });
+  return listSessions(resolvedClassId);
 }
 
 async function listSessions(classId) {
-  const rows = await ClassSession.find({ classId }).sort({ sessionNumber: 1 });
+  const courseClass = await findClassDocByIdOrKey(classId);
+  if (!courseClass) {
+    throw new AppError("Class not found", { statusCode: 404, code: "CLASS_NOT_FOUND" });
+  }
+  const rows = await ClassSession.find({ classId: courseClass._id }).sort({ sessionNumber: 1 });
   return rows.map(toPublicSession);
 }
 

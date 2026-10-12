@@ -1,5 +1,5 @@
-// src/components/SwimmingPerformancePro.jsx
-import { useState, useMemo, useCallback } from "react";
+// src/components/record/RecordYab.jsx
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   FiClock,
@@ -11,14 +11,10 @@ import {
 } from "react-icons/fi";
 import { FaSwimmer, FaGlobe } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { getSwimmingRecords } from "../../features/catalog/catalogApi";
 
-// ─────────────────────────────────────────────
-// RECORDS DATA — آخرین بروزرسانی: مهر ۱۴۰۵ (2026-10)
-// منبع خارجی: World Aquatics / Olympics.com
-// منبع داخلی: فدراسیون شنا ایران
-// ─────────────────────────────────────────────
-
-const records = [
+// Fallback تا وقتی API لود شود / آفلاین
+const FALLBACK_RECORDS = [
   // ============ رکورد جهانی — آزاد ============
   { event: "50m آزاد", time: 20.88, distance: 50, holder: "کامرون مک‌اووی", type: "خارجی", discipline: "آزاد" },
   { event: "100m آزاد", time: 46.40, distance: 100, holder: "پان ژانله", type: "خارجی", discipline: "آزاد" },
@@ -77,6 +73,7 @@ const records = [
 
 // MAIN COMPONENT //
 export default function SwimmingPerformancePro() {
+  const [records, setRecords] = useState(FALLBACK_RECORDS);
   const [selectedDiscipline, setSelectedDiscipline] = useState("");
   const [selectedEvent, setSelectedEvent] = useState("");
   const [swimmerTime, setSwimmerTime] = useState("");
@@ -87,7 +84,25 @@ export default function SwimmingPerformancePro() {
   const [error, setError] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
 
-  const disciplines = [...new Set(records.map((r) => r.discipline))];
+  useEffect(() => {
+    const ac = new AbortController();
+    (async () => {
+      try {
+        const data = await getSwimmingRecords({ signal: ac.signal });
+        const items = Array.isArray(data?.items) ? data.items : [];
+        if (items.length) setRecords(items);
+      } catch (err) {
+        if (err?.code === "ABORTED") return;
+        // keep FALLBACK_RECORDS
+      }
+    })();
+    return () => ac.abort();
+  }, []);
+
+  const disciplines = useMemo(
+    () => [...new Set(records.map((r) => r.discipline))],
+    [records],
+  );
 
   const handleEventChange = useCallback((eventName) => {
     setSelectedEvent(eventName);
@@ -103,12 +118,12 @@ export default function SwimmingPerformancePro() {
           (selectedDiscipline ? r.discipline === selectedDiscipline : true) &&
           (filterType === "همه" ? true : r.type === filterType)
       ),
-    [selectedDiscipline, filterType]
+    [records, selectedDiscipline, filterType]
   );
 
   const filteredRecords = useMemo(
     () => (filterType === "همه" ? records : records.filter((r) => r.type === filterType)),
-    [filterType]
+    [records, filterType]
   );
 
   const COLORS = ["#3B82F6", "#E5E7EB"];

@@ -387,9 +387,38 @@ export default function AdminClassDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">قیمت</dt>
+                  <dt className="text-xs text-slate-500">قیمت فروش</dt>
                   <dd>{formatIrr(courseClass.price)}</dd>
                 </div>
+                {courseClass.listPrice != null ? (
+                  <div>
+                    <dt className="text-xs text-slate-500">قیمت لیست</dt>
+                    <dd>{formatIrr(courseClass.listPrice)}</dd>
+                  </div>
+                ) : null}
+                {courseClass.pool ? (
+                  <div>
+                    <dt className="text-xs text-slate-500">استخر / محل</dt>
+                    <dd>
+                      {courseClass.pool}
+                      {courseClass.location ? (
+                        <span className="block text-xs text-slate-500">{courseClass.location}</span>
+                      ) : null}
+                    </dd>
+                  </div>
+                ) : null}
+                {courseClass.catalogKey ? (
+                  <div>
+                    <dt className="text-xs text-slate-500">کلید کاتالوگ</dt>
+                    <dd className="font-mono text-xs break-all">{courseClass.catalogKey}</dd>
+                  </div>
+                ) : null}
+                {courseClass.audienceLabel ? (
+                  <div>
+                    <dt className="text-xs text-slate-500">مخاطب</dt>
+                    <dd>{courseClass.audienceLabel}</dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt className="text-xs text-slate-500">بازه</dt>
                   <dd>

@@ -143,7 +143,10 @@ async function checkScheduleConflict(participantId, candidateClass) {
 }
 
 async function getClassOrThrow(classId) {
-  const courseClass = await CourseClass.findById(classId);
+  const raw = String(classId || "");
+  const courseClass = /^[a-f\d]{24}$/i.test(raw)
+    ? await CourseClass.findById(raw)
+    : await CourseClass.findOne({ catalogKey: raw });
   if (!courseClass) {
     throw new AppError("کلاس یافت نشد", { statusCode: 404, code: "CLASS_NOT_FOUND" });
   }
@@ -151,8 +154,8 @@ async function getClassOrThrow(classId) {
 }
 
 async function checkAvailability(classId) {
-  await expireHeldReservations(classId);
   const courseClass = await getClassOrThrow(classId);
+  await expireHeldReservations(courseClass._id);
   return {
     classId: String(courseClass._id),
     status: courseClass.status,
@@ -167,8 +170,6 @@ async function createReservation({
   participantId,
   idempotencyKey,
 }) {
-  await expireHeldReservations(classId);
-
   if (idempotencyKey) {
     const existing = await Reservation.findOne({ idempotencyKey });
     if (existing) {
@@ -178,6 +179,8 @@ async function createReservation({
 
   const participant = await assertParticipantOwned(userId, participantId);
   const courseClass = await getClassOrThrow(classId);
+  const resolvedClassId = courseClass._id;
+  await expireHeldReservations(resolvedClassId);
 
   if (courseClass.status !== CLASS_STATUSES.REGISTRATION_OPEN) {
     throw new AppError("ثبت‌نام این کلاس باز نیست", {
@@ -187,7 +190,7 @@ async function createReservation({
   }
 
   const existingEnrollment = await Enrollment.findOne({
-    classId,
+    classId: resolvedClassId,
     participantId,
     status: { $in: [...ACTIVE_ENROLLMENT_STATUSES, ENROLLMENT_STATUSES.WAITLISTED] },
   });
@@ -212,7 +215,7 @@ async function createReservation({
 
   const seat = await CourseClass.findOneAndUpdate(
     {
-      _id: classId,
+      _id: resolvedClassId,
       status: CLASS_STATUSES.REGISTRATION_OPEN,
       $expr: { $lt: [{ $add: ["$confirmedCount", "$heldCount"] }, "$capacity"] },
     },
@@ -229,7 +232,7 @@ async function createReservation({
 
   try {
     const reservation = await Reservation.create({
-      classId,
+      classId: resolvedClassId,
       userId,
       participantId,
       status: RESERVATION_STATUSES.HELD,
@@ -239,7 +242,7 @@ async function createReservation({
 
     logEvent("RESERVATION_CREATED", {
       reservationId: String(reservation._id),
-      classId: String(classId),
+      classId: String(resolvedClassId),
       userId: String(userId),
       participantId: String(participantId),
     });
@@ -247,7 +250,7 @@ async function createReservation({
     return reservation;
   } catch (error) {
     await CourseClass.updateOne(
-      { _id: classId, heldCount: { $gt: 0 } },
+      { _id: resolvedClassId, heldCount: { $gt: 0 } },
       { $inc: { heldCount: -1 } },
     );
     if (error?.code === 11000) {
@@ -261,9 +264,10 @@ async function createReservation({
 }
 
 async function joinWaitlist({ userId, classId, participantId }) {
-  await expireHeldReservations(classId);
   const participant = await assertParticipantOwned(userId, participantId);
   const courseClass = await getClassOrThrow(classId);
+  const resolvedClassId = courseClass._id;
+  await expireHeldReservations(resolvedClassId);
 
   if (courseClass.status !== CLASS_STATUSES.REGISTRATION_OPEN) {
     throw new AppError("ثبت‌نام این کلاس باز نیست", {
@@ -295,11 +299,14 @@ async function joinWaitlist({ userId, classId, participantId }) {
   // Unique (classId, position) + retry absorbs concurrent max(position)+1 races.
   let entry = null;
   for (let attempt = 0; attempt < 8; attempt += 1) {
-    const last = await WaitlistEntry.findOne({ classId }).sort({ position: -1 }).select("position").lean();
+    const last = await WaitlistEntry.findOne({ classId: resolvedClassId })
+      .sort({ position: -1 })
+      .select("position")
+      .lean();
     const position = (last?.position || 0) + 1;
     try {
       entry = await WaitlistEntry.create({
-        classId,
+        classId: resolvedClassId,
         userId,
         participantId,
         position,
@@ -331,7 +338,7 @@ async function joinWaitlist({ userId, classId, participantId }) {
     await Enrollment.create({
       userId,
       participantId,
-      classId,
+      classId: resolvedClassId,
       status: ENROLLMENT_STATUSES.WAITLISTED,
     });
   } catch (error) {
@@ -340,7 +347,7 @@ async function joinWaitlist({ userId, classId, participantId }) {
 
   logEvent("WAITLIST_JOINED", {
     waitlistId: String(entry._id),
-    classId: String(classId),
+    classId: String(resolvedClassId),
     position: entry.position,
   });
 

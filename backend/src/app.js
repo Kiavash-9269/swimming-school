@@ -96,6 +96,7 @@ function createApp() {
 
   app.use("/api/auth", authRoutes);
   app.use("/api/courses", coursesRoutes);
+  app.use("/api/catalog", require("./modules/catalog/catalog.routes"));
   app.use("/api/enrollments", enrollmentRoutes);
   app.use("/api/payments", billingRoutes);
   app.use("/api/notifications", require("./modules/notifications/notification.routes"));

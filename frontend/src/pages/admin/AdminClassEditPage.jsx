@@ -50,6 +50,10 @@ export default function AdminClassEditPage() {
           timezone: cls.timezone || "",
           totalSessions: String(cls.totalSessions ?? ""),
           price: String(cls.price ?? ""),
+          listPrice: cls.listPrice != null ? String(cls.listPrice) : "",
+          pool: cls.pool || "",
+          location: cls.location || "",
+          audienceLabel: cls.audienceLabel || "",
           capacity: String(cls.capacity ?? ""),
         });
         setStatus("ready");
@@ -113,6 +117,10 @@ export default function AdminClassEditPage() {
       };
       if (form.timezone.trim()) body.timezone = form.timezone.trim();
       if (classStatus === "DRAFT") body.price = Number(form.price);
+      body.listPrice = form.listPrice.trim() === "" ? null : Number(form.listPrice);
+      body.pool = form.pool.trim();
+      body.location = form.location.trim();
+      body.audienceLabel = form.audienceLabel.trim();
       await updateCourseClass(classId, body);
       toast.success("کلاس به‌روزرسانی شد.");
       navigate(`/admin/classes/${classId}`);
@@ -212,7 +220,7 @@ export default function AdminClassEditPage() {
               onChange={(e) => set("totalSessions", e.target.value)}
             />
           </Field>
-          <Field label="قیمت (ریال)" hint={classStatus !== "DRAFT" ? "فقط در وضعیت پیش‌نویس قابل تغییر است." : undefined}>
+          <Field label="قیمت فروش" hint={classStatus !== "DRAFT" ? "فقط در وضعیت پیش‌نویس قابل تغییر است." : undefined}>
             <input
               type="number"
               className={inputClass}
@@ -221,6 +229,16 @@ export default function AdminClassEditPage() {
               onChange={(e) => set("price", e.target.value)}
             />
           </Field>
+          <Field label="قیمت لیست (اختیاری)">
+            <input
+              type="number"
+              className={inputClass}
+              value={form.listPrice}
+              onChange={(e) => set("listPrice", e.target.value)}
+            />
+          </Field>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field label="ظرفیت" error={errors.capacity}>
             <input
               type="number"
@@ -229,9 +247,24 @@ export default function AdminClassEditPage() {
               onChange={(e) => set("capacity", e.target.value)}
             />
           </Field>
+          <Field label="منطقه زمانی">
+            <input className={inputClass} value={form.timezone} onChange={(e) => set("timezone", e.target.value)} />
+          </Field>
         </div>
-        <Field label="منطقه زمانی">
-          <input className={inputClass} value={form.timezone} onChange={(e) => set("timezone", e.target.value)} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="استخر">
+            <input className={inputClass} value={form.pool} onChange={(e) => set("pool", e.target.value)} />
+          </Field>
+          <Field label="آدرس / محل">
+            <input className={inputClass} value={form.location} onChange={(e) => set("location", e.target.value)} />
+          </Field>
+        </div>
+        <Field label="برچسب مخاطب">
+          <input
+            className={inputClass}
+            value={form.audienceLabel}
+            onChange={(e) => set("audienceLabel", e.target.value)}
+          />
         </Field>
         <button
           type="submit"

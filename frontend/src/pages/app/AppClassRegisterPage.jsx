@@ -28,7 +28,8 @@ import EmptyState from "../../components/Ui/EmptyState";
 import ForbiddenState from "../../components/Ui/ForbiddenState";
 import { useToast } from "../../components/feedback/useToast";
 
-const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
+/** Mongo ObjectId or marketing catalogKey */
+const CLASS_REF_RE = /^([a-f\d]{24}|[a-z0-9][\w:.-]{1,119})$/i;
 
 /**
  * F5: class → participant → eligibility → availability → HELD → confirm/checkout.
@@ -38,7 +39,7 @@ export default function AppClassRegisterPage() {
   const { classId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const validId = OBJECT_ID_RE.test(classId || "");
+  const validId = CLASS_REF_RE.test(classId || "");
   const confirmKeyRef = useRef(null);
   const [courseClass, setCourseClass] = useState(null);
   const [bootStatus, setBootStatus] = useState("loading");

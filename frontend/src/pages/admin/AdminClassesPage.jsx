@@ -139,6 +139,7 @@ export default function AdminClassesPage() {
             <thead className="bg-slate-50 text-xs text-slate-500">
               <tr>
                 <th className="px-3 py-2">عنوان</th>
+                <th className="px-3 py-2">استخر</th>
                 <th className="px-3 py-2">وضعیت</th>
                 <th className="px-3 py-2">ظرفیت</th>
                 <th className="px-3 py-2">قیمت</th>
@@ -153,7 +154,11 @@ export default function AdminClassesPage() {
                     <Link to={`/admin/classes/${c.id}`} className="font-medium text-cyan-800 hover:underline">
                       {c.title}
                     </Link>
+                    {c.catalogKey ? (
+                      <div className="mt-0.5 font-mono text-[10px] text-slate-400">{c.catalogKey}</div>
+                    ) : null}
                   </td>
+                  <td className="px-3 py-2 text-xs text-slate-600">{c.pool || "—"}</td>
                   <td className="px-3 py-2">
                     <StatusPill tone={classStatusTone(c.status)}>
                       {CLASS_STATUS_LABELS[c.status] || c.status}
@@ -163,7 +168,12 @@ export default function AdminClassesPage() {
                     {Number(c.confirmedCount || 0).toLocaleString("fa-IR")} /{" "}
                     {Number(c.capacity || 0).toLocaleString("fa-IR")}
                   </td>
-                  <td className="px-3 py-2">{formatIrr(c.price)}</td>
+                  <td className="px-3 py-2">
+                    {formatIrr(c.price)}
+                    {c.listPrice != null && c.listPrice !== c.price ? (
+                      <div className="text-[10px] text-slate-400 line-through">{formatIrr(c.listPrice)}</div>
+                    ) : null}
+                  </td>
                   <td className="px-3 py-2">{formatDateFa(c.startDate)}</td>
                   <td className="px-3 py-2">
                     <Link

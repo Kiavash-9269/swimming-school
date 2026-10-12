@@ -1,5 +1,5 @@
 // src/components/courses/CoursesFeatures.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,16 +16,18 @@ import {
   FaTag,
   FaArrowLeft,
 } from "react-icons/fa";
-import { GiWaterDrop } from "react-icons/gi";
 import { useAuth } from "../../services/useAuth";
+import { getMarketingCatalog } from "../../features/catalog/catalogApi";
+import { userMessageFromApiError } from "../../features/courses/courseLabels";
 
-// ─── عکس استخرها ───
 import PoolSajjad1 from "../../assets/images/IMG_1207.webp";
 import PoolKosar1 from "../../assets/images/IMG_2352.webp";
 
-// ─────────────────────────────────────────────
-// TAB CONFIG — هماهنگ با تم آبی نفتی/آسمانی سایت
-// ─────────────────────────────────────────────
+const POOL_IMAGES = {
+  sajjad: { image: PoolSajjad1, emoji: "🌊" },
+  kosar: { image: PoolKosar1, emoji: "💦" },
+};
+
 const tabConfig = {
   men: {
     id: "men",
@@ -101,361 +103,49 @@ const tabConfig = {
   },
 };
 
-// ─────────────────────────────────────────────
-// PRICING (تومان)
-// ─────────────────────────────────────────────
-const PRICING = {
-  public: { price: 400_000, discountPrice: 300_000 },
-  school: { price: 4_000_000, discountPrice: 3_700_000 },
-  hydro: { price: 3_700_000, discountPrice: 3_700_000 },
-};
-
 function formatToman(amount) {
   return `${Number(amount).toLocaleString("fa-IR")} تومان`;
 }
 
-// ─────────────────────────────────────────────
-// COURSES DATA — ساعت‌ها ۲۴ ساعته + عکس
-// ─────────────────────────────────────────────
-function makeSession(id, label, day, audience) {
-  return { id, label, day, audience };
+function mapGroupToCourse(group) {
+  const poolMeta = POOL_IMAGES[group.poolImageKey] || {};
+  return {
+    id: group.id,
+    groupKey: group.groupKey,
+    classId: group.classId || group.groupKey,
+    classStatus: group.classStatus,
+    pool: group.pool,
+    poolEmoji: poolMeta.emoji || "🏊",
+    image: poolMeta.image || null,
+    location: group.location,
+    description: group.description,
+    type: group.type,
+    category: group.category,
+    pricing: group.pricing || { price: 0, discountPrice: 0 },
+    schedule: Array.isArray(group.schedule) ? group.schedule : [],
+  };
 }
 
-const menCourses = [
-  {
-    id: 1,
-    classId: "men-sajjad-01",
-    pool: "استخر سجاد",
-    poolEmoji: "🌊",
-    image: PoolSajjad1,
-    location: "حامد شمالی ۱۰",
-    description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته",
-    type: "school",
-    schedule: [
-      {
-        id: "evening-1",
-        days: "روزهای زوج",
-        time: "۱۶:۱۵ - ۱۷:۱۵",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "evening-2",
-        days: "روزهای زوج",
-        time: "۱۷:۳۰ - ۱۸:۳۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "evening-3",
-        days: "روزهای زوج",
-        time: "۱۹:۰۰ - ۲۰:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-    ],
-  },
-  {
-    id: 2,
-    classId: "men-kosar-01",
-    pool: "استخر کوثر",
-    poolEmoji: "💦",
-    image: PoolKosar1,
-    location: "قاسم آباد، روبروی شاهد ۷۵",
-    description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته",
-    type: "school",
-    schedule: [
-      {
-        id: "afternoon-1",
-        days: "روزهای فرد",
-        time: "۱۴:۳۰ - ۱۵:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "afternoon-2",
-        days: "روزهای فرد",
-        time: "۱۶:۰۰ - ۱۷:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "evening-1",
-        days: "روزهای فرد",
-        time: "۱۸:۰۰ - ۱۹:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-      {
-        id: "evening-2",
-        days: "روزهای فرد",
-        time: "۱۹:۰۰ - ۲۰:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-    ],
-  },
-];
+function resolveEnrollClassId(course, selectedSession) {
+  if (course.type === "public") {
+    return course.classId || course.groupKey;
+  }
+  return selectedSession?.classId || selectedSession?.catalogKey || null;
+}
 
-const womenCourses = [
-  {
-    id: 101,
-    classId: "women-sajjad-01",
-    pool: "استخر سجاد",
-    poolEmoji: "🌊",
-    image: PoolSajjad1,
-    location: "حامد شمالی ۱۰",
-    description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته",
-    type: "school",
-    schedule: [
-      {
-        id: "morning-1",
-        days: "روزهای فرد",
-        time: "۱۰:۰۰ - ۱۲:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "noon-1",
-        days: "روزهای فرد",
-        time: "۱۲:۰۰ - ۱۴:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "afternoon-1",
-        days: "روزهای فرد",
-        time: "۱۴:۰۰ - ۱۶:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-      {
-        id: "evening-1",
-        days: "روزهای فرد",
-        time: "۱۶:۰۰ - ۱۸:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-      {
-        id: "evening-2",
-        days: "روزهای فرد",
-        time: "۱۸:۰۰ - ۲۰:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "شنبه، دوشنبه، چهارشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-    ],
-  },
-  {
-    id: 102,
-    classId: "women-kosar-01",
-    pool: "استخر کوثر",
-    poolEmoji: "💦",
-    image: PoolKosar1,
-    location: "قاسم آباد، روبروی شاهد ۷۵",
-    description: "آموزش حرفه‌ای شنا از مبتدی تا پیشرفته",
-    type: "school",
-    schedule: [
-      {
-        id: "morning-1",
-        days: "روزهای زوج",
-        time: "۱۰:۰۰ - ۱۲:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "noon-1",
-        days: "روزهای زوج",
-        time: "۱۲:۰۰ - ۱۴:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پایه — ۵ سال تا بزرگسال"
-          ),
-        ],
-      },
-      {
-        id: "afternoon-1",
-        days: "روزهای زوج",
-        time: "۱۴:۰۰ - ۱۶:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-      {
-        id: "evening-1",
-        days: "روزهای زوج",
-        time: "۱۶:۰۰ - ۱۸:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-      {
-        id: "evening-2",
-        days: "روزهای زوج",
-        time: "۱۸:۰۰ - ۲۰:۰۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ۱",
-            "یکشنبه، سه‌شنبه، پنجشنبه",
-            "آموزش پیشرفته — ۱۰ سال به بالا"
-          ),
-        ],
-      },
-    ],
-  },
-];
+function canEnroll(course, selectedSession) {
+  if (course.type === "public") {
+    return Boolean(course.classId || course.groupKey);
+  }
+  return Boolean(selectedSession?.classId || selectedSession?.catalogKey);
+}
 
-const hydroMenCourses = [
-  {
-    id: 201,
-    classId: "hydro-men-sajjad-01",
-    pool: "استخر سجاد",
-    poolEmoji: "🌊",
-    image: PoolSajjad1,
-    location: "حامد شمالی ۱۰",
-    description: "تمرینات آب‌درمانی زیر نظر دکتر شجاعی",
-    type: "hydro",
-    schedule: [
-      {
-        id: "evening-1",
-        days: "روزهای زوج",
-        time: "۱۹:۰۰ - ۲۰:۳۰",
-        sessions: [
-          makeSession(
-            "s1",
-            "سانس ویژه",
-            "شنبه، دوشنبه، چهارشنبه",
-            "بزرگسال — با نسخه پزشک"
-          ),
-        ],
-      },
-    ],
-  },
-];
-
-const publicCourses = [
-  {
-    id: 301,
-    classId: "public-sajjad",
-    pool: "استخر سجاد",
-    poolEmoji: "🌊",
-    image: PoolSajjad1,
-    location: "حامد شمالی ۱۰",
-    type: "public",
-  },
-  {
-    id: 302,
-    classId: "public-kosar",
-    pool: "استخر کوثر",
-    poolEmoji: "💦",
-    image: PoolKosar1,
-    location: "قاسم آباد، روبروی شاهد ۷۵",
-    type: "public",
-  },
-];
-
-// ─────────────────────────────────────────────
-// POOL IMAGE — با fallback به ایموجی
-// ─────────────────────────────────────────────
 function PoolImage({ src, alt, emoji, className }) {
   const [errored, setErrored] = useState(false);
 
   if (!src || errored) {
     return (
-      <div
-        className={`${className} bg-slate-100 flex items-center justify-center`}
-      >
+      <div className={`${className} bg-slate-100 flex items-center justify-center`}>
         <span className="text-3xl leading-none">{emoji || "🏊"}</span>
       </div>
     );
@@ -472,28 +162,19 @@ function PoolImage({ src, alt, emoji, className }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// PRICE BADGE
-// ─────────────────────────────────────────────
 function PriceBadge({ pricing, colorClass, accentBg }) {
-  const hasDiscount = pricing.discountPrice < pricing.price;
-  const percent = hasDiscount
-    ? Math.round(
-        ((pricing.price - pricing.discountPrice) / pricing.price) * 100
-      )
-    : 0;
+  const list = Number(pricing?.price ?? 0);
+  const sale = Number(pricing?.discountPrice ?? list);
+  const hasDiscount = sale < list;
+  const percent = hasDiscount ? Math.round(((list - sale) / list) * 100) : 0;
 
   return (
     <div className="rounded-xl bg-slate-50/80 border border-slate-100 p-3 mb-4">
       {hasDiscount ? (
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 line-through">
-              {formatToman(pricing.price)}
-            </span>
-            <span className={`text-base font-bold ${colorClass}`}>
-              {formatToman(pricing.discountPrice)}
-            </span>
+            <span className="text-[10px] text-slate-400 line-through">{formatToman(list)}</span>
+            <span className={`text-base font-bold ${colorClass}`}>{formatToman(sale)}</span>
           </div>
           <span
             className={`text-[10px] ${accentBg} text-white px-2 py-1 rounded-lg flex items-center gap-1 font-semibold shadow-sm`}
@@ -503,38 +184,47 @@ function PriceBadge({ pricing, colorClass, accentBg }) {
           </span>
         </div>
       ) : (
-        <span className={`text-base font-bold ${colorClass}`}>
-          {formatToman(pricing.price)}
-        </span>
+        <span className={`text-base font-bold ${colorClass}`}>{formatToman(sale || list)}</span>
       )}
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────
 export default function CoursesFeatures() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("men");
   const [selectedSchedules, setSelectedSchedules] = useState({});
   const [selectedSessions, setSelectedSessions] = useState({});
+  const [categories, setCategories] = useState(null);
+  const [loadStatus, setLoadStatus] = useState("loading");
+  const [loadError, setLoadError] = useState("");
+
+  const load = useCallback(async (signal) => {
+    setLoadStatus("loading");
+    setLoadError("");
+    try {
+      const data = await getMarketingCatalog({ signal });
+      setCategories(data?.categories || {});
+      setLoadStatus("ready");
+    } catch (err) {
+      if (err?.code === "ABORTED") return;
+      setLoadError(userMessageFromApiError(err, "بارگذاری دوره‌ها ناموفق بود."));
+      setLoadStatus("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    load(ac.signal);
+    return () => ac.abort();
+  }, [load]);
 
   const currentCourses = useMemo(() => {
-    switch (activeTab) {
-      case "men":
-        return menCourses;
-      case "women":
-        return womenCourses;
-      case "public":
-        return publicCourses;
-      case "hydro":
-        return hydroMenCourses;
-      default:
-        return menCourses;
-    }
-  }, [activeTab]);
+    const items = categories?.[activeTab]?.items;
+    if (!Array.isArray(items)) return [];
+    return items.map(mapGroupToCourse);
+  }, [categories, activeTab]);
 
   const currentTabConfig = tabConfig[activeTab];
   const CurrentIcon = currentTabConfig.icon;
@@ -554,16 +244,17 @@ export default function CoursesFeatures() {
   const handleAction = (course) => {
     const isPublic = course.type === "public";
     const selectedScheduleId = selectedSchedules[course.id];
-    const selectedSchedule = course.schedule?.find(
-      (s) => s.id === selectedScheduleId
-    );
+    const selectedSchedule = course.schedule?.find((s) => s.id === selectedScheduleId);
     const selectedSession = selectedSchedule?.sessions?.find(
-      (s) => s.id === selectedSessions[course.id]
+      (s) => s.id === selectedSessions[course.id],
     );
 
+    const enrollId = resolveEnrollClassId(course, selectedSession);
+    if (!enrollId) return;
+
     const targetPath = isPublic
-      ? `/app/courses/${course.classId}`
-      : `/app/courses/${course.classId}/register`;
+      ? `/app/courses/${enrollId}`
+      : `/app/courses/${enrollId}/register`;
 
     if (!isAuthenticated) {
       navigate("/auth?mode=login", { state: { from: targetPath } });
@@ -586,14 +277,12 @@ export default function CoursesFeatures() {
       className="min-h-screen bg-sky-950 p-3 sm:p-6 md:p-14 flex flex-col items-center"
     >
       <div className="w-full max-w-7xl">
-        {/* HEADER — دست نخورده */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="px-2 sm:px-4 pt-4 sm:pt-8 max-w-7xl mx-auto text-center"
         >
-          <header className="text-center mt-12 sm:mt-4 mb-8 sm:mb-10 md:mb-12">              
-        
+          <header className="text-center mt-12 sm:mt-4 mb-8 sm:mb-10 md:mb-12">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3 sm:mb-4">
               دوره‌های آموزشی ما
             </h1>
@@ -604,7 +293,6 @@ export default function CoursesFeatures() {
           </header>
         </motion.div>
 
-        {/* TABS */}
         <div className="flex justify-center mb-8 sm:mb-10 px-2 sm:px-4">
           <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-1.5 border border-sky-200/50 shadow-lg w-full max-w-4xl">
             <div className="flex flex-nowrap sm:flex-wrap justify-start sm:justify-center gap-1 overflow-x-auto pb-1 sm:pb-0">
@@ -614,6 +302,7 @@ export default function CoursesFeatures() {
                 return (
                   <button
                     key={tab.id}
+                    type="button"
                     onClick={() => setActiveTab(tab.id)}
                     className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                       isActive
@@ -630,258 +319,272 @@ export default function CoursesFeatures() {
           </div>
         </div>
 
-        {/* COURSES GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 px-2 sm:px-4">
-          {currentCourses.map((course, i) => {
-            const isPublic = course.type === "public";
-            const isHydro = course.type === "hydro";
-            const pricing = isPublic
-              ? PRICING.public
-              : isHydro
-                ? PRICING.hydro
-                : PRICING.school;
+        {loadStatus === "loading" ? (
+          <p className="text-center text-sky-100/80 text-sm py-16">در حال بارگذاری دوره‌ها…</p>
+        ) : null}
 
-            const selectedScheduleId = selectedSchedules[course.id];
-            const selectedSchedule = course.schedule?.find(
-              (s) => s.id === selectedScheduleId
-            );
-            const selectedSessionId = selectedSessions[course.id];
-            const ready = Boolean(selectedScheduleId && selectedSessionId);
+        {loadStatus === "error" ? (
+          <div className="mx-4 rounded-2xl border border-rose-200 bg-white p-6 text-center">
+            <p className="text-sm text-rose-700">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => load()}
+              className="mt-4 rounded-xl bg-sky-700 px-4 py-2 text-sm text-white hover:bg-sky-600"
+            >
+              تلاش مجدد
+            </button>
+          </div>
+        ) : null}
 
-            return (
-              <motion.div
-                key={course.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative bg-white rounded-3xl overflow-hidden border border-slate-200/80 hover:border-slate-300 transition-all duration-300 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full"
-              >
-                {/* ─────────── عکس استخر (HERO) ─────────── */}
-                <div className="relative h-44 sm:h-48 w-full overflow-hidden">
-                  <PoolImage
-                    src={course.image}
-                    alt={course.pool}
-                    emoji={course.poolEmoji}
-                    className="w-full h-full transition-transform duration-500 group-hover:scale-105"
-                  />
+        {loadStatus === "ready" && currentCourses.length === 0 ? (
+          <p className="text-center text-sky-100/80 text-sm py-16">
+            در این بخش دوره‌ای برای نمایش نیست.
+          </p>
+        ) : null}
 
-                  {/* گرادیان تیره پایین عکس برای خوانایی */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        {loadStatus === "ready" && currentCourses.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 px-2 sm:px-4">
+            {currentCourses.map((course, i) => {
+              const isPublic = course.type === "public";
+              const isHydro = course.type === "hydro";
+              const pricing = course.pricing;
 
-                  {/* بج نوع دوره — گوشه بالا راست */}
-                  <span
-                    className={`absolute top-3 right-3 text-[10px] font-semibold ${currentTabConfig.color} bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1 flex-shrink-0 shadow-sm`}
-                  >
-                    <CurrentIcon className="w-2.5 h-2.5" />
-                    {currentTabConfig.label}
-                  </span>
+              const selectedScheduleId = selectedSchedules[course.id];
+              const selectedSchedule = course.schedule?.find((s) => s.id === selectedScheduleId);
+              const selectedSessionId = selectedSessions[course.id];
+              const selectedSession = selectedSchedule?.sessions?.find(
+                (s) => s.id === selectedSessionId,
+              );
+              const ready = isPublic
+                ? canEnroll(course)
+                : Boolean(selectedScheduleId && selectedSessionId && canEnroll(course, selectedSession));
 
-                  {/* اطلاعات روی عکس */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="font-bold text-white text-base sm:text-lg mb-1 drop-shadow-sm">
-                      {course.pool}
-                    </h3>
-                    <p className="text-[11px] text-white/90 flex items-center gap-1 drop-shadow-sm">
-                      <FaMapMarkerAlt className="w-2.5 h-2.5 flex-shrink-0" />
-                      <span className="truncate">{course.location}</span>
-                    </p>
+              const sessionPricing =
+                selectedSession && (selectedSession.listPrice != null || selectedSession.price != null)
+                  ? {
+                      price: selectedSession.listPrice ?? pricing.price,
+                      discountPrice: selectedSession.price ?? pricing.discountPrice,
+                    }
+                  : pricing;
+
+              return (
+                <motion.div
+                  key={course.groupKey || course.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="group relative bg-white rounded-3xl overflow-hidden border border-slate-200/80 hover:border-slate-300 transition-all duration-300 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 flex flex-col h-full"
+                >
+                  <div className="relative h-44 sm:h-48 w-full overflow-hidden">
+                    <PoolImage
+                      src={course.image}
+                      alt={course.pool}
+                      emoji={course.poolEmoji}
+                      className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <span
+                      className={`absolute top-3 right-3 text-[10px] font-semibold ${currentTabConfig.color} bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1 flex-shrink-0 shadow-sm`}
+                    >
+                      <CurrentIcon className="w-2.5 h-2.5" />
+                      {currentTabConfig.label}
+                    </span>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="font-bold text-white text-base sm:text-lg mb-1 drop-shadow-sm">
+                        {course.pool}
+                      </h3>
+                      <p className="text-[11px] text-white/90 flex items-center gap-1 drop-shadow-sm">
+                        <FaMapMarkerAlt className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span className="truncate">{course.location}</span>
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* BODY */}
-                <div className="relative p-5 pt-4 flex flex-col flex-grow">
-                  {course.description && (
-                    <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4">
-                      {course.description}
-                    </p>
-                  )}
+                  <div className="relative p-5 pt-4 flex flex-col flex-grow">
+                    {course.description ? (
+                      <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4">
+                        {course.description}
+                      </p>
+                    ) : null}
 
-                  {isPublic ? (
-                    <>
-                      <div className="flex-grow">
+                    {isPublic ? (
+                      <>
+                        <div className="flex-grow">
+                          <PriceBadge
+                            pricing={pricing}
+                            colorClass={currentTabConfig.color}
+                            accentBg={currentTabConfig.accentBg}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAction(course)}
+                          disabled={!ready}
+                          className={`w-full flex items-center justify-center gap-2 bg-gradient-to-l ${currentTabConfig.gradient} ${currentTabConfig.gradientHover} text-white py-3 rounded-2xl font-semibold text-sm transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <FaShoppingCart className="w-3.5 h-3.5" />
+                          خرید بلیط سانس عمومی
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-[11px] text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1">
+                              <FaClock className="w-3 h-3" />
+                              انتخاب ساعت
+                            </div>
+                            {selectedSchedule ? (
+                              <motion.span
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full"
+                              >
+                                <FaCheck className="w-2.5 h-2.5" />
+                                انتخاب شد
+                              </motion.span>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {course.schedule.map((schedule) => {
+                              const isSelected = selectedScheduleId === schedule.id;
+                              return (
+                                <motion.button
+                                  key={schedule.id}
+                                  type="button"
+                                  whileTap={{ scale: 0.96 }}
+                                  onClick={() => toggleSchedule(course.id, schedule.id)}
+                                  className={`px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition-all duration-200 border tabular-nums ${
+                                    isSelected
+                                      ? `bg-gradient-to-l ${currentTabConfig.gradient} text-white border-transparent shadow-sm`
+                                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  {schedule.time}
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                          {!selectedSchedule ? (
+                            <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+                              <FaInfoCircle className="w-2.5 h-2.5" />
+                              برای ادامه، یک ساعت را انتخاب کنید
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <AnimatePresence initial={false}>
+                          {selectedSchedule ? (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="mb-4 overflow-hidden"
+                            >
+                              <div className="text-[11px] text-slate-400 font-medium uppercase tracking-wide mb-2 flex items-center gap-1">
+                                <FaUsers className="w-3 h-3" />
+                                انتخاب سانس
+                              </div>
+                              <div className="space-y-1.5">
+                                {selectedSchedule.sessions.map((session) => {
+                                  const isSessionSelected = selectedSessionId === session.id;
+                                  return (
+                                    <button
+                                      key={session.id}
+                                      type="button"
+                                      onClick={() => selectSession(course.id, session.id)}
+                                      className={`w-full text-right px-3 py-2.5 rounded-xl border transition-all flex items-start gap-3 ${
+                                        isSessionSelected
+                                          ? `${currentTabConfig.borderColor} ${currentTabConfig.badgeBg}`
+                                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                      }`}
+                                    >
+                                      <span
+                                        className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                                          isSessionSelected
+                                            ? `${currentTabConfig.borderColor} ${currentTabConfig.buttonBg}`
+                                            : "border-slate-300"
+                                        }`}
+                                      >
+                                        {isSessionSelected ? (
+                                          <span className="w-1 h-1 rounded-full bg-white" />
+                                        ) : null}
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-semibold text-slate-800">
+                                          {session.label}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400 mt-0.5">
+                                          {session.day}
+                                        </div>
+                                        {session.audience ? (
+                                          <div className="text-[10px] text-slate-500 mt-1">
+                                            {session.audience}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          ) : null}
+                        </AnimatePresence>
+
                         <PriceBadge
-                          pricing={pricing}
+                          pricing={sessionPricing}
                           colorClass={currentTabConfig.color}
                           accentBg={currentTabConfig.accentBg}
                         />
-                      </div>
-                      <button
-                        onClick={() => handleAction(course)}
-                        className={`w-full flex items-center justify-center gap-2 bg-gradient-to-l ${currentTabConfig.gradient} ${currentTabConfig.gradientHover} text-white py-3 rounded-2xl font-semibold text-sm transition-all duration-200 shadow-md hover:shadow-lg`}
-                      >
-                        <FaShoppingCart className="w-3.5 h-3.5" />
-                        خرید بلیط سانس عمومی
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {/* انتخاب ساعت */}
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-[11px] text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1">
-                            <FaClock className="w-3 h-3" />
-                            انتخاب ساعت
-                          </div>
-                          {selectedSchedule && (
-                            <motion.span
-                              initial={{ opacity: 0, x: 10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full"
-                            >
-                              <FaCheck className="w-2.5 h-2.5" />
-                              انتخاب شد
-                            </motion.span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {course.schedule.map((schedule) => {
-                            const isSelected =
-                              selectedScheduleId === schedule.id;
-                            return (
-                              <motion.button
-                                key={schedule.id}
-                                type="button"
-                                whileTap={{ scale: 0.96 }}
-                                onClick={() =>
-                                  toggleSchedule(course.id, schedule.id)
-                                }
-                                className={`px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition-all duration-200 border tabular-nums ${
-                                  isSelected
-                                    ? `bg-gradient-to-l ${currentTabConfig.gradient} text-white border-transparent shadow-sm`
-                                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                                }`}
-                              >
-                                {schedule.time}
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                        {!selectedSchedule && (
-                          <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
-                            <FaInfoCircle className="w-2.5 h-2.5" />
-                            برای ادامه، یک ساعت را انتخاب کنید
-                          </p>
-                        )}
-                      </div>
 
-                      {/* انتخاب سانس */}
-                      <AnimatePresence initial={false}>
-                        {selectedSchedule && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="mb-4 overflow-hidden"
+                        <div className="mt-auto pt-1">
+                          <motion.button
+                            whileHover={ready ? { scale: 1.01 } : {}}
+                            whileTap={ready ? { scale: 0.98 } : {}}
+                            disabled={!ready}
+                            type="button"
+                            onClick={() => handleAction(course)}
+                            className={`w-full py-3 rounded-2xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                              ready
+                                ? `bg-gradient-to-l ${currentTabConfig.gradient} ${currentTabConfig.gradientHover} text-white shadow-md hover:shadow-lg`
+                                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                            }`}
                           >
-                            <div className="text-[11px] text-slate-400 font-medium uppercase tracking-wide mb-2 flex items-center gap-1">
-                              <FaUsers className="w-3 h-3" />
-                              انتخاب سانس
-                            </div>
-                            <div className="space-y-1.5">
-                              {selectedSchedule.sessions.map((session) => {
-                                const isSessionSelected =
-                                  selectedSessionId === session.id;
-                                return (
-                                  <button
-                                    key={session.id}
-                                    type="button"
-                                    onClick={() =>
-                                      selectSession(course.id, session.id)
-                                    }
-                                    className={`w-full text-right px-3 py-2.5 rounded-xl border transition-all flex items-start gap-3 ${
-                                      isSessionSelected
-                                        ? `${currentTabConfig.borderColor} ${currentTabConfig.badgeBg}`
-                                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-                                        isSessionSelected
-                                          ? `${currentTabConfig.borderColor} ${currentTabConfig.buttonBg}`
-                                          : "border-slate-300"
-                                      }`}
-                                    >
-                                      {isSessionSelected && (
-                                        <span className="w-1 h-1 rounded-full bg-white" />
-                                      )}
-                                    </span>
+                            {ready ? (
+                              <>
+                                <span>
+                                  {isHydro ? "ادامه رزرو آب‌درمانی" : "ادامه ثبت‌نام"}
+                                </span>
+                                <FaArrowLeft className="w-3 h-3" />
+                              </>
+                            ) : (
+                              <>
+                                <FaClock className="w-3.5 h-3.5" />
+                                <span>
+                                  {!selectedScheduleId
+                                    ? "ابتدا ساعت را انتخاب کنید"
+                                    : "حالا یک سانس را انتخاب کنید"}
+                                </span>
+                              </>
+                            )}
+                          </motion.button>
 
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-xs font-semibold text-slate-800">
-                                        {session.label}
-                                      </div>
-                                      <div className="text-[10px] text-slate-400 mt-0.5">
-                                        {session.day}
-                                      </div>
-                                      {session.audience && (
-                                        <div className="text-[10px] text-slate-500 mt-1">
-                                          {session.audience}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      <PriceBadge
-                        pricing={pricing}
-                        colorClass={currentTabConfig.color}
-                        accentBg={currentTabConfig.accentBg}
-                      />
-
-                      {/* دکمه ثبت‌نام */}
-                      <div className="mt-auto pt-1">
-                        <motion.button
-                          whileHover={ready ? { scale: 1.01 } : {}}
-                          whileTap={ready ? { scale: 0.98 } : {}}
-                          disabled={!ready}
-                          onClick={() => handleAction(course)}
-                          className={`w-full py-3 rounded-2xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                            ready
-                              ? `bg-gradient-to-l ${currentTabConfig.gradient} ${currentTabConfig.gradientHover} text-white shadow-md hover:shadow-lg`
-                              : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                          }`}
-                        >
-                          {ready ? (
-                            <>
-                              <span>
-                                {isHydro
-                                  ? "ادامه رزرو آب‌درمانی"
-                                  : "ادامه ثبت‌نام"}
-                              </span>
-                              <FaArrowLeft className="w-3 h-3" />
-                            </>
-                          ) : (
-                            <>
-                              <FaClock className="w-3.5 h-3.5" />
-                              <span>
-                                {!selectedScheduleId
-                                  ? "ابتدا ساعت را انتخاب کنید"
-                                  : "حالا یک سانس را انتخاب کنید"}
-                              </span>
-                            </>
-                          )}
-                        </motion.button>
-
-                        {!isAuthenticated && (
-                          <p className="text-[10px] text-slate-400 text-center mt-2 flex items-center justify-center gap-1">
-                            <FaInfoCircle className="w-2.5 h-2.5" />
-                            برای ثبت‌نام ابتدا وارد حساب کاربری شوید
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                          {!isAuthenticated ? (
+                            <p className="text-[10px] text-slate-400 text-center mt-2 flex items-center justify-center gap-1">
+                              <FaInfoCircle className="w-2.5 h-2.5" />
+                              برای ثبت‌نام ابتدا وارد حساب کاربری شوید
+                            </p>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </div>
   );

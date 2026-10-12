@@ -26,6 +26,7 @@ const AdminClassesPage = lazy(() => import("./pages/admin/AdminClassesPage.jsx")
 const AdminClassNewPage = lazy(() => import("./pages/admin/AdminClassNewPage.jsx"));
 const AdminClassDetailPage = lazy(() => import("./pages/admin/AdminClassDetailPage.jsx"));
 const AdminClassEditPage = lazy(() => import("./pages/admin/AdminClassEditPage.jsx"));
+const AdminCatalogPage = lazy(() => import("./pages/admin/AdminCatalogPage.jsx"));
 const AdminInstructorsPage = lazy(() => import("./pages/admin/AdminInstructorsPage.jsx"));
 const AdminAdminsPage = lazy(() => import("./pages/admin/AdminAdminsPage.jsx"));
 const AdminPaymentsPage = lazy(() => import("./pages/admin/AdminPaymentsPage.jsx"));
@@ -145,6 +146,7 @@ const route = createBrowserRouter([
           { path: "classes/new", element: <AdminClassNewPage /> },
           { path: "classes/:classId/edit", element: <AdminClassEditPage /> },
           { path: "classes/:classId", element: <AdminClassDetailPage /> },
+          { path: "catalog", element: <AdminCatalogPage /> },
           { path: "instructors", element: <AdminInstructorsPage /> },
           { path: "participants", element: <AdminParticipantsPage /> },
           { path: "participants/:participantId", element: <AdminParticipantDetailPage /> },
