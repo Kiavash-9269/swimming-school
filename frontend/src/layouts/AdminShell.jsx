@@ -3,8 +3,8 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
-  BookOpen,
   CalendarDays,
+  Trophy,
   ChartColumn,
   ClipboardCheck,
   CreditCard,
@@ -29,7 +29,7 @@ const NAV = [
     items: [
       { to: "/admin/courses", label: "دوره‌ها", icon: Layers },
       { to: "/admin/classes", label: "کلاس‌ها", icon: CalendarDays },
-      { to: "/admin/catalog", label: "کاتالوگ", icon: BookOpen },
+      { to: "/admin/records", label: "رکوردها", icon: Trophy },
       { to: "/admin/instructors", label: "مربیان", icon: Users },
       { to: "/admin/attendance", label: "حضور و غیاب", icon: ClipboardCheck },
     ],
