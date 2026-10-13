@@ -22,8 +22,8 @@ export const SESSION_STATUS_LABELS = {
 
 export const GENDER_RESTRICTION_LABELS = {
   ANY: "بدون محدودیت",
-  MALE: "مردانه",
-  FEMALE: "زنانه",
+  MALE: "آقایان",
+  FEMALE: "بانوان",
 };
 
 /** Product rule: courses are male or female only. */
@@ -31,6 +31,20 @@ export const GENDER_RESTRICTION_OPTIONS = [
   { value: "MALE", label: GENDER_RESTRICTION_LABELS.MALE },
   { value: "FEMALE", label: GENDER_RESTRICTION_LABELS.FEMALE },
 ];
+
+/** Filter chips for admin/app course & class lists. */
+export const GENDER_FILTER_TABS = [
+  { id: "all", label: "همه" },
+  { id: "MALE", label: "آقایان" },
+  { id: "FEMALE", label: "بانوان" },
+  { id: "ANY", label: "بدون محدودیت" },
+];
+
+export function matchesGenderFilter(genderRestriction, filterId) {
+  if (!filterId || filterId === "all") return true;
+  const value = genderRestriction || "ANY";
+  return value === filterId;
+}
 
 /** Backend daysOfWeek: 0–6 (JS getUTCDay style). */
 export const DAY_OF_WEEK_OPTIONS = [

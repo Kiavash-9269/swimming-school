@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getCourseClasses } from "../../features/courses/coursesApi";
 import ClassCard from "../../features/courses/components/ClassCard";
-import { CLASS_STATUS_LABELS, userMessageFromApiError } from "../../features/courses/courseLabels";
+import {
+  CLASS_STATUS_LABELS,
+  GENDER_FILTER_TABS,
+  matchesGenderFilter,
+  userMessageFromApiError,
+} from "../../features/courses/courseLabels";
 import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import EmptyState from "../../components/Ui/EmptyState";
@@ -17,6 +22,7 @@ export default function AppCoursesPage() {
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [tab, setTab] = useState("all");
+  const [genderFilter, setGenderFilter] = useState("all");
 
   const load = useCallback(async (signal) => {
     setStatus("loading");
@@ -55,10 +61,11 @@ export default function AppCoursesPage() {
   }, [load]);
 
   const filtered = useMemo(() => {
-    if (tab === "open") return items.filter((c) => c.status === "REGISTRATION_OPEN");
-    if (tab === "running") return items.filter((c) => c.status === "IN_PROGRESS");
-    return items;
-  }, [items, tab]);
+    let list = items;
+    if (tab === "open") list = list.filter((c) => c.status === "REGISTRATION_OPEN");
+    else if (tab === "running") list = list.filter((c) => c.status === "IN_PROGRESS");
+    return list.filter((c) => matchesGenderFilter(c.genderRestriction, genderFilter));
+  }, [items, tab, genderFilter]);
 
   return (
     <div className="space-y-6">
@@ -69,26 +76,44 @@ export default function AppCoursesPage() {
         </p>
       </header>
 
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: "all", label: "همه" },
-          { id: "open", label: "ثبت‌نام باز" },
-          { id: "running", label: "در حال برگزاری" },
-        ].map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-xl px-3 py-1.5 text-sm ${
-              tab === t.id ? "bg-cyan-700 font-bold text-white" : "border border-slate-200 bg-white text-slate-700"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-        <span className="self-center text-xs text-slate-400">
-          {Number(filtered.length).toLocaleString("fa-IR")} کلاس
-        </span>
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          {GENDER_FILTER_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setGenderFilter(t.id)}
+              className={`rounded-xl px-3 py-1.5 text-sm ${
+                genderFilter === t.id
+                  ? "bg-cyan-700 font-bold text-white"
+                  : "border border-slate-200 bg-white text-slate-700"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "all", label: "همه وضعیت‌ها" },
+            { id: "open", label: "ثبت‌نام باز" },
+            { id: "running", label: "در حال برگزاری" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`rounded-xl px-3 py-1.5 text-sm ${
+                tab === t.id ? "bg-slate-900 font-bold text-white" : "border border-slate-200 bg-white text-slate-700"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+          <span className="self-center text-xs text-slate-400">
+            {Number(filtered.length).toLocaleString("fa-IR")} کلاس
+          </span>
+        </div>
       </div>
 
       {status === "loading" ? <SectionLoader label="در حال دریافت کلاس‌های مجموعه…" /> : null}

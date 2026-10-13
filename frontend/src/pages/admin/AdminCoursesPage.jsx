@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getCourseTemplates } from "../../features/courses/coursesApi";
 import {
+  GENDER_FILTER_TABS,
   GENDER_RESTRICTION_LABELS,
   formatDateFa,
+  matchesGenderFilter,
   userMessageFromApiError,
 } from "../../features/courses/courseLabels";
 import { StatusPill, AdminPageHeader } from "../../features/courses/components/AdminCourseUi";
@@ -20,6 +22,7 @@ export default function AdminCoursesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeOnly = searchParams.get("activeOnly") === "true";
   const q = searchParams.get("q") || "";
+  const genderFilter = searchParams.get("gender") || "all";
 
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("loading");
@@ -58,17 +61,26 @@ export default function AdminCoursesPage() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return items;
-    return items.filter(
-      (t) =>
+    return items.filter((t) => {
+      if (!matchesGenderFilter(t.genderRestriction, genderFilter)) return false;
+      if (!needle) return true;
+      return (
         String(t.title || "")
           .toLowerCase()
           .includes(needle) ||
         String(t.level || "")
           .toLowerCase()
-          .includes(needle),
-    );
-  }, [items, q]);
+          .includes(needle)
+      );
+    });
+  }, [items, q, genderFilter]);
+
+  function setGenderFilter(value) {
+    const next = new URLSearchParams(searchParams);
+    if (!value || value === "all") next.delete("gender");
+    else next.set("gender", value);
+    setSearchParams(next);
+  }
 
   return (
     <div className="space-y-6">
@@ -87,41 +99,62 @@ export default function AdminCoursesPage() {
         }
       />
 
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <label className="text-sm">
-          <span className="text-xs text-slate-500">جستجو در عنوان یا سطح</span>
-          <input
-            value={localQ}
-            onChange={(e) => setLocalQ(e.target.value)}
-            placeholder="عنوان یا سطح…"
-            className="mt-1 block w-56 rounded-xl border border-slate-200 px-3 py-2"
-          />
-        </label>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={activeOnly}
-            onChange={(e) => {
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap gap-2">
+          {GENDER_FILTER_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setGenderFilter(tab.id)}
+              className={`rounded-xl px-3 py-1.5 text-sm transition ${
+                genderFilter === tab.id
+                  ? "bg-cyan-700 font-medium text-white"
+                  : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+          <span className="self-center text-xs text-slate-400">
+            {Number(filtered.length).toLocaleString("fa-IR")} دوره
+          </span>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-sm">
+            <span className="text-xs text-slate-500">جستجو در عنوان یا سطح</span>
+            <input
+              value={localQ}
+              onChange={(e) => setLocalQ(e.target.value)}
+              placeholder="عنوان یا سطح…"
+              className="mt-1 block w-56 rounded-xl border border-slate-200 px-3 py-2"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={activeOnly}
+              onChange={(e) => {
+                const next = new URLSearchParams(searchParams);
+                if (e.target.checked) next.set("activeOnly", "true");
+                else next.delete("activeOnly");
+                setSearchParams(next);
+              }}
+            />
+            فقط دوره‌های فعال
+          </label>
+          <button
+            type="button"
+            onClick={() => {
               const next = new URLSearchParams(searchParams);
-              if (e.target.checked) next.set("activeOnly", "true");
-              else next.delete("activeOnly");
+              if (localQ.trim()) next.set("q", localQ.trim());
+              else next.delete("q");
               setSearchParams(next);
             }}
-          />
-          فقط دوره‌های فعال
-        </label>
-        <button
-          type="button"
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            if (localQ.trim()) next.set("q", localQ.trim());
-            else next.delete("q");
-            setSearchParams(next);
-          }}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
-        >
-          اعمال
-        </button>
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
+          >
+            اعمال
+          </button>
+        </div>
       </div>
 
       {forbidden ? (

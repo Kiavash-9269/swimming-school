@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getCourseClasses, getCourseTemplates } from "../../features/courses/coursesApi";
 import {
   CLASS_STATUS_LABELS,
   CLASS_STATUS_OPTIONS,
+  GENDER_FILTER_TABS,
+  GENDER_RESTRICTION_LABELS,
   formatDateFa,
   formatIrr,
   classStatusTone,
+  matchesGenderFilter,
   userMessageFromApiError,
 } from "../../features/courses/courseLabels";
 import { StatusPill, AdminPageHeader } from "../../features/courses/components/AdminCourseUi";
@@ -21,6 +24,7 @@ export default function AdminClassesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get("status") || "";
   const courseTemplateId = searchParams.get("courseTemplateId") || "";
+  const genderFilter = searchParams.get("gender") || "all";
 
   const [items, setItems] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -64,6 +68,16 @@ export default function AdminClassesPage() {
     setSearchParams(next);
   }
 
+  const filtered = useMemo(
+    () => items.filter((c) => matchesGenderFilter(c.genderRestriction, genderFilter)),
+    [items, genderFilter],
+  );
+
+  const templatesForFilter = useMemo(() => {
+    if (genderFilter === "all") return templates;
+    return templates.filter((t) => matchesGenderFilter(t.genderRestriction, genderFilter));
+  }, [templates, genderFilter]);
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -81,64 +95,86 @@ export default function AdminClassesPage() {
         }
       />
 
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <label className="text-sm">
-          <span className="text-xs text-slate-500">وضعیت</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setFilter("status", e.target.value)}
-            className="mt-1 block min-w-40 rounded-xl border border-slate-200 px-3 py-2"
-          >
-            <option value="">همه</option>
-            {CLASS_STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {CLASS_STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="text-xs text-slate-500">دوره</span>
-          <select
-            value={courseTemplateId}
-            onChange={(e) => setFilter("courseTemplateId", e.target.value)}
-            className="mt-1 block min-w-48 max-w-xs rounded-xl border border-slate-200 px-3 py-2"
-          >
-            <option value="">همه دوره‌ها</option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
-                {t.isActive === false ? " (غیرفعال)" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        {(statusFilter || courseTemplateId) && (
-          <button
-            type="button"
-            onClick={() => setSearchParams({})}
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700"
-          >
-            پاک کردن فیلتر
-          </button>
-        )}
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap gap-2">
+          {GENDER_FILTER_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFilter("gender", tab.id === "all" ? "" : tab.id)}
+              className={`rounded-xl px-3 py-1.5 text-sm transition ${
+                genderFilter === tab.id
+                  ? "bg-cyan-700 font-medium text-white"
+                  : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+          <span className="self-center text-xs text-slate-400">
+            {Number(filtered.length).toLocaleString("fa-IR")} کلاس
+          </span>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-sm">
+            <span className="text-xs text-slate-500">وضعیت</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setFilter("status", e.target.value)}
+              className="mt-1 block min-w-40 rounded-xl border border-slate-200 px-3 py-2"
+            >
+              <option value="">همه</option>
+              {CLASS_STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {CLASS_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="text-xs text-slate-500">دوره</span>
+            <select
+              value={courseTemplateId}
+              onChange={(e) => setFilter("courseTemplateId", e.target.value)}
+              className="mt-1 block min-w-48 max-w-xs rounded-xl border border-slate-200 px-3 py-2"
+            >
+              <option value="">همه دوره‌ها</option>
+              {templatesForFilter.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                  {t.isActive === false ? " (غیرفعال)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          {(statusFilter || courseTemplateId || genderFilter !== "all") && (
+            <button
+              type="button"
+              onClick={() => setSearchParams({})}
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700"
+            >
+              پاک کردن فیلتر
+            </button>
+          )}
+        </div>
       </div>
 
       {status === "loading" ? <SectionLoader label="در حال بارگذاری کلاس‌ها…" /> : null}
       {status === "error" ? <ErrorState title="خطا" message={errorMessage} onRetry={() => load()} /> : null}
-      {status === "ready" && items.length === 0 ? (
+      {status === "ready" && filtered.length === 0 ? (
         <EmptyState
           title="کلاسی برای نمایش وجود ندارد."
           description="فیلتر را تغییر دهید یا کلاس جدید بسازید."
         />
       ) : null}
 
-      {status === "ready" && items.length > 0 ? (
+      {status === "ready" && filtered.length > 0 ? (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
           <table className="min-w-full text-right text-sm">
             <thead className="bg-slate-50 text-xs text-slate-500">
               <tr>
                 <th className="px-3 py-2">عنوان</th>
+                <th className="px-3 py-2">جنسیت</th>
                 <th className="px-3 py-2">استخر</th>
                 <th className="px-3 py-2">وضعیت</th>
                 <th className="px-3 py-2">ظرفیت</th>
@@ -148,7 +184,7 @@ export default function AdminClassesPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((c) => (
+              {filtered.map((c) => (
                 <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                   <td className="px-3 py-2">
                     <Link to={`/admin/classes/${c.id}`} className="font-medium text-cyan-800 hover:underline">
@@ -157,6 +193,9 @@ export default function AdminClassesPage() {
                     {c.catalogKey ? (
                       <div className="mt-0.5 font-mono text-[10px] text-slate-400">{c.catalogKey}</div>
                     ) : null}
+                  </td>
+                  <td className="px-3 py-2 text-xs text-slate-600">
+                    {GENDER_RESTRICTION_LABELS[c.genderRestriction] || c.genderRestriction || "—"}
                   </td>
                   <td className="px-3 py-2 text-xs text-slate-600">{c.pool || "—"}</td>
                   <td className="px-3 py-2">
