@@ -35,23 +35,23 @@ export default function ProductAppLayout({ variant = "user" }) {
               to="/app"
               className="ml-1 rounded-xl bg-slate-900 px-2.5 py-1 text-xs font-bold text-white"
             >
-              حساب
+              پنل کاربری
             </Link>
             <Link to="/" className="px-2 text-sm text-slate-500 hover:text-cyan-800">
               سایت
             </Link>
             <span className="text-slate-300">|</span>
             <NavLink to="/app" end className={linkClass}>
-              خانه حساب
+              داشبورد
             </NavLink>
             <NavLink to="/app/courses" className={linkClass}>
-              کلاس‌ها
+              دوره‌ها
             </NavLink>
             <NavLink to="/app/participants" className={linkClass}>
-              شرکت‌کنندگان
+              افراد ثبت‌شده
             </NavLink>
             <NavLink to="/app/enrollments" className={linkClass}>
-              ثبت‌نام‌ها
+              ثبت‌نام‌های من
             </NavLink>
             <NavLink to="/instructor" className={linkClass}>
               فضای مربی

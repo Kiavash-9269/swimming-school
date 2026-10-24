@@ -50,7 +50,7 @@ export function userMessageFromParticipantError(err, fallback = "خطایی رخ
 }
 
 /** Client-side mirror of Zod rules — backend remains authoritative. */
-export function validateParticipantForm(values, { partial = false } = {}) {
+export function validateParticipantForm(values, { partial = false, requireMedical = false } = {}) {
   const errors = {};
   const require = (key, ok, msg) => {
     if (!ok) errors[key] = msg;
@@ -81,6 +81,13 @@ export function validateParticipantForm(values, { partial = false } = {}) {
   if (values.phone != null) {
     require("phone", phoneOk(String(values.phone).trim()), "موبایل باید خالی یا ۰۹xxxxxxxxx باشد.");
   }
+  if (!partial || values.fatherOccupation !== undefined) {
+    const v = String(values.fatherOccupation || "").trim();
+    require("fatherOccupation", v.length <= 80, "شغل پدر حداکثر ۸۰ کاراکتر باشد.");
+  }
+  if (requireMedical) {
+    require("medicalConfirmed", values.medicalConfirmed === true, "تأییدیه پزشکی الزامی است.");
+  }
   if (values.emergencyContact?.phone != null) {
     require(
       "emergencyPhone",
@@ -98,6 +105,8 @@ export function buildParticipantPayload(values) {
     birthDate: values.birthDate,
     gender: values.gender,
     relation: values.relation || "SELF",
+    fatherOccupation: String(values.fatherOccupation || "").trim(),
+    medicalConfirmed: values.medicalConfirmed === true,
     phone: String(values.phone || "").trim(),
     emergencyContact: {
       name: String(values.emergencyContact?.name || "").trim(),

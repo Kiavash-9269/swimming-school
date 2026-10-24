@@ -37,9 +37,9 @@ export default function AppParticipantsPage() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">شرکت‌کنندگان</h1>
+          <h1 className="text-2xl font-bold text-slate-900">افراد ثبت‌شده</h1>
           <p className="mt-2 text-sm text-slate-600">
-            فقط شرکت‌کنندگان فعال متعلق به حساب شما از سرور نمایش داده می‌شوند.
+            افرادی که با این حساب ثبت‌نام شده‌اند: خود شما، فرزندان یا سایر افراد.
           </p>
         </div>
         <Link
@@ -58,8 +58,8 @@ export default function AppParticipantsPage() {
 
       {status === "ready" && items.length === 0 ? (
         <EmptyState
-          title="هنوز شرکت‌کننده‌ای ندارید"
-          description="برای ثبت‌نام در کلاس، ابتدا یک شرکت‌کننده (خودتان یا فرزند) اضافه کنید."
+          title="هنوز فردی ثبت نکرده‌اید"
+          description="برای ثبت‌نام در کلاس می‌توانید اطلاعات فرد را همان لحظه در صفحه ثبت‌نام وارد کنید؛ اینجا برای ویرایش سریع‌تر فهرست شده است."
           actionLabel="افزودن شرکت‌کننده"
           onAction={() => navigate("/app/participants/new")}
         />

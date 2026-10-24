@@ -24,6 +24,81 @@ import { useToast } from "../../components/feedback/useToast";
 
 const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
 
+/** Printable invoice card — `printing` marks exactly one card visible on paper. */
+function InvoiceCard({
+  kind,
+  invoiceNo,
+  issuedAt,
+  rows,
+  totalLabel,
+  total,
+  meta = [],
+  printing,
+  onPrint,
+}) {
+  const isFinal = kind === "final";
+  const title = isFinal ? "فاکتور نهایی پرداخت" : "فاکتور پیش‌پرداخت";
+  const tone = isFinal
+    ? "border-emerald-200 bg-emerald-50/60 text-emerald-950"
+    : "border-cyan-200 bg-cyan-50/60 text-cyan-950";
+
+  return (
+    <div
+      dir="rtl"
+      className={`rounded-2xl border bg-white p-5 ${
+        printing ? "invoice-print" : "border-slate-200"
+      }`}
+    >
+      <div className={`flex flex-wrap items-start justify-between gap-3 rounded-xl border p-4 ${tone}`}>
+        <div>
+          <h3 className="font-bold">{title}</h3>
+          <p className="mt-1 text-xs opacity-80">
+            شماره فاکتور: {invoiceNo} — تاریخ صدور: {issuedAt}
+          </p>
+        </div>
+        <span className="rounded-lg bg-white/70 px-2 py-1 text-xs">
+          {isFinal ? "پس از پرداخت" : "پیش از پرداخت"}
+        </span>
+      </div>
+
+      <dl className="mt-4 space-y-2 text-sm text-slate-700">
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            className="flex items-center justify-between gap-3 border-b border-dashed border-slate-200 pb-2"
+          >
+            <dt className="text-slate-500">{row.label}</dt>
+            <dd className="text-left font-medium">{row.value}</dd>
+          </div>
+        ))}
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+          <dt className="font-bold text-slate-900">{totalLabel}</dt>
+          <dd className="font-bold text-slate-900">{total}</dd>
+        </div>
+      </dl>
+
+      {meta.length ? (
+        <dl className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
+          {meta.map((m) => (
+            <div key={m.label}>
+              <dt className="text-slate-400">{m.label}</dt>
+              <dd className="mt-0.5 break-all text-slate-700">{m.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onPrint}
+        className="mt-4 inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+      >
+        چاپ / ذخیره PDF
+      </button>
+    </div>
+  );
+}
+
 /**
  * GET /enrollments/:id — optional cancel via POST /:id/cancel (empty body).
  */
@@ -44,6 +119,15 @@ export default function AppEnrollmentDetailPage() {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [printing, setPrinting] = useState(null);
+
+  function handlePrint(key) {
+    setPrinting(key);
+    window.setTimeout(() => {
+      window.print();
+      setPrinting(null);
+    }, 150);
+  }
 
   const load = useCallback(
     async (signal) => {
@@ -129,6 +213,9 @@ export default function AppEnrollmentDetailPage() {
 
   const reasons = enrollment?.eligibilitySnapshot?.reasons || [];
   const showCancel = canUserCancelEnrollment(enrollment?.status);
+  const paymentSuccess =
+    payment?.status === "SUCCESS" ||
+    ["PAID", "ACTIVE", "PENDING_COMPLIANCE", "COMPLETED"].includes(enrollment?.status);
 
   return (
     <div className="space-y-6">
@@ -232,7 +319,7 @@ export default function AppEnrollmentDetailPage() {
         <h2 className="font-bold text-slate-900">پرداخت</h2>
         <dl className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
           <div>
-            <dt className="text-xs text-slate-400">مبلغ نهایی ثبت‌نام</dt>
+            <dt className="text-xs text-slate-400">مبلغ قابل پرداخت</dt>
             <dd>{formatIrrAmount(enrollment.finalAmount)}</dd>
           </div>
           <div>
@@ -255,8 +342,61 @@ export default function AppEnrollmentDetailPage() {
           </Link>
         ) : null}
         <p className="mt-3 text-xs text-slate-500">
-          این صفحه استرداد را ادعا نمی‌کند؛ فقط وضعیت‌های برگشتی از سرور نمایش داده می‌شود.
+          وضعیت استرداد پس از بررسی درخواست اعلام می‌شود.
         </p>
+      </section>
+
+      {/* Invoices: proforma before payment, final after payment */}
+      <section className="space-y-4">
+        <h2 className="font-bold text-slate-900">فاکتورها</h2>
+        <InvoiceCard
+          kind="proforma"
+          invoiceNo={`PI-${String(enrollment.id).slice(-8)}`}
+          issuedAt={formatExpiryFa(enrollment.createdAt)}
+          printing={printing === "proforma"}
+          onPrint={() => handlePrint("proforma")}
+          rows={[
+            { label: "شرح خدمات", value: `ثبت‌نام دوره «${courseClass?.title || "—"}»` },
+            { label: "شرکت‌کننده", value: participant ? `${participant.firstName || ""} ${participant.lastName || ""}`.trim() : "—" },
+            { label: "قیمت پایه", value: formatIrrAmount(enrollment.basePrice) },
+            { label: "تخفیف", value: formatIrrAmount(enrollment.discountAmount || 0) },
+          ]}
+          totalLabel="مبلغ قابل پرداخت"
+          total={formatIrrAmount(enrollment.finalAmount)}
+          meta={[
+            { label: "شناسه ثبت‌نام", value: enrollment.id },
+            { label: "وضعیت", value: ENROLLMENT_STATUS_LABELS[enrollment.status] || enrollment.status },
+          ]}
+        />
+
+        {paymentSuccess ? (
+          <InvoiceCard
+            kind="final"
+            invoiceNo={`FI-${String(enrollment.id).slice(-8)}`}
+            issuedAt={formatExpiryFa(payment?.verifiedAt || payment?.createdAt || enrollment.confirmedAt)}
+            printing={printing === "final"}
+            onPrint={() => handlePrint("final")}
+            rows={[
+              { label: "شرح خدمات", value: `ثبت‌نام دوره «${courseClass?.title || "—"}»` },
+              { label: "شرکت‌کننده", value: participant ? `${participant.firstName || ""} ${participant.lastName || ""}`.trim() : "—" },
+              { label: "قیمت پایه", value: formatIrrAmount(enrollment.basePrice) },
+              { label: "تخفیف", value: formatIrrAmount(enrollment.discountAmount || 0) },
+              { label: "مبلغ پرداخت‌شده", value: formatIrrAmount(payment?.amount ?? enrollment.finalAmount) },
+            ]}
+            totalLabel="جمع کل پرداختی"
+            total={formatIrrAmount(payment?.amount ?? enrollment.finalAmount)}
+            meta={[
+              { label: "شماره پیگیری پرداخت", value: payment?.authority || payment?.providerRef || "—" },
+              { label: "روش پرداخت", value: payment?.provider || "—" },
+              { label: "تاریخ پرداخت", value: formatExpiryFa(payment?.verifiedAt || payment?.createdAt) },
+              { label: "وضعیت پرداخت", value: PAYMENT_STATUS_LABELS[payment?.status] || payment?.status || "—" },
+            ]}
+          />
+        ) : (
+          <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            فاکتور نهایی پس از پرداخت موفق صادر می‌شود.
+          </p>
+        )}
       </section>
 
       {(enrollment.status === "PENDING_COMPLIANCE" || reasons.length > 0) && (
@@ -295,7 +435,7 @@ export default function AppEnrollmentDetailPage() {
         <section className="rounded-2xl border border-rose-200 bg-white p-5">
           <h2 className="font-bold text-slate-900">لغو ثبت‌نام</h2>
           <p className="mt-2 text-sm text-slate-600">
-            لغو طبق قوانین سرور انجام می‌شود. ادعای استرداد خودکار در این صفحه وجود ندارد.
+            لغو طبق مقررات آموزشگاه انجام می‌شود. مبلغ پرداخت‌شده پس از بررسی مسترد می‌شود.
           </p>
           {!confirmCancel ? (
             <button

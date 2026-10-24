@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { listParticipants } from "../../features/participants/participantsApi";
+import { Link, useParams } from "react-router-dom";
+import { createParticipant, updateParticipant } from "../../features/participants/participantsApi";
+import ParticipantFormFields from "../../features/participants/components/ParticipantFormFields";
+import {
+  buildParticipantPayload,
+  validateParticipantForm,
+  userMessageFromParticipantError,
+} from "../../features/participants/participantLabels";
 import { getCourseClassById } from "../../features/courses/coursesApi";
 import { GENDER_LABELS, RELATION_LABELS } from "../../features/participants/participantLabels";
 import {
@@ -24,12 +30,23 @@ import {
 import { WAITLIST_STATUS_LABELS } from "../../features/reports/reportLabels";
 import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
-import EmptyState from "../../components/Ui/EmptyState";
 import ForbiddenState from "../../components/Ui/ForbiddenState";
 import { useToast } from "../../components/feedback/useToast";
 
 /** Mongo ObjectId or marketing catalogKey */
 const CLASS_REF_RE = /^([a-f\d]{24}|[a-z0-9][\w:.-]{1,119})$/i;
+
+const INITIAL_FORM = {
+  firstName: "",
+  lastName: "",
+  birthDate: "",
+  gender: "",
+  relation: "SELF",
+  fatherOccupation: "",
+  phone: "",
+  medicalConfirmed: false,
+  emergencyContact: { name: "", phone: "", relationship: "" },
+};
 
 /**
  * F5: class → participant → eligibility → availability → HELD → confirm/checkout.
@@ -37,7 +54,6 @@ const CLASS_REF_RE = /^([a-f\d]{24}|[a-z0-9][\w:.-]{1,119})$/i;
  */
 export default function AppClassRegisterPage() {
   const { classId } = useParams();
-  const navigate = useNavigate();
   const toast = useToast();
   const validId = CLASS_REF_RE.test(classId || "");
   const confirmKeyRef = useRef(null);
@@ -46,11 +62,13 @@ export default function AppClassRegisterPage() {
   const [bootError, setBootError] = useState("");
   const [bootForbidden, setBootForbidden] = useState(false);
 
-  const [participants, setParticipants] = useState([]);
-  const [participantsStatus, setParticipantsStatus] = useState("loading");
-  const [participantsError, setParticipantsError] = useState("");
-
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedParticipant, setSelectedParticipant] = useState(null);
+  const [editing, setEditing] = useState(true);
+  const [formValues, setFormValues] = useState(INITIAL_FORM);
+  const [formErrors, setFormErrors] = useState({});
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const [eligibility, setEligibility] = useState(null);
   const [eligibilityStatus, setEligibilityStatus] = useState("idle");
@@ -99,20 +117,6 @@ export default function AppClassRegisterPage() {
     [classId, validId],
   );
 
-  const loadParticipants = useCallback(async (signal) => {
-    setParticipantsStatus("loading");
-    setParticipantsError("");
-    try {
-      const data = await listParticipants({ signal });
-      setParticipants(Array.isArray(data?.items) ? data.items : []);
-      setParticipantsStatus("ready");
-    } catch (err) {
-      if (err?.code === "ABORTED") return;
-      setParticipantsError(userMessageFromEnrollmentError(err, "بارگذاری شرکت‌کنندگان ناموفق بود."));
-      setParticipantsStatus("error");
-    }
-  }, []);
-
   const loadAvailability = useCallback(
     async (signal) => {
       if (!validId) return;
@@ -160,10 +164,9 @@ export default function AppClassRegisterPage() {
   useEffect(() => {
     const ac = new AbortController();
     loadBoot(ac.signal);
-    loadParticipants(ac.signal);
     loadAvailability(ac.signal);
     return () => ac.abort();
-  }, [loadBoot, loadParticipants, loadAvailability]);
+  }, [loadBoot, loadAvailability]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -189,7 +192,7 @@ export default function AppClassRegisterPage() {
     return () => clearInterval(id);
   }, [reservation?.expiresAt]);
 
-  const selected = participants.find((p) => p.id === selectedId) || null;
+  const selected = selectedParticipant;
   const eligible = eligibilityStatus === "ready" && eligibility?.eligible === true;
   const availReady = availabilityStatus === "ready" && availability;
   const registrationOpen = availReady ? availability.registrationOpen === true : false;
@@ -248,7 +251,7 @@ export default function AppClassRegisterPage() {
       setReservation(data);
       setWaitlistEntry(null);
       setActionStatus("idle");
-      toast.success("صندلی موقتاً رزرو شد.");
+      toast.success("جای شما موقتاً نگه داشته شد.");
       await loadAvailability();
     } catch (err) {
       setActionStatus("idle");
@@ -320,7 +323,7 @@ export default function AppClassRegisterPage() {
     if (!reservation?.id || confirming || confirmedEnrollment) return;
     if (holdExpiredClient(reservation, holdSecondsLeft)) {
       setCheckoutError(
-        "زمان نمایش‌داده‌شده برای نگه‌داشت صندلی به پایان رسیده است. سرور مرجع است؛ در صورت نیاز دوباره رزرو کنید.",
+        "مدت نگه‌داری جا به پایان رسیده است؛ در صورت نیاز دوباره ثبت‌نام کنید.",
       );
       return;
     }
@@ -348,7 +351,7 @@ export default function AppClassRegisterPage() {
         setReservation(null);
         setCheckoutStatus("idle");
         confirmKeyRef.current = null;
-        toast.success("ثبت‌نام از سرور تأیید شد.");
+        toast.success("ثبت‌نام تأیید شد.");
         return;
       }
 
@@ -395,6 +398,36 @@ export default function AppClassRegisterPage() {
     }
   }
 
+  async function handleParticipantSubmit(e) {
+    e.preventDefault();
+    if (formSubmitting) return;
+    const errs = validateParticipantForm(formValues, { requireMedical: true });
+    setFormErrors(errs);
+    if (Object.keys(errs).length) return;
+
+    setFormSubmitting(true);
+    setFormError("");
+    try {
+      const payload = buildParticipantPayload(formValues);
+      const isUpdate = Boolean(selectedId);
+      const saved = isUpdate
+        ? await updateParticipant(selectedId, payload)
+        : await createParticipant(payload);
+      setSelectedParticipant(saved);
+      setSelectedId(saved.id);
+      setEditing(false);
+      setFormErrors({});
+      toast.success(isUpdate ? "اطلاعات شرکت‌کننده به‌روزرسانی شد." : "اطلاعات شرکت‌کننده ثبت شد.");
+      if (isUpdate) runEligibility(saved.id);
+    } catch (err) {
+      setFormError(
+        userMessageFromParticipantError(err, "ثبت اطلاعات شرکت‌کننده ناموفق بود."),
+      );
+    } finally {
+      setFormSubmitting(false);
+    }
+  }
+
   function resetOutcome() {
     setReservation(null);
     setWaitlistEntry(null);
@@ -433,17 +466,17 @@ export default function AppClassRegisterPage() {
         </Link>
         <h1 className="mt-2 text-2xl font-bold text-slate-900">شروع ثبت‌نام</h1>
         <p className="mt-1 text-sm text-slate-600">
-          {courseClass?.title || "کلاس"} — انتخاب شرکت‌کننده، بررسی شرایط و رزرو موقت صندلی
+          {courseClass?.title || "کلاس"} — تکمیل اطلاعات، بررسی شرایط و ثبت‌نام موقت
         </p>
         <p className="mt-2 text-xs text-amber-800">
-          پس از رزرو موقت می‌توانید پرداخت را شروع کنید. تا تأیید سرور، ثبت‌نام قطعی نیست.
+          پس از ثبت‌نام موقت می‌توانید پرداخت را انجام دهید. تا پرداخت موفق، ثبت‌نام قطعی نیست.
         </p>
       </div>
 
       {/* Availability */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-bold text-slate-900">ظرفیت (سرور)</h2>
+          <h2 className="font-bold text-slate-900">ظرفیت کلاس</h2>
           <button
             type="button"
             onClick={() => loadAvailability()}
@@ -453,8 +486,7 @@ export default function AppClassRegisterPage() {
             به‌روزرسانی
           </button>
         </div>
-        {availabilityStatus === "loading" ? (
-          <p className="mt-3 text-sm text-slate-500">در حال بررسی ظرفیت…</p>
+        {availabilityStatus === "loading" ? (              <p className="mt-3 text-sm text-slate-500">در حال بررسی ظرفیت…</p>
         ) : null}
         {availabilityStatus === "error" ? (
           <ErrorState title="خطا" message={availabilityError} onRetry={() => loadAvailability()} />
@@ -473,7 +505,7 @@ export default function AppClassRegisterPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-400">ظرفیت / تأیید / رزرو / آزاد</dt>
+              <dt className="text-xs text-slate-400">کل / قطعی / در انتظار پرداخت / باقی‌مانده</dt>
               <dd>
                 {[availability.capacity, availability.confirmed, availability.held, availability.available]
                   .map((n) => (n != null ? Number(n).toLocaleString("fa-IR") : "—"))
@@ -489,7 +521,7 @@ export default function AppClassRegisterPage() {
                 </p>
               ) : (
                 <p className="rounded-xl bg-emerald-50 px-3 py-2 text-emerald-900">
-                  صندلی آزاد موجود است.
+                  ظرفیت خالی دارد؛ می‌توانید ثبت‌نام کنید.
                 </p>
               )}
             </div>
@@ -506,11 +538,10 @@ export default function AppClassRegisterPage() {
               : "ثبت‌نام با موفقیت انجام شد"}
           </h2>
           <p className="mt-2 text-sm text-emerald-900">
-            وضعیت ثبت‌نام بر اساس پاسخ سرور است
+            وضعیت ثبت‌نام:
             {confirmedEnrollment.status
-              ? ` (${ENROLLMENT_STATUS_LABELS[confirmedEnrollment.status] || confirmedEnrollment.status})`
+              ? ` ${ENROLLMENT_STATUS_LABELS[confirmedEnrollment.status] || confirmedEnrollment.status}`
               : ""}
-            .
           </p>
           {confirmedEnrollment.status === "PENDING_COMPLIANCE" ? (
             <p className="mt-2 text-sm text-amber-900">
@@ -525,7 +556,7 @@ export default function AppClassRegisterPage() {
             </div>
             {confirmedQuote?.finalPrice != null ? (
               <div>
-                <dt className="text-xs text-emerald-700/80">مبلغ نهایی (سرور)</dt>
+                <dt className="text-xs text-emerald-700/80">مبلغ نهایی</dt>
                 <dd>{formatIrrAmount(confirmedQuote.finalPrice)}</dd>
               </div>
             ) : null}
@@ -559,14 +590,14 @@ export default function AppClassRegisterPage() {
       {/* Outcome: held */}
       {reservation && !confirmedEnrollment ? (
         <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-          <h2 className="font-bold text-emerald-950">نگه‌داشت موقت صندلی</h2>
+          <h2 className="font-bold text-emerald-950">در انتظار پرداخت</h2>
           <p className="mt-2 text-sm text-emerald-900">
-            صندلی موقتاً نگه داشته شده است. این هنوز ثبت‌نام قطعی نیست؛ برای ادامه باید پرداخت را
-            شروع کنید.
+            جای شما موقتاً نگه داشته شده است؛ هنوز ثبت‌نام قطعی نیست. برای قطعی‌شدن، پرداخت را
+            انجام دهید.
           </p>
           <dl className="mt-4 grid gap-2 text-sm text-emerald-950 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-emerald-700/80">شناسه رزرو</dt>
+              <dt className="text-xs text-emerald-700/80">کد پیگیری موقت</dt>
               <dd className="font-mono text-xs break-all">{reservation.id}</dd>
             </div>
             <div>
@@ -582,7 +613,7 @@ export default function AppClassRegisterPage() {
               <dd>{formatExpiryFa(reservation.expiresAt)}</dd>
             </div>
             <div>
-              <dt className="text-xs text-emerald-700/80">شمارش معکوس (محلی)</dt>
+              <dt className="text-xs text-emerald-700/80">زمان باقی‌مانده</dt>
               <dd>
                 {holdExpired
                   ? "ممکن است منقضی شده باشد"
@@ -602,8 +633,8 @@ export default function AppClassRegisterPage() {
           </dl>
           {holdExpired ? (
             <p className="mt-3 text-sm text-amber-900">
-              زمان نمایش‌داده‌شده به پایان رسیده است. سرور مرجع است. پرداخت تا تأیید سرور غیرفعال شده؛
-              بازیابی خودکار رزرو وجود ندارد.
+              مدت نگه‌داری جا به پایان رسیده و پرداخت غیرفعال شده است؛ در صورت نیاز دوباره ثبت‌نام
+              کنید.
             </p>
           ) : null}
           {checkoutError ? (
@@ -622,7 +653,7 @@ export default function AppClassRegisterPage() {
                 ? "انتقال به درگاه…"
                 : checkoutStatus === "confirming"
                   ? "در حال شروع پرداخت…"
-                  : "ادامه پرداخت"}
+                  : "پرداخت و قطعی‌کردن ثبت‌نام"}
             </button>
             <button
               type="button"
@@ -641,7 +672,8 @@ export default function AppClassRegisterPage() {
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <h2 className="font-bold text-amber-950">در لیست انتظار</h2>
           <p className="mt-2 text-sm text-amber-900">
-            صندلی رزرو نشده است. در صورت آزاد شدن ظرفیت، طبق قوانین سرور پیگیری می‌شود.
+            جایی برای شما رزرو نشده است. در صورت آزاد شدن ظرفیت، درخواست شما به‌صورت خودکار
+            پیگیری می‌شود.
           </p>
           <dl className="mt-4 grid gap-2 text-sm text-amber-950 sm:grid-cols-2">
             <div>
@@ -680,79 +712,74 @@ export default function AppClassRegisterPage() {
 
       {!outcome ? (
         <>
-          {/* Participants */}
+          {/* Participant details — inline form */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="font-bold text-slate-900">۱. انتخاب شرکت‌کننده</h2>
-            {participantsStatus === "loading" ? (
-              <p className="mt-3 text-sm text-slate-500">در حال بارگذاری…</p>
-            ) : null}
-            {participantsStatus === "error" ? (
-              <ErrorState
-                title="خطا"
-                message={participantsError}
-                onRetry={() => loadParticipants()}
-              />
-            ) : null}
-            {participantsStatus === "ready" && participants.length === 0 ? (
-              <EmptyState
-                title="شرکت‌کننده‌ای ندارید"
-                description="ابتدا یک شرکت‌کننده فعال اضافه کنید."
-                actionLabel="افزودن شرکت‌کننده"
-                onAction={() => navigate("/app/participants/new")}
-              />
-            ) : null}
-            {participantsStatus === "ready" && participants.length > 0 ? (
-              <ul className="mt-4 space-y-2" role="listbox" aria-label="شرکت‌کنندگان">
-                {participants.map((p) => {
-                  const isSelected = p.id === selectedId;
-                  return (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        disabled={submitting}
-                        onClick={() => setSelectedId(p.id)}
-                        className={`w-full rounded-xl border px-4 py-3 text-right transition ${
-                          isSelected
-                            ? "border-cyan-600 bg-cyan-50 ring-2 ring-cyan-600/30"
-                            : "border-slate-200 bg-white hover:border-cyan-300"
-                        }`}
-                      >
-                        <span className="block font-medium text-slate-900">
-                          {p.firstName} {p.lastName}
-                        </span>
-                        <span className="mt-1 block text-xs text-slate-500">
-                          {RELATION_LABELS[p.relation] || p.relation}
-                          {" · "}
-                          {GENDER_LABELS[p.gender] || p.gender}
-                          {p.age != null
-                            ? ` · سن ${Number(p.age).toLocaleString("fa-IR")}`
-                            : ""}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : null}
-            {participantsStatus === "ready" && participants.length > 0 ? (
-              <p className="mt-3 text-sm">
-                <Link to="/app/participants/new" className="text-cyan-700 hover:underline">
-                  افزودن شرکت‌کننده جدید
-                </Link>
-              </p>
-            ) : null}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-bold text-slate-900">۱. اطلاعات شرکت‌کننده</h2>
+              {selected && !editing ? (
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  disabled={submitting || confirming}
+                  className="text-sm text-cyan-700 hover:underline disabled:opacity-50"
+                >
+                  ویرایش اطلاعات
+                </button>
+              ) : null}
+            </div>
+
+            {!selected || editing ? (
+              <form onSubmit={handleParticipantSubmit} className="mt-4 space-y-5">
+                <p className="text-sm text-slate-600">
+                  اطلاعات خود یا فرزندتان را همین‌جا وارد کنید؛ نیازی به ثبت جداگانه نیست.
+                </p>
+                <ParticipantFormFields
+                  values={formValues}
+                  errors={formErrors}
+                  onChange={setFormValues}
+                  disabled={formSubmitting}
+                />
+                {formError ? (
+                  <p
+                    className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800"
+                    role="alert"
+                  >
+                    {formError}
+                  </p>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={formSubmitting || submitting || confirming}
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-cyan-700 px-5 py-3 text-sm font-medium text-white hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 sm:w-auto"
+                >
+                  {formSubmitting ? "در حال ثبت اطلاعات…" : "بررسی شرایط و ادامه"}
+                </button>
+              </form>
+            ) : (
+              <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950">
+                <span className="font-medium">
+                  {selected.firstName} {selected.lastName}
+                </span>
+                <span className="text-cyan-800">
+                  {" · "}
+                  {RELATION_LABELS[selected.relation] || selected.relation}
+                  {" · "}
+                  {GENDER_LABELS[selected.gender] || selected.gender}
+                </span>
+              </div>
+            )}
           </section>
 
           {/* Eligibility */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
             <h2 className="font-bold text-slate-900">۲. بررسی شرایط</h2>
             {!selectedId ? (
-              <p className="mt-3 text-sm text-slate-500">ابتدا یک شرکت‌کننده انتخاب کنید.</p>
+              <p className="mt-3 text-sm text-slate-500">
+                ابتدا اطلاعات شرکت‌کننده را کامل کنید تا شرایط بررسی شود.
+              </p>
             ) : null}
             {selectedId && eligibilityStatus === "loading" ? (
-              <p className="mt-3 text-sm text-slate-500">در حال بررسی شرایط از سرور…</p>
+              <p className="mt-3 text-sm text-slate-500">در حال بررسی شرایط…</p>
             ) : null}
             {selectedId && eligibilityStatus === "error" ? (
               <ErrorState
@@ -782,7 +809,8 @@ export default function AppClassRegisterPage() {
                       ) : null}
                     </ul>
                     <p className="mt-2 text-xs text-rose-800/80">
-                      اگر مدارک بیمه/پزشکی لازم است، پس از پرداخت از صفحهٔ تکمیل مدارک ثبت‌نام بارگذاری کنید.
+                      در صورت نیاز به مدرک، پس از پرداخت از صفحهٔ مدارک ثبت‌نام بارگذاری کنید. برای
+                      تأییدیه پزشکی، تیک مربوطه در اطلاعات شرکت‌کننده را بزنید.
                     </p>
                   </div>
                 )}
@@ -792,7 +820,7 @@ export default function AppClassRegisterPage() {
 
           {/* Actions */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="font-bold text-slate-900">۳. رزرو یا لیست انتظار</h2>
+            <h2 className="font-bold text-slate-900">۳. ادامه ثبت‌نام</h2>
             {actionError ? (
               <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">
                 {actionError}
@@ -810,7 +838,7 @@ export default function AppClassRegisterPage() {
                 onClick={handleReserve}
                 className="mt-4 w-full rounded-xl bg-cyan-700 px-4 py-3 text-sm font-medium text-white hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 sm:w-auto"
               >
-                {actionStatus === "reserving" ? "در حال رزرو…" : "رزرو موقت صندلی"}
+                {actionStatus === "reserving" ? "در حال ثبت…" : "ثبت‌نام موقت"}
               </button>
             ) : null}
 

@@ -202,7 +202,9 @@ async function createReservation({
   }
 
   const template = await CourseTemplate.findById(courseClass.courseTemplateId);
-  const eligibility = await checkEligibility(participant, courseClass, template);
+  const eligibility = await checkEligibility(participant, courseClass, template, {
+    acceptPendingUploads: true,
+  });
   if (!eligibility.eligible) {
     throw new AppError("شرایط ثبت‌نام برقرار نیست", {
       statusCode: 400,
@@ -285,7 +287,9 @@ async function joinWaitlist({ userId, classId, participantId }) {
   }
 
   const template = await CourseTemplate.findById(courseClass.courseTemplateId);
-  const eligibility = await checkEligibility(participant, courseClass, template);
+  const eligibility = await checkEligibility(participant, courseClass, template, {
+    acceptPendingUploads: true,
+  });
   if (!eligibility.eligible) {
     throw new AppError("شرایط ثبت‌نام برقرار نیست", {
       statusCode: 400,

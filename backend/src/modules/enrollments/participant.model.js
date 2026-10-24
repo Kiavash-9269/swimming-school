@@ -54,6 +54,10 @@ const participantSchema = new mongoose.Schema(
         message: "Invalid Iranian mobile number",
       },
     },
+    fatherOccupation: { type: String, trim: true, maxlength: 80, default: "" },
+    // User attestation instead of a mandatory medical file upload (ENAMAD-era flow).
+    medicalConfirmed: { type: Boolean, default: false },
+    medicalConfirmedAt: { type: Date, default: null },
     emergencyContact: { type: emergencyContactSchema, default: () => ({}) },
     // When the student joined the school; admins backdate this for pre-existing students.
     registeredAt: { type: Date, default: Date.now, index: true },

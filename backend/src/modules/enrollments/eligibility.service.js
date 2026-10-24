@@ -37,7 +37,22 @@ function isMedicalValid(record, asOf = new Date()) {
 /**
  * @returns {{ eligible: boolean, reasons: string[], age: number, evaluatedAt: Date, ruleVersion: string }}
  */
-async function checkEligibility(participant, courseClass, courseTemplate, { asOf = new Date() } = {}) {
+async function hasPersistedUpload(Model, participantId) {
+  return Boolean(
+    await Model.exists({
+      participantId,
+      persisted: true,
+      storageKey: { $regex: /^(medical|insurance)\/[a-f0-9]{32}$/i },
+    }),
+  );
+}
+
+async function checkEligibility(
+  participant,
+  courseClass,
+  courseTemplate,
+  { asOf = new Date(), acceptPendingUploads = false } = {},
+) {
   const reasons = [];
   const evaluatedAt = asOf;
 
@@ -101,17 +116,24 @@ async function checkEligibility(participant, courseClass, courseTemplate, { asOf
       participantId: participant._id,
       status: COMPLIANCE_STATUSES.APPROVED,
     }).sort({ updatedAt: -1 });
-    if (!isInsuranceValidForPeriod(insurance, { asOf, classStart: courseClass.startDate })) {
+    const insuranceOk = isInsuranceValidForPeriod(insurance, { asOf, classStart: courseClass.startDate });
+    const insuranceUploaded =
+      acceptPendingUploads && (await hasPersistedUpload(InsuranceRecord, participant._id));
+    if (!insuranceOk && !insuranceUploaded) {
       reasons.push("INSURANCE_REQUIRED");
     }
   }
 
   if (template.requiresMedicalApproval) {
+    // Self-declared tick in the registration form replaces a mandatory file upload.
+    const attested = participant.medicalConfirmed === true;
     const medical = await MedicalDocument.findOne({
       participantId: participant._id,
       status: COMPLIANCE_STATUSES.APPROVED,
     }).sort({ updatedAt: -1 });
-    if (!isMedicalValid(medical, asOf)) {
+    const medicalUploaded =
+      acceptPendingUploads && (await hasPersistedUpload(MedicalDocument, participant._id));
+    if (!attested && !isMedicalValid(medical, asOf) && !medicalUploaded) {
       reasons.push("MEDICAL_APPROVAL_REQUIRED");
     }
   }

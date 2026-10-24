@@ -117,6 +117,21 @@ export default function ParticipantFormFields({
           {errors.relation ? <p className={errClass}>{errors.relation}</p> : null}
         </div>
         <div>
+          <label className={labelClass} htmlFor="fatherOccupation">
+            شغل پدر
+          </label>
+          <input
+            id="fatherOccupation"
+            className={inputClass}
+            value={values.fatherOccupation || ""}
+            disabled={disabled}
+            onChange={(e) => set("fatherOccupation", e.target.value)}
+            placeholder="مثلاً کارمند، فروشنده، آزاد"
+            maxLength={80}
+          />
+          {errors.fatherOccupation ? <p className={errClass}>{errors.fatherOccupation}</p> : null}
+        </div>
+        <div>
           <label className={labelClass} htmlFor="phone">
             موبایل (اختیاری)
           </label>
@@ -177,6 +192,22 @@ export default function ParticipantFormFields({
           </div>
         </div>
       </fieldset>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <label className="flex items-start gap-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-600"
+            checked={values.medicalConfirmed === true}
+            disabled={disabled}
+            onChange={(e) => set("medicalConfirmed", e.target.checked)}
+          />
+          <span>
+            تأیید می‌کنم این شرکت‌کننده منع پزشکی برای شنا ندارد و مسئولیت اظهارنامه با خانواده است.
+          </span>
+        </label>
+        {errors.medicalConfirmed ? <p className={errClass}>{errors.medicalConfirmed}</p> : null}
+      </div>
     </div>
   );
 }

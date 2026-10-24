@@ -28,6 +28,8 @@ const participantBody = z
     birthDate: z.coerce.date(),
     gender: z.enum([GENDERS.MALE, GENDERS.FEMALE]),
     relation: z.enum(Object.values(PARTICIPANT_RELATIONS)).optional().default(PARTICIPANT_RELATIONS.SELF),
+    fatherOccupation: z.string().trim().max(80).optional().default(""),
+    medicalConfirmed: z.boolean().optional().default(false),
     phone: z
       .string()
       .trim()
@@ -46,6 +48,8 @@ const participantUpdateBody = z
     birthDate: z.coerce.date().optional(),
     gender: z.enum([GENDERS.MALE, GENDERS.FEMALE]).optional(),
     relation: z.enum(Object.values(PARTICIPANT_RELATIONS)).optional(),
+    fatherOccupation: z.string().trim().max(80).optional(),
+    medicalConfirmed: z.boolean().optional(),
     phone: z
       .string()
       .trim()
@@ -68,6 +72,8 @@ const adminParticipantBody = z
     birthDate: z.coerce.date(),
     gender: z.enum([GENDERS.MALE, GENDERS.FEMALE]),
     relation: z.enum(Object.values(PARTICIPANT_RELATIONS)).optional().default(PARTICIPANT_RELATIONS.SELF),
+    fatherOccupation: z.string().trim().max(80).optional().default(""),
+    medicalConfirmed: z.boolean().optional().default(false),
     phone: z
       .string()
       .trim()

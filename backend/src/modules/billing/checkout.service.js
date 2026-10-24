@@ -520,7 +520,9 @@ async function initiateCheckout({
     throw new AppError("شرکت‌کننده یافت نشد", { statusCode: 404, code: "PARTICIPANT_NOT_FOUND" });
   }
   const template = await CourseTemplate.findById(courseClass.courseTemplateId);
-  const eligibility = await checkEligibility(participant, courseClass, template);
+  const eligibility = await checkEligibility(participant, courseClass, template, {
+    acceptPendingUploads: true,
+  });
   if (!eligibility.eligible) {
     throw new AppError("واجد شرایط ثبت‌نام نیست", {
       statusCode: 400,

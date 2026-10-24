@@ -1,8 +1,32 @@
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../services/useAuth";
 
+const TILES = [
+  {
+    to: "/app/courses",
+    title: "دوره‌ها و کلاس‌ها",
+    description: "فهرست کلاس‌های باز، ظرفیت باقی‌مانده و جزئیات برنامه زمانی.",
+    primary: true,
+  },
+  {
+    to: "/app/enrollments",
+    title: "ثبت‌نام‌های من",
+    description: "وضعیت ثبت‌نام‌ها، نتیجه پرداخت‌ها و فاکتورهای صادرشده.",
+  },
+  {
+    to: "/app/participants",
+    title: "افراد ثبت‌شده",
+    description: "مشخصات خود، فرزندان و افرادی که از طرف شما ثبت‌نام می‌شوند.",
+  },
+  {
+    to: "/instructor",
+    title: "بخش مربیان",
+    description: "فقط برای مربیان؛ حضور و غیاب و برنامه کلاس‌ها.",
+  },
+];
+
 /**
- * Authenticated home — points to real F3 courses discovery.
+ * Authenticated home — plain-language entry points for a regular member.
  * Admins are sent to the ops panel (they should not land on the member shell).
  */
 export default function AppHomePage() {
@@ -15,42 +39,51 @@ export default function AppHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">سلام، {user?.firstName}</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          سلام{user?.firstName ? `، ${user.firstName}` : ""}
+        </h1>
         <p className="mt-2 text-sm text-slate-600">
-          کلاس‌ها، شرکت‌کنندگان و ثبت‌نام‌های خود را از اینجا مدیریت کنید.
+          از بخش‌های زیر می‌توانید ثبت‌نام، افراد خانواده و پرداخت‌های خود را مدیریت کنید.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Link
-          to="/app/courses"
-          className="inline-flex rounded-xl bg-cyan-700 px-5 py-3 text-sm font-medium text-white hover:bg-cyan-600"
-        >
-          مشاهده کلاس‌ها
-        </Link>
-        <Link
-          to="/app/enrollments"
-          className="inline-flex rounded-xl border border-cyan-700 px-5 py-3 text-sm font-medium text-cyan-800 hover:bg-cyan-50"
-        >
-          ثبت‌نام‌های من
-        </Link>
-        <Link
-          to="/app/participants"
-          className="inline-flex rounded-xl border border-slate-300 px-5 py-3 text-sm font-medium text-slate-800 hover:bg-slate-50"
-        >
-          شرکت‌کنندگان
-        </Link>
-        <Link
-          to="/instructor"
-          className="inline-flex rounded-xl border border-slate-300 px-5 py-3 text-sm font-medium text-slate-800 hover:bg-slate-50"
-        >
-          فضای مربی
-        </Link>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {TILES.map((tile) => (
+          <Link
+            key={tile.to}
+            to={tile.to}
+            className={`group rounded-2xl border p-5 shadow-sm transition ${
+              tile.primary
+                ? "border-cyan-700 bg-cyan-700 text-white hover:bg-cyan-600 sm:col-span-2"
+                : "border-slate-200 bg-white hover:border-cyan-300"
+            }`}
+          >
+            <h2
+              className={`font-bold ${tile.primary ? "text-white" : "text-slate-900"}`}
+            >
+              {tile.title}
+            </h2>
+            <p
+              className={`mt-1.5 text-sm ${
+                tile.primary ? "text-cyan-50" : "text-slate-600"
+              }`}
+            >
+              {tile.description}
+            </p>
+            <span
+              className={`mt-3 inline-block text-sm ${
+                tile.primary ? "text-white group-hover:underline" : "text-cyan-700 group-hover:underline"
+              }`}
+            >
+              رفتن به {tile.title} ←
+            </span>
+          </Link>
+        ))}
       </div>
 
       <div className="flex flex-wrap gap-3 text-sm">
         <Link to="/" className="text-cyan-700 hover:underline">
-          بازگشت به صفحه اصلی
+          بازگشت به صفحه اصلی سایت
         </Link>
       </div>
     </div>

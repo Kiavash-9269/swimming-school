@@ -102,7 +102,7 @@ export default function AppPaymentResultPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">نتیجه پرداخت</h1>
-        <p className="mt-1 text-sm text-slate-600">وضعیت نهایی فقط بر اساس پاسخ سرور نمایش داده می‌شود.</p>
+        <p className="mt-1 text-sm text-slate-600">وضعیت نهایی پس از تأیید درگاه پرداخت نمایش داده می‌شود.</p>
       </div>
 
       {navHint.callbackError ? (
@@ -114,7 +114,7 @@ export default function AppPaymentResultPage() {
       {isSuccessPay && isFullyActive ? (
         <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
           <h2 className="font-bold text-emerald-950">ثبت‌نام با موفقیت انجام شد</h2>
-          <p className="mt-2 text-sm text-emerald-900">پرداخت و ثبت‌نام از سمت سرور تأیید و فعال شد.</p>
+          <p className="mt-2 text-sm text-emerald-900">پرداخت و ثبت‌نام با موفقیت تأیید و فعال شد.</p>
         </section>
       ) : null}
 
@@ -140,8 +140,8 @@ export default function AppPaymentResultPage() {
         <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
           <h2 className="font-bold text-rose-950">پرداخت یا ثبت‌نام تکمیل نشد</h2>
           <p className="mt-2 text-sm text-rose-900">
-            ثبت‌نام فعال نیست. برای تلاش دوباره باید از صفحه کلاس جریان رزرو را از نو شروع کنید؛
-            پرداخت خودکار تکرار نمی‌شود.
+            ثبت‌نام فعال نیست. برای تلاش دوباره، از صفحه دوره ثبت‌نام را از نو آغاز کنید؛ پرداخت
+            به‌صورت خودکار تکرار نمی‌شود.
           </p>
         </section>
       ) : null}
@@ -150,7 +150,7 @@ export default function AppPaymentResultPage() {
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <h2 className="font-bold text-amber-950">پرداخت در انتظار تأیید</h2>
           <p className="mt-2 text-sm text-amber-900">
-            هنوز وضعیت نهایی از سرور دریافت نشده است. کمی بعد دوباره بررسی کنید.
+            هنوز وضعیت نهایی دریافت نشده است؛ کمی بعد دوباره بررسی کنید.
           </p>
           <button
             type="button"
@@ -165,12 +165,12 @@ export default function AppPaymentResultPage() {
       {!isSuccessPay && !isFailed && !isPending ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5">
           <h2 className="font-bold text-slate-900">وضعیت نامشخص</h2>
-          <p className="mt-2 text-sm text-slate-600">جزئیات زیر را از سرور ببینید.</p>
+          <p className="mt-2 text-sm text-slate-600">جزئیات این پرداخت:</p>
         </section>
       ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="font-bold text-slate-900">جزئیات (سرور)</h2>
+        <h2 className="font-bold text-slate-900">جزئیات پرداخت</h2>
         <dl className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
           <div>
             <dt className="text-xs text-slate-400">وضعیت پرداخت</dt>

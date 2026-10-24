@@ -103,11 +103,11 @@ export default function AppEnrollmentsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">ثبت‌نام‌های من</h1>
           <p className="mt-1 text-sm text-slate-600">
-            {items.length.toLocaleString("fa-IR")} ثبت‌نام (حداکثر ۲۰۰ مورد از سرور)
+            {items.length.toLocaleString("fa-IR")} ثبت‌نام ثبت شده است
           </p>
         </div>
         <Link to="/app/courses" className="text-sm text-cyan-700 hover:underline">
-          مشاهده کلاس‌ها
+          مشاهده دوره‌ها
         </Link>
       </div>
 
@@ -138,11 +138,11 @@ export default function AppEnrollmentsPage() {
                     <dd>{participantName || "—"}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-400">تاریخ ایجاد</dt>
+                    <dt className="text-xs text-slate-400">تاریخ ثبت‌نام</dt>
                     <dd>{formatExpiryFa(enr.createdAt)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-400">مبلغ نهایی (سرور)</dt>
+                    <dt className="text-xs text-slate-400">مبلغ</dt>
                     <dd>{formatIrrAmount(enr.finalAmount)}</dd>
                   </div>
                   {enr.status === "PENDING_COMPLIANCE" ? (

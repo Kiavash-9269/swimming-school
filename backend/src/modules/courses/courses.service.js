@@ -57,7 +57,8 @@ function toPublicTemplate(doc) {
   };
 }
 
-function toPublicClass(doc, { genderRestriction } = {}) {
+function toPublicClass(doc, extras = {}) {
+  const { genderRestriction } = extras;
   const available = Math.max(0, doc.capacity - doc.confirmedCount - doc.heldCount);
   return {
     id: String(doc._id),
@@ -85,6 +86,10 @@ function toPublicClass(doc, { genderRestriction } = {}) {
     location: doc.location || "",
     audienceLabel: doc.audienceLabel || "",
     genderRestriction: genderRestriction || null,
+    requiresInsurance: Boolean(extras.requiresInsurance),
+    requiresMedicalApproval: Boolean(extras.requiresMedicalApproval),
+    ageMin: extras.ageMin ?? null,
+    ageMax: extras.ageMax ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -101,9 +106,15 @@ async function genderByTemplateIds(templateIds) {
 
 async function toPublicClassEnriched(doc) {
   if (!doc) return null;
-  const map = await genderByTemplateIds([doc.courseTemplateId]);
+  const template = await CourseTemplate.findById(doc.courseTemplateId)
+    .select("genderRestriction requiresInsurance requiresMedicalApproval ageMin ageMax")
+    .lean();
   return toPublicClass(doc, {
-    genderRestriction: map.get(String(doc.courseTemplateId)) || GENDERS.ANY,
+    genderRestriction: template?.genderRestriction || GENDERS.ANY,
+    requiresInsurance: template?.requiresInsurance,
+    requiresMedicalApproval: template?.requiresMedicalApproval,
+    ageMin: template?.ageMin ?? null,
+    ageMax: template?.ageMax ?? null,
   });
 }
 

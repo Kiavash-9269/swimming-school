@@ -265,7 +265,7 @@ async function getMarketingCatalog() {
         category: group.category,
         pricing: {
           price: linked?.listPrice ?? pricing.price,
-          discountPrice: linked?.price ?? pricing.discountPrice,
+          discountPrice: linked?.price ?? pricing.price,
         },
         schedule: [],
       };
@@ -284,7 +284,7 @@ async function getMarketingCatalog() {
       category: group.category,
       pricing: {
         price: pricing.price,
-        discountPrice: pricing.discountPrice,
+        discountPrice: pricing.price,
       },
       schedule: group.schedule.map((schedule) => ({
         id: schedule.id,
@@ -301,7 +301,7 @@ async function getMarketingCatalog() {
             catalogKey,
             classId: linked ? String(linked._id) : null,
             classStatus: linked?.status || null,
-            price: linked?.price ?? pricing.discountPrice,
+            price: linked?.price ?? pricing.price,
             listPrice: linked?.listPrice ?? pricing.price,
           };
         }),
@@ -327,18 +327,10 @@ async function getMarketingCatalog() {
 
 async function ensureDefaultRecords() {
   const count = await SwimmingRecord.countDocuments();
-  if (count > 0) return { seeded: false, count };
-  const docs = DEFAULT_SWIMMING_RECORDS.map((row, index) => ({
-    ...row,
-    highlight: Boolean(row.highlight),
-    sortOrder: index,
-  }));
-  await SwimmingRecord.insertMany(docs);
-  return { seeded: true, count: docs.length };
+  return { seeded: false, count };
 }
 
 async function listRecords() {
-  await ensureDefaultRecords();
   const rows = await SwimmingRecord.find().sort({ sortOrder: 1, discipline: 1, distance: 1 }).lean();
   return { items: rows.map(toPublicRecord), total: rows.length };
 }

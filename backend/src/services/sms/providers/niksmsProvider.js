@@ -74,6 +74,8 @@ function escapeXml(value) {
 function normalizeNiksmsSender(sender, { forRest = false } = {}) {
   const raw = String(sender || "").trim();
   if (!raw) return "";
+  // Shared service line: Niksms docs require the literal token "blacklist" (lowercase).
+  if (raw.toLowerCase() === "blacklist") return "blacklist";
   if (forRest) {
     return raw.replace(/^98/, "");
   }

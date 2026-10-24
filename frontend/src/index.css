@@ -102,3 +102,26 @@ html {
 @media only screen and (min-width: 1200px) {
   /* BIG screens */
 }
+
+/* ——— Printed invoices (فاکتور) — only the selected invoice goes to paper ——— */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .invoice-print,
+  .invoice-print * {
+    visibility: visible;
+  }
+  .invoice-print {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+  }
+  .invoice-print button {
+    display: none !important;
+  }
+}

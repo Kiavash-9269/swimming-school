@@ -145,8 +145,8 @@ export default function AdminCatalogPage() {
               <div key={key} className="rounded-xl bg-slate-50 px-3 py-2">
                 <dt className="text-xs text-slate-500">{key}</dt>
                 <dd>
-                  {formatIrr(val.discountPrice)}
-                  {val.price !== val.discountPrice ? (
+                  {formatIrr(val.discountPrice ?? val.price)}
+                  {val.discountPrice != null && val.price !== val.discountPrice ? (
                     <span className="mr-2 text-xs text-slate-400 line-through">
                       {formatIrr(val.price)}
                     </span>

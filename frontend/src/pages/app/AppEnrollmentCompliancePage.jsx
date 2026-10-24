@@ -303,7 +303,7 @@ export default function AppEnrollmentCompliancePage() {
         )}
         <h1 className="mt-2 text-2xl font-bold text-slate-900">مدارک و تأییدیه‌ها</h1>
         <p className="mt-1 text-sm text-slate-600">
-          وضعیت بر اساس پاسخ سرور است. تأیید نهایی مدارک توسط ادمین انجام می‌شود.
+          وضعیت پس از تأیید نهایی به‌روز می‌شود. بررسی مدارک توسط آموزشگاه انجام می‌شود.
         </p>
       </div>
 
@@ -357,7 +357,7 @@ export default function AppEnrollmentCompliancePage() {
 
       {reasons.length ? (
         <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5">
-          <h2 className="font-bold text-amber-950">دلایل واجدشرایطی (اسنپ‌شات سرور)</h2>
+          <h2 className="font-bold text-amber-950">دلایل بررسی شرایط</h2>
           <ul className="mt-2 list-disc pr-5 text-sm text-amber-950">
             {reasons.map((code) => (
               <li key={code}>{labelEligibilityReason(code)}</li>
@@ -372,7 +372,7 @@ export default function AppEnrollmentCompliancePage() {
           <h2 className="font-bold text-slate-900">بیمه</h2>
           <p className="mt-1 text-sm text-slate-600">
             وضعیت: {DOCUMENT_UX_LABELS[insUx]}
-            {reasons.includes("INSURANCE_REQUIRED") ? " (طبق اسنپ‌شات ثبت‌نام موردنیاز است)" : ""}
+            {reasons.includes("INSURANCE_REQUIRED") ? " (طبق شرایط ثبت‌نام موردنیاز است)" : ""}
           </p>
           {insurance[0] ? (
             <dl className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
@@ -470,8 +470,12 @@ export default function AppEnrollmentCompliancePage() {
           <p className="mt-1 text-sm text-slate-600">
             وضعیت: {DOCUMENT_UX_LABELS[medUx]}
             {reasons.includes("MEDICAL_APPROVAL_REQUIRED")
-              ? " (طبق اسنپ‌شات ثبت‌نام موردنیاز است)"
+              ? " (طبق شرایط ثبت‌نام موردنیاز است)"
               : ""}
+          </p>
+          <p className="mt-2 rounded-xl bg-cyan-50 px-3 py-2 text-xs text-cyan-900">
+            تأییدیه پزشکی همان تیکی است که هنگام ثبت‌نام زده‌اید. بارگذاری فایل پزشکی اختیاری است و
+            فقط در صورت درخواست آموزشگاه لازم می‌شود.
           </p>
           {medicalDocs[0] ? (
             <dl className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">

@@ -46,6 +46,8 @@ export default function AppParticipantEditPage() {
           birthDate: formatDateInput(p.birthDate),
           gender: p.gender || "",
           relation: p.relation || "SELF",
+          fatherOccupation: p.fatherOccupation || "",
+          medicalConfirmed: p.medicalConfirmed === true,
           phone: p.phone || "",
           emergencyContact: {
             name: p.emergencyContact?.name || "",

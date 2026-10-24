@@ -4,10 +4,11 @@
  * Keep in lockstep with the public courses / record-yab UX.
  */
 
+/** Single list/sale price per category (toman). No separate discount price. */
 const PRICING = {
-  public: { price: 400_000, discountPrice: 300_000 },
-  school: { price: 4_000_000, discountPrice: 3_700_000 },
-  hydro: { price: 3_700_000, discountPrice: 3_700_000 },
+  public: { price: 300_000 },
+  school: { price: 3_700_000 },
+  hydro: { price: 3_700_000 },
 };
 
 const DAY_NAME_TO_NUMBER = {
@@ -107,7 +108,7 @@ function slot({
     ageMin: meta.ageMin,
     ageMax: meta.ageMax,
     listPrice: pricing.price,
-    price: pricing.discountPrice,
+    price: pricing.price,
     capacity: capacity ?? (type === "public" ? 40 : type === "hydro" ? 8 : 12),
     totalSessions: totalSessions ?? (type === "public" ? 8 : 12),
     title: `${pool} — ${time} (${sessionLabel})`,
@@ -475,7 +476,7 @@ function flattenSlots() {
         ageMin: 5,
         ageMax: 99,
         listPrice: pricing.price,
-        price: pricing.discountPrice,
+        price: pricing.price,
         capacity: 40,
         totalSessions: 8,
         title: `${group.pool} — سانس عمومی`,

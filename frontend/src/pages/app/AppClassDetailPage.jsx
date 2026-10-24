@@ -154,7 +154,7 @@ export default function AppClassDetailPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="font-bold text-slate-900">ثبت‌نام و ظرفیت</h2>
         <p className="mt-1 text-xs text-slate-400">
-          منبع ترجیحی: گزارش ظرفیت سرور (شامل رزرو موقت)
+          شامل ثبت‌نام‌های موقتی که هنوز پرداخت نشده‌اند
         </p>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div>
@@ -162,15 +162,15 @@ export default function AppClassDetailPage() {
             <dd>{CLASS_STATUS_LABELS[courseClass.status] || courseClass.status}</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-400">ثبت‌نام باز؟</dt>
-            <dd>{ux.registrationOpen ? "بله" : "خیر"}</dd>
+            <dt className="text-xs text-slate-400">وضعیت ثبت‌نام</dt>
+            <dd>{ux.registrationOpen ? "باز" : "بسته"}</dd>
           </div>
           <div>
             <dt className="text-xs text-slate-400">ظرفیت کل</dt>
             <dd>{(capacity?.capacity ?? courseClass.capacity)?.toLocaleString("fa-IR") ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-400">صندلی آزاد</dt>
+            <dt className="text-xs text-slate-400">ظرفیت خالی</dt>
             <dd>{(capacity?.available ?? courseClass.availableSeats)?.toLocaleString("fa-IR") ?? "—"}</dd>
           </div>
           <div>
@@ -178,15 +178,15 @@ export default function AppClassDetailPage() {
             <dd>{(capacity?.confirmed ?? courseClass.confirmedCount)?.toLocaleString("fa-IR") ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-400">رزرو موقت</dt>
+            <dt className="text-xs text-slate-400">در انتظار پرداخت</dt>
             <dd>{(capacity?.held ?? courseClass.heldCount)?.toLocaleString("fa-IR") ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-400">پر؟</dt>
+            <dt className="text-xs text-slate-400">کلاس پر است؟</dt>
             <dd>{ux.isFull ? "بله" : "خیر"}</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-400">قیمت نمایشی</dt>
+            <dt className="text-xs text-slate-400">شهریه</dt>
             <dd className="font-medium">{formatIrr(courseClass.price)}</dd>
           </div>
         </dl>
@@ -211,11 +211,11 @@ export default function AppClassDetailPage() {
               <dd>{GENDER_RESTRICTION_LABELS[template.genderRestriction] || template.genderRestriction}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-400">بیمه / پزشکی</dt>
+              <dt className="text-xs text-slate-400">مدارک لازم</dt>
               <dd>
                 {[
-                  template.requiresInsurance ? "بیمه لازم" : null,
-                  template.requiresMedicalApproval ? "تأیید پزشکی لازم" : null,
+                  template.requiresInsurance ? "بیمه" : null,
+                  template.requiresMedicalApproval ? "تأییدیه سلامت" : null,
                 ]
                   .filter(Boolean)
                   .join(" · ") || "الزام خاصی اعلام نشده"}
@@ -266,7 +266,7 @@ export default function AppClassDetailPage() {
           <div className="mt-4">
             <EmptyState
               title="جلسه‌ای ثبت نشده"
-              description="هنوز جلسه‌ای برای این کلاس در سرور ایجاد نشده است."
+              description="هنوز جلسه‌ای برای این کلاس ثبت نشده است."
             />
           </div>
         ) : (
@@ -292,8 +292,8 @@ export default function AppClassDetailPage() {
       <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
         <h2 className="font-bold text-slate-900">ثبت‌نام در کلاس</h2>
         <p className="mt-2 text-sm text-slate-600">
-          شرایط شرکت‌کننده، ظرفیت و رزرو موقت صندلی (یا لیست انتظار) را بررسی کنید. پرداخت و
-          تکمیل ثبت‌نام هنوز فعال نیست.
+          اطلاعات شرکت‌کننده را همین‌جا وارد کنید تا شرایط بررسی شود. در صورت داشتن ظرفیت،
+          ثبت‌نام موقت و سپس پرداخت را ادامه دهید.
         </p>
         <Link
           to={`/app/courses/${classId}/register`}

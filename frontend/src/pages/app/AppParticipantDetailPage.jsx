@@ -107,7 +107,7 @@ export default function AppParticipantDetailPage() {
     <div className="space-y-8">
       <div>
         <Link to="/app/participants" className="text-sm text-cyan-700 hover:underline">
-          ← فهرست شرکت‌کنندگان
+          ← بازگشت به افراد ثبت‌شده
         </Link>
         <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -147,6 +147,14 @@ export default function AppParticipantDetailPage() {
             <dd>{participant.phone || "—"}</dd>
           </div>
           <div>
+            <dt className="text-xs text-slate-400">شغل پدر</dt>
+            <dd>{participant.fatherOccupation || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">تأییدیه سلامت</dt>
+            <dd>{participant.medicalConfirmed ? "تأیید شده" : "تأیید نشده"}</dd>
+          </div>
+          <div>
             <dt className="text-xs text-slate-400">وضعیت</dt>
             <dd>{participant.isActive ? "فعال" : "غیرفعال"}</dd>
           </div>
@@ -172,17 +180,24 @@ export default function AppParticipantDetailPage() {
       </section>
 
       <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
-        <h2 className="font-bold text-slate-900">ماژول‌های بعدی</h2>
+        <h2 className="font-bold text-slate-900">ثبت‌نام این فرد</h2>
         <p className="mt-2 text-sm text-slate-600">
-          واجدشرایطی، رزرو، مدارک بیمه/پزشکی و ثبت‌نام‌ها در فازهای بعدی به این صفحه وصل می‌شوند.
+          برای ثبت‌نام در یک دوره، از بخش دوره‌ها اقدام کنید؛ اطلاعات این فرد همان‌جا نمایش داده
+          می‌شود.
         </p>
+        <Link
+          to="/app/courses"
+          className="mt-3 inline-flex rounded-xl bg-cyan-700 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-600"
+        >
+          مشاهده دوره‌ها
+        </Link>
       </section>
 
       <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
         <h2 className="font-bold text-rose-900">غیرفعال‌سازی</h2>
         <p className="mt-2 text-sm text-rose-800">
-          حذف سخت در سرور وجود ندارد. غیرفعال‌سازی شرکت‌کننده را از فهرست فعال‌ها خارج می‌کند.
-          اگر ثبت‌نام فعال داشته باشد سرور آن را رد می‌کند.
+          حذف کامل وجود ندارد؛ غیرفعال‌سازی، فرد را از فهرست فعال خارج می‌کند. اگر فرد ثبت‌نام فعال
+          داشته باشد، این کار انجام نمی‌شود.
         </p>
         {!confirmDeactivate ? (
           <button

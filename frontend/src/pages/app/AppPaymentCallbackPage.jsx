@@ -22,7 +22,7 @@ export default function AppPaymentCallbackPage() {
   const navigate = useNavigate();
   const ranRef = useRef(false);
   const [status, setStatus] = useState("processing");
-  const [message, setMessage] = useState("در حال تأیید پرداخت از سرور…");
+  const [message, setMessage] = useState("در حال تأیید پرداخت…");
 
   useEffect(() => {
     if (ranRef.current) return;

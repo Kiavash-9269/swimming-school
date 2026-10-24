@@ -36,6 +36,9 @@ function toPublicParticipant(doc, { includeEmergency = false, includeAge = false
     gender: doc.gender,
     relation: doc.relation,
     phone: doc.phone || "",
+    fatherOccupation: doc.fatherOccupation || "",
+    medicalConfirmed: Boolean(doc.medicalConfirmed),
+    medicalConfirmedAt: doc.medicalConfirmedAt || null,
     registeredAt: doc.registeredAt || doc.createdAt,
     createdByAdmin: Boolean(doc.createdByAdmin),
     notes: doc.notes || "",
@@ -112,6 +115,9 @@ async function createParticipant({ ownerUserId, data }) {
     gender: data.gender,
     relation: data.relation,
     phone: data.phone || "",
+    fatherOccupation: data.fatherOccupation || "",
+    medicalConfirmed: Boolean(data.medicalConfirmed),
+    medicalConfirmedAt: data.medicalConfirmed ? new Date() : null,
     emergencyContact: data.emergencyContact || {},
     isActive: true,
   });
@@ -147,6 +153,16 @@ async function updateParticipant({ userId, role, participantId, data }) {
   if (data.gender != null) participant.gender = data.gender;
   if (data.relation != null) participant.relation = data.relation;
   if (data.phone != null) participant.phone = data.phone;
+  if (data.fatherOccupation != null) participant.fatherOccupation = data.fatherOccupation;
+  if (data.medicalConfirmed != null) {
+    const next = Boolean(data.medicalConfirmed);
+    if (next && !participant.medicalConfirmed) {
+      participant.medicalConfirmedAt = new Date();
+    } else if (!next) {
+      participant.medicalConfirmedAt = null;
+    }
+    participant.medicalConfirmed = next;
+  }
   if (data.emergencyContact != null) {
     participant.emergencyContact = {
       name: data.emergencyContact.name || "",
@@ -277,6 +293,9 @@ async function createParticipantByAdmin({ actorId, data }) {
     gender: data.gender,
     relation: data.relation,
     phone: data.phone || (isSelf ? data.accountPhone : ""),
+    fatherOccupation: data.fatherOccupation || "",
+    medicalConfirmed: Boolean(data.medicalConfirmed),
+    medicalConfirmedAt: data.medicalConfirmed ? new Date() : null,
     emergencyContact: data.emergencyContact || {},
     registeredAt: data.registeredAt || new Date(),
     notes: data.notes || "",

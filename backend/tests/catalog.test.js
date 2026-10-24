@@ -45,14 +45,14 @@ describe("Catalog API", () => {
     expect(res.body.data.categories.men).toBeTruthy();
     expect(res.body.data.categories.women).toBeTruthy();
     expect(res.body.data.groups.length).toBeGreaterThan(0);
-    expect(res.body.data.pricing.school.discountPrice).toBe(3_700_000);
+    expect(res.body.data.pricing.school.price).toBe(3_700_000);
   });
 
-  test("GET /catalog/records seeds defaults then lists them", async () => {
+  test("GET /catalog/records stays empty until an admin restores defaults", async () => {
     const res = await request(app).get("/api/catalog/records");
     expect(res.status).toBe(200);
-    expect(res.body.data.total).toBe(DEFAULT_SWIMMING_RECORDS.length);
-    expect(res.body.data.items[0].event).toBeTruthy();
+    expect(res.body.data.total).toBe(0);
+    expect(res.body.data.items).toEqual([]);
   });
 
   test("ADMIN sync catalogs slots into course_classes and resolves by catalogKey", async () => {
