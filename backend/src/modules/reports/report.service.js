@@ -15,6 +15,7 @@ const { env } = require("../../config/env");
 const { AppError } = require("../../utils/AppError");
 const { logEvent, logError } = require("../../services/logging");
 const { buildWorkbookBuffer, sanitizeFilename } = require("./excel");
+const { buildMdbBuffer, wantsAccess } = require("./access");
 const { SHEET_NAMES, FILE_BASENAMES, localizeExportRow } = require("./exportLabels");
 const {
   ENROLLMENT_STATUSES,
@@ -892,8 +893,9 @@ const EXPORT_COLUMNS = {
   ],
 };
 
-async function exportReport(reportType, query, { adminUserId }) {
+async function exportReport(reportType, query, { adminUserId, format }) {
   const started = Date.now();
+  const access = wantsAccess(format);
   logEvent("EXPORT_REQUESTED", {
     reportType,
     adminUserId: String(adminUserId),
@@ -938,16 +940,19 @@ async function exportReport(reportType, query, { adminUserId }) {
 
     const columns = EXPORT_COLUMNS[reportType];
     const rows = (data.items || []).map((row) => localizeExportRow(reportType, row));
-    const buffer = await buildWorkbookBuffer({
-      sheetName: SHEET_NAMES[reportType] || "گزارش",
-      columns,
-      rows,
-      rightToLeft: true,
-    });
+    const sheetName = SHEET_NAMES[reportType] || "گزارش";
+    const buffer = access
+      ? await buildMdbBuffer({ sheetName, columns, rows })
+      : await buildWorkbookBuffer({
+          sheetName,
+          columns,
+          rows,
+          rightToLeft: true,
+        });
 
     const dateStamp = new Date().toLocaleDateString("fa-IR").replace(/\//g, "-");
     const base = FILE_BASENAMES[reportType] || "گزارش";
-    const filename = sanitizeFilename(`${base}-${dateStamp}.xlsx`);
+    const filename = sanitizeFilename(`${base}-${dateStamp}.${access ? "mdb" : "xlsx"}`);
 
     logEvent("EXPORT_COMPLETED", {
       reportType,
@@ -956,7 +961,7 @@ async function exportReport(reportType, query, { adminUserId }) {
       rowCount: data.items.length,
     });
 
-    return { buffer, filename, rowCount: data.items.length };
+    return { buffer, filename, rowCount: data.items.length, format: access ? "access" : "xlsx" };
   } catch (err) {
     if (err?.code === "EXPORT_TOO_LARGE") {
       logEvent("EXPORT_REJECTED_LIMIT", {

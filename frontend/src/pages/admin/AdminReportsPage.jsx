@@ -55,7 +55,7 @@ function MetricCard({ label, value, hint }) {
   );
 }
 
-function FilterBar({ fromDate, toDate, onFrom, onTo, onApply, extra, exporting, onExport }) {
+function FilterBar({ fromDate, toDate, onFrom, onTo, onApply, extra, exporting, onExport, onExportAccess }) {
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200/80 bg-gradient-to-l from-white to-slate-50/60 p-4 shadow-sm">
       <label className="min-w-[10rem] flex-1 text-sm sm:max-w-[14rem]">
@@ -82,10 +82,21 @@ function FilterBar({ fromDate, toDate, onFrom, onTo, onApply, extra, exporting, 
         <button
           type="button"
           disabled={exporting}
-          onClick={onExport}
+          onClick={() => onExport("xlsx")}
           className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm disabled:opacity-50"
         >
           {exporting ? "در حال خروجی…" : "خروجی اکسل"}
+        </button>
+      ) : null}
+      {onExportAccess ? (
+        <button
+          type="button"
+          disabled={exporting}
+          onClick={() => onExportAccess("access")}
+          className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm disabled:opacity-50"
+          title="فایل اکسس (.mdb) با همان ستون‌ها و ردیف‌های خروجی اکسل"
+        >
+          خروجی اکسس
         </button>
       ) : null}
     </div>
@@ -227,27 +238,29 @@ export default function AdminReportsPage() {
     return () => ac.abort();
   }, [load, filterTick]);
 
-  async function handleExport() {
+  async function handleExport(format = "xlsx") {
     const exportable = ["enrollments", "payments", "classes", "participants", "waitlist"];
     if (!exportable.includes(tab)) {
       toast.info("خروجی اکسل برای این گزارش در سرور تعریف نشده است.");
       return;
     }
+    const access = format === "access";
     setExporting(true);
     try {
       const params = { ...baseParams };
       delete params.page;
       delete params.limit;
+      if (access) params.format = "access";
       const { blob, filename } = await exportAdminReport(tab, params);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename || `${tab}-report.xlsx`;
+      a.download = filename || `${tab}-report.${access ? "mdb" : "xlsx"}`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("خروجی آماده شد.");
+      toast.success(access ? "خروجی اکسس آماده شد." : "خروجی آماده شد.");
     } catch (err) {
-      toast.error(userMessageFromReportError(err, "خروجی ناموفق بود."));
+      toast.error(userMessageFromReportError(err, access ? "خروجی اکسس ناموفق بود." : "خروجی ناموفق بود."));
     } finally {
       setExporting(false);
     }
@@ -286,6 +299,11 @@ export default function AdminReportsPage() {
           }}
           exporting={exporting}
           onExport={
+            ["enrollments", "payments", "classes", "participants", "waitlist"].includes(tab)
+              ? handleExport
+              : null
+          }
+          onExportAccess={
             ["enrollments", "payments", "classes", "participants", "waitlist"].includes(tab)
               ? handleExport
               : null

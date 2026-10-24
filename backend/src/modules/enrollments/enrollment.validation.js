@@ -213,6 +213,7 @@ const paginationQuery = z.object({
     .transform((v) => (v === undefined ? undefined : v === "true")),
   registeredFrom: z.coerce.date().optional(),
   registeredTo: z.coerce.date().optional(),
+  format: z.enum(["xlsx", "access"]).optional(),
 });
 
 module.exports = {

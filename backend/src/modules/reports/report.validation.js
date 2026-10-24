@@ -19,6 +19,8 @@ const paginationFields = {
   sortDir,
 };
 
+const exportFormat = z.enum(["xlsx", "access"]).optional();
+
 function withDateRangeRefine(schema) {
   return schema.superRefine((data, ctx) => {
     if (data.fromDate && data.toDate && data.fromDate.getTime() > data.toDate.getTime()) {
@@ -45,6 +47,7 @@ const participantReportQuery = withDateRangeRefine(
       ageMax: z.coerce.number().int().min(0).max(120).optional(),
       q: z.string().trim().max(80).optional(),
       sortBy: z.enum(["createdAt", "birthDate", "firstName", "lastName"]).optional().default("createdAt"),
+      format: exportFormat,
     })
     .strict()
     .superRefine((data, ctx) => {
@@ -68,6 +71,7 @@ const enrollmentReportQuery = withDateRangeRefine(
         .enum(["createdAt", "confirmedAt", "finalAmount", "priceCharged", "status"])
         .optional()
         .default("createdAt"),
+      format: exportFormat,
     })
     .strict(),
 );
@@ -82,6 +86,7 @@ const paymentReportQuery = withDateRangeRefine(
       enrollmentId: objectId.optional(),
       classId: objectId.optional(),
       sortBy: z.enum(["createdAt", "amount", "verifiedAt", "status"]).optional().default("createdAt"),
+      format: exportFormat,
     })
     .strict(),
 );
@@ -94,6 +99,7 @@ const classReportQuery = withDateRangeRefine(
       instructorId: objectId.optional(),
       courseTemplateId: objectId.optional(),
       sortBy: z.enum(["createdAt", "startDate", "price", "capacity", "title"]).optional().default("startDate"),
+      format: exportFormat,
     })
     .strict(),
 );
@@ -107,6 +113,7 @@ const attendanceReportQuery = withDateRangeRefine(
       participantId: objectId.optional(),
       status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED", "UNKNOWN"]).optional(),
       sortBy: z.enum(["createdAt", "markedAt", "status"]).optional().default("markedAt"),
+      format: exportFormat,
     })
     .strict(),
 );
@@ -119,6 +126,7 @@ const waitlistReportQuery = withDateRangeRefine(
       status: z.enum(Object.values(WAITLIST_STATUSES)).optional(),
       participantId: objectId.optional(),
       sortBy: z.enum(["createdAt", "position", "status"]).optional().default("position"),
+      format: exportFormat,
     })
     .strict(),
 );

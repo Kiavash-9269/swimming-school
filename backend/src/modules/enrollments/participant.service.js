@@ -7,6 +7,7 @@ const { User, ROLES } = require("../auth/user.model");
 const { hashPassword } = require("../../utils/password");
 const { env } = require("../../config/env");
 const { buildWorkbookBuffer, sanitizeFilename } = require("../reports/excel");
+const { buildMdbBuffer } = require("../reports/access");
 const {
   labelOf,
   formatFaDate,
@@ -468,7 +469,7 @@ const EXPORT_COLUMNS = [
   { header: "یادداشت", key: "notes", width: 35 },
 ];
 
-async function exportParticipantsAdmin(filters = {}) {
+async function exportParticipantsAdmin(filters = {}, { format } = {}) {
   const filter = await buildAdminParticipantFilter(filters);
   const max = env.EXPORT_MAX_ROWS || 5000;
   const count = await Participant.countDocuments(filter);
@@ -518,9 +519,16 @@ async function exportParticipantsAdmin(filters = {}) {
     };
   });
 
-  const buffer = await buildWorkbookBuffer({ sheetName: "شاگردان", columns: EXPORT_COLUMNS, rows });
+  const access = format === "access";
+  const buffer = access
+    ? await buildMdbBuffer({ sheetName: "شاگردان", columns: EXPORT_COLUMNS, rows })
+    : await buildWorkbookBuffer({ sheetName: "شاگردان", columns: EXPORT_COLUMNS, rows });
   const dateStamp = new Date().toISOString().slice(0, 10);
-  return { buffer, filename: sanitizeFilename(`شاگردان-${dateStamp}.xlsx`) };
+  return {
+    buffer,
+    filename: sanitizeFilename(`شاگردان-${dateStamp}.${access ? "mdb" : "xlsx"}`),
+    format: access ? "access" : "xlsx",
+  };
 }
 
 module.exports = {

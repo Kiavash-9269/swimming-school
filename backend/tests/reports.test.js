@@ -463,4 +463,74 @@ describe("Phase 6 admin reports & exports", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.pagination.total).toBeGreaterThanOrEqual(1);
   });
+
+  // Access (.mdb) export needs a Java runtime + the bundled helper jar.
+  const javaReady = (() => {
+    try {
+      const { spawnSync } = require("node:child_process");
+      const probe = spawnSync("java", ["-version"], { timeout: 10000 });
+      return probe.status === 0;
+    } catch {
+      return false;
+    }
+  })();
+
+  function bufferParser(res, cb) {
+    const chunks = [];
+    res.on("data", (c) => chunks.push(c));
+    res.on("end", () => cb(null, Buffer.concat(chunks)));
+  }
+
+  (javaReady ? test : test.skip)(
+    "access export: real .mdb bytes on report and participants routes",
+    async () => {
+      const { participantId } = await bootstrap();
+      await Participant.findByIdAndUpdate(participantId, {
+        firstName: "=CMD",
+        lastName: "علی",
+      });
+
+      const reportRes = await request(app)
+        .get("/api/admin/reports/participants/export")
+        .query({ format: "access" })
+        .set("Authorization", `Bearer ${adminToken}`)
+        .buffer(true)
+        .parse(bufferParser);
+      expect(reportRes.status).toBe(200);
+      expect(reportRes.headers["content-type"]).toMatch(/application\/vnd\.ms-access/);
+      expect(reportRes.headers["content-disposition"]).toMatch(/\.mdb/);
+      expect(reportRes.headers["content-disposition"]).toMatch(/filename\*=UTF-8''/);
+      expect(reportRes.body.length).toBeGreaterThan(1000);
+      // Jet 4 database header written by the Jackcess helper
+      expect(reportRes.body.slice(4, 19).toString("latin1")).toBe("Standard Jet DB");
+
+      const enrolledRes = await request(app)
+        .get("/api/enrollments/admin/participants/export")
+        .query({ format: "access" })
+        .set("Authorization", `Bearer ${adminToken}`)
+        .buffer(true)
+        .parse(bufferParser);
+      expect(enrolledRes.status).toBe(200);
+      expect(enrolledRes.body.slice(4, 19).toString("latin1")).toBe("Standard Jet DB");
+
+      // default (no format) keeps the Excel behavior
+      const excelRes = await request(app)
+        .get("/api/admin/reports/participants/export")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .buffer(true)
+        .parse(bufferParser);
+      expect(excelRes.status).toBe(200);
+      expect(excelRes.headers["content-type"]).toMatch(/spreadsheetml/);
+    },
+    120000,
+  );
+
+  test("access export rejects unknown format values", async () => {
+    await bootstrap();
+    const res = await request(app)
+      .get("/api/admin/reports/participants/export")
+      .query({ format: "pdf" })
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(res.status).toBe(400);
+  });
 });

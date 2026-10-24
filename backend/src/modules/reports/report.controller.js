@@ -2,6 +2,12 @@ const { success } = require("../../utils/apiResponse");
 const { asyncHandler } = require("../../middleware/errorHandler");
 const reportService = require("./report.service");
 const { sendWorkbook } = require("./excel");
+const { sendMdb, wantsAccess } = require("./access");
+
+/** Send an export in whichever format the request asked for (xlsx | access). */
+function sendExport(res, out) {
+  return wantsAccess(out.format) ? sendMdb(res, out) : sendWorkbook(res, out);
+}
 
 const dashboard = asyncHandler(async (req, res) => {
   const data = await reportService.reportDashboard({ adminUserId: req.user._id });
@@ -51,43 +57,49 @@ const compliance = asyncHandler(async (req, res) => {
 const exportParticipants = asyncHandler(async (req, res) => {
   const out = await reportService.exportReport("participants", req.query, {
     adminUserId: req.user._id,
+    format: req.query.format,
   });
-  return sendWorkbook(res, out);
+  return sendExport(res, out);
 });
 
 const exportEnrollments = asyncHandler(async (req, res) => {
   const out = await reportService.exportReport("enrollments", req.query, {
     adminUserId: req.user._id,
+    format: req.query.format,
   });
-  return sendWorkbook(res, out);
+  return sendExport(res, out);
 });
 
 const exportPayments = asyncHandler(async (req, res) => {
   const out = await reportService.exportReport("payments", req.query, {
     adminUserId: req.user._id,
+    format: req.query.format,
   });
-  return sendWorkbook(res, out);
+  return sendExport(res, out);
 });
 
 const exportAttendance = asyncHandler(async (req, res) => {
   const out = await reportService.exportReport("attendance", req.query, {
     adminUserId: req.user._id,
+    format: req.query.format,
   });
-  return sendWorkbook(res, out);
+  return sendExport(res, out);
 });
 
 const exportClasses = asyncHandler(async (req, res) => {
   const out = await reportService.exportReport("classes", req.query, {
     adminUserId: req.user._id,
+    format: req.query.format,
   });
-  return sendWorkbook(res, out);
+  return sendExport(res, out);
 });
 
 const exportWaitlist = asyncHandler(async (req, res) => {
   const out = await reportService.exportReport("waitlist", req.query, {
     adminUserId: req.user._id,
+    format: req.query.format,
   });
-  return sendWorkbook(res, out);
+  return sendExport(res, out);
 });
 
 module.exports = {

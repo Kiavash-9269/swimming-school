@@ -85,21 +85,22 @@ export default function AdminParticipantsPage() {
     };
   }, [qParam, gender, isActiveParam, showAll, classId, registeredFrom, registeredTo]);
 
-  async function handleExport() {
+  async function handleExport(format = "xlsx") {
+    const access = format === "access";
     setExporting(true);
     try {
-      const { blob, filename } = await exportAdminParticipants(filters);
+      const { blob, filename } = await exportAdminParticipants({ ...filters, format });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename || "students.xlsx";
+      a.download = filename || `students.${access ? "mdb" : "xlsx"}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success("فایل اکسل شاگردان آماده شد.");
+      toast.success(access ? "فایل اکسس (.mdb) شاگردان آماده شد." : "فایل اکسل شاگردان آماده شد.");
     } catch (err) {
-      toast.error(userMessageFromEnrollmentError(err, "خروجی اکسل ناموفق بود."));
+      toast.error(userMessageFromEnrollmentError(err, access ? "خروجی اکسس ناموفق بود." : "خروجی اکسل ناموفق بود."));
     } finally {
       setExporting(false);
     }
@@ -194,12 +195,21 @@ export default function AdminParticipantsPage() {
         </button>
         <button
           type="button"
-          onClick={handleExport}
+          onClick={() => handleExport("xlsx")}
           disabled={exporting}
           className="rounded-xl border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
           title="خروجی همه شاگردانِ مطابق فیلترهای فعلی (همه صفحه‌ها)"
         >
           {exporting ? "در حال آماده‌سازی…" : "خروجی اکسل"}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleExport("access")}
+          disabled={exporting}
+          className="rounded-xl border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+          title="فایل اکسس (.mdb) با همان ستون‌ها و ردیف‌های خروجی اکسل"
+        >
+          خروجی اکسس
         </button>
       </div>
 

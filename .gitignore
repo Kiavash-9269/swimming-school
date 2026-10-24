@@ -31,3 +31,6 @@ deploy/ubuntu/retry-domain.sh
 .DS_Store
 *.tar
 *.tar.gz
+
+# Local build toolchain (JDK/ECJ/jackcess scratch, never committed)
+.tools/

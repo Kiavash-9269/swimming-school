@@ -411,22 +411,24 @@ export default function AdminAttendancePage() {
     setSubmitError("");
   }
 
-  async function handleExport() {
+  async function handleExport(format = "xlsx") {
+    const access = format === "access";
     setExporting(true);
     try {
       const params = { ...listParams };
       delete params.page;
       delete params.limit;
+      if (access) params.format = "access";
       const { blob, filename } = await exportAdminAttendanceReport(params);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename || "attendance-report.xlsx";
+      a.download = filename || `attendance-report.${access ? "mdb" : "xlsx"}`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("خروجی آماده شد.");
+      toast.success(access ? "خروجی اکسس آماده شد." : "خروجی آماده شد.");
     } catch (err) {
-      toast.error(userMessageFromAttendanceError(err, "خروجی ناموفق بود."));
+      toast.error(userMessageFromAttendanceError(err, access ? "خروجی اکسس ناموفق بود." : "خروجی ناموفق بود."));
     } finally {
       setExporting(false);
     }
@@ -746,10 +748,19 @@ export default function AdminAttendancePage() {
               <button
                 type="button"
                 disabled={exporting}
-                onClick={handleExport}
+                onClick={() => handleExport("xlsx")}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-50"
               >
                 {exporting ? "در حال خروجی…" : "خروجی اکسل"}
+              </button>
+              <button
+                type="button"
+                disabled={exporting}
+                onClick={() => handleExport("access")}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-50"
+                title="فایل اکسس (.mdb) با همان ستون‌ها و ردیف‌های خروجی اکسل"
+              >
+                خروجی اکسس
               </button>
             </div>
 

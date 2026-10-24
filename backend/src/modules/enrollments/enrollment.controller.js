@@ -13,6 +13,7 @@ const user360Service = require("./user360.service");
 const attendanceService = require("./attendance.service");
 const { logEvent } = require("../../services/logging");
 const { sendWorkbook } = require("../reports/excel");
+const { sendMdb, wantsAccess } = require("../reports/access");
 const { ENROLLMENT_STATUSES } = require("../courses/domain.constants");
 
 const { toPublicParticipant } = participantService;
@@ -490,18 +491,21 @@ const adminSearchParticipants = asyncHandler(async (req, res) => {
 });
 
 const adminExportParticipants = asyncHandler(async (req, res) => {
-  const out = await participantService.exportParticipantsAdmin({
-    q: req.query.q,
-    gender: req.query.gender,
-    isActive: req.query.isActive,
-    ownerUserId: req.query.ownerUserId,
-    enrolled: req.query.enrolled,
-    classId: req.query.classId,
-    registeredFrom: req.query.registeredFrom,
-    registeredTo: req.query.registeredTo,
-  });
-  logEvent("ADMIN_PARTICIPANTS_EXPORTED", { actorId: String(req.user._id) });
-  return sendWorkbook(res, out);
+  const out = await participantService.exportParticipantsAdmin(
+    {
+      q: req.query.q,
+      gender: req.query.gender,
+      isActive: req.query.isActive,
+      ownerUserId: req.query.ownerUserId,
+      enrolled: req.query.enrolled,
+      classId: req.query.classId,
+      registeredFrom: req.query.registeredFrom,
+      registeredTo: req.query.registeredTo,
+    },
+    { format: req.query.format },
+  );
+  logEvent("ADMIN_PARTICIPANTS_EXPORTED", { actorId: String(req.user._id), format: out.format });
+  return wantsAccess(out.format) ? sendMdb(res, out) : sendWorkbook(res, out);
 });
 
 const adminCreateParticipant = asyncHandler(async (req, res) => {

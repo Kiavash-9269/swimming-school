@@ -333,9 +333,11 @@ export function searchAdminParticipants({ page = 1, limit = 20, signal, ...filte
   );
 }
 
-/** GET /enrollments/admin/participants/export — xlsx of every student matching the list filters. */
-export function exportAdminParticipants({ signal, ...filters } = {}) {
-  return apiDownloadBlob(`/enrollments/admin/participants/export${adminParticipantQuery(filters)}`, {
+/** GET /enrollments/admin/participants/export — xlsx (or .mdb) of every student matching the list filters. */
+export function exportAdminParticipants({ signal, format, ...filters } = {}) {
+  const base = adminParticipantQuery(filters);
+  const withFormat = format ? `${base ? `${base}&` : "?"}format=${encodeURIComponent(format)}` : base;
+  return apiDownloadBlob(`/enrollments/admin/participants/export${withFormat}`, {
     method: "GET",
     auth: true,
     signal,
