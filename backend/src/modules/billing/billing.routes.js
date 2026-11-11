@@ -46,6 +46,31 @@ router.get(
   controller.reconcilePayments,
 );
 
+router.post(
+  "/card-to-card",
+  authenticate,
+  refundLimiter,
+  validate(controller.cardToCardBody),
+  controller.startCardToCard,
+);
+
+router.post(
+  "/:id/confirm",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  controller.confirmCardToCard,
+);
+
+router.post(
+  "/:id/reject",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  validate(controller.rejectCardToCardBody),
+  controller.rejectCardToCard,
+);
+
 router.get("/:id", authenticate, controller.getPayment);
 
 router.post(

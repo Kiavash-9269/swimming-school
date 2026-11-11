@@ -71,6 +71,11 @@ const TEMPLATES = {
     fa: "شما در روز {{dayLabel}} ساعت {{timeLabel}} در کلاس «{{classTitle}}» غایب بودید.",
     en: "You were absent from class «{{classTitle}}» on {{dayLabel}} at {{timeLabel}}.",
   },
+  [NOTIFICATION_TYPES.ADMIN_MESSAGE]: {
+    version: "v1",
+    fa: "{{message}}",
+    en: "{{message}}",
+  },
   [NOTIFICATION_TYPES.REGISTRATION_DISCOUNT]: {
     version: "v1",
     // Avoid http(s) URLs — Niksms may reject messages containing links (LinkNotAllowed).

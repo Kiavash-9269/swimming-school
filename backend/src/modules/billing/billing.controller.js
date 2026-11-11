@@ -94,6 +94,53 @@ const reconcilePayments = asyncHandler(async (req, res) => {
   return success(res, data);
 });
 
+const cardToCardBody = z
+  .object({
+    enrollmentId: objectId,
+    trackingCode: z.string().trim().max(60).optional(),
+    note: z.string().trim().max(300).optional(),
+  })
+  .strict();
+
+const rejectCardToCardBody = z
+  .object({
+    reason: z.string().trim().max(200).optional(),
+  })
+  .strict();
+
+const startCardToCard = asyncHandler(async (req, res) => {
+  const data = await checkout.startCardToCardPayment({
+    enrollmentId: req.body.enrollmentId,
+    userId: req.user._id,
+    trackingCode: req.body.trackingCode,
+    note: req.body.note,
+  });
+  return success(res, data, 201);
+});
+
+const confirmCardToCard = asyncHandler(async (req, res) => {
+  const result = await checkout.approveCardToCardPayment({
+    paymentId: req.params.id,
+    adminUserId: req.user._id,
+  });
+  return success(res, {
+    alreadyProcessed: Boolean(result.alreadyProcessed),
+    cardToCard: result.cardToCard,
+    enrollment: result.enrollment
+      ? { id: String(result.enrollment._id), status: result.enrollment.status }
+      : null,
+  });
+});
+
+const rejectCardToCard = asyncHandler(async (req, res) => {
+  const data = await checkout.rejectCardToCardPayment({
+    paymentId: req.params.id,
+    adminUserId: req.user._id,
+    reason: req.body.reason,
+  });
+  return success(res, data);
+});
+
 const adminListQuery = z.object({
   status: z
     .enum([
@@ -119,6 +166,11 @@ const reconcileQuery = z.object({
 
 module.exports = {
   getPayment,
+  cardToCardBody,
+  rejectCardToCardBody,
+  startCardToCard,
+  confirmCardToCard,
+  rejectCardToCard,
   providerCallback,
   providerCallbackBody,
   listAdminPayments,

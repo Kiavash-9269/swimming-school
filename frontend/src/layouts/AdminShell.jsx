@@ -39,6 +39,7 @@ const NAV = [
     items: [
       { to: "/admin/participants", label: "شاگردان", icon: UserRound },
       { to: "/admin/documents/pending", label: "مدارک", icon: FileCheck2 },
+      { to: "/admin/clinic", label: "کلینیک", icon: Waves },
     ],
   },
   {
@@ -46,6 +47,8 @@ const NAV = [
     items: [
       { to: "/admin/payments", label: "پرداخت‌ها", icon: CreditCard },
       { to: "/admin/notifications", label: "پیام‌ها", icon: Bell },
+      { to: "/admin/sms", label: "ارسال پیامک", icon: Bell },
+      { to: "/admin/settings", label: "تنظیمات و کارت‌به‌کارت", icon: CreditCard },
       { to: "/admin/reports", label: "گزارش مدیریت", icon: ChartColumn },
     ],
   },

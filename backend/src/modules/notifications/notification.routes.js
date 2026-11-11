@@ -7,6 +7,7 @@ const controller = require("./notification.controller");
 const router = express.Router();
 const adminLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 120 });
 const promoLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
+const adminSmsLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 60 });
 
 router.get(
   "/",
@@ -24,6 +25,15 @@ router.post(
   promoLimiter,
   validate(controller.promoSmsBody),
   controller.sendPromoSms,
+);
+
+router.post(
+  "/admin-sms",
+  authenticate,
+  authorize("ADMIN"),
+  adminSmsLimiter,
+  validate(controller.adminSmsBody),
+  controller.sendAdminSms,
 );
 
 router.get("/jobs", authenticate, authorize("ADMIN"), adminLimiter, controller.listJobs);

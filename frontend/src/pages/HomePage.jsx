@@ -4,6 +4,7 @@ import HomeAbout from "../components/About/HomeAbout";
 import HomeServices from "../components/Services/HomeServices";
 import HomeWhyChooseUs from "../components/WhyChooseUs/HomeWhyChooseUs";
 import HomeSwimmer from "../components/swimmer/HomeSwimmer";
+import HomeClinic from "../components/clinic/HomeClinic";
 
 export default function HomePage() {
   return (
@@ -12,6 +13,7 @@ export default function HomePage() {
         <HomeHero />
         <HomeAbout />
         <HomeServices />
+        <HomeClinic />
         <HomeWhyChooseUs />
         <HomeSwimmer />
       </div>

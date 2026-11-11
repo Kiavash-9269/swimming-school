@@ -166,7 +166,7 @@ async function recoverStaleProcessing({ limit = 50 } = {}) {
 /**
  * Atomically claim one pending notification.
  */
-async function claimNextNotification() {
+async function claimNextNotification({ ids } = {}) {
   const now = new Date();
   const leaseMs = (env.NOTIFICATION_LEASE_SECONDS || 60) * 1000;
   const leaseUntil = new Date(now.getTime() + leaseMs);
@@ -175,6 +175,7 @@ async function claimNextNotification() {
     {
       status: NOTIFICATION_STATUSES.PENDING,
       nextAttemptAt: { $lte: now },
+      ...(ids && ids.length ? { _id: { $in: ids } } : {}),
     },
     {
       $set: {
@@ -303,14 +304,14 @@ async function processClaimedNotification(notification) {
   }
 }
 
-async function processNotificationBatch({ limit } = {}) {
+async function processNotificationBatch({ limit, ids } = {}) {
   await recoverStaleProcessing({ limit: limit || env.JOB_BATCH_SIZE });
   const batch = Math.min(env.JOB_BATCH_SIZE || 50, Number(limit) || env.JOB_BATCH_SIZE || 50);
   let processed = 0;
   let sent = 0;
 
   for (let i = 0; i < batch; i += 1) {
-    const claimed = await claimNextNotification();
+    const claimed = await claimNextNotification({ ids });
     if (!claimed) break;
     processed += 1;
     const result = await processClaimedNotification(claimed);

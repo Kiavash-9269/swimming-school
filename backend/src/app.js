@@ -101,6 +101,9 @@ function createApp() {
   app.use("/api/enrollments", enrollmentRoutes);
   app.use("/api/payments", billingRoutes);
   app.use("/api/notifications", require("./modules/notifications/notification.routes"));
+  app.use("/api/site", require("./modules/site/site.routes"));
+  app.use("/api/clinic", require("./modules/clinic/clinic.routes"));
+  app.use("/api/records", require("./modules/records/records.routes"));
   app.use("/api/admin/reports", require("./modules/reports/report.routes"));
   app.use("/api/admin/admins", require("./modules/admins/admins.routes"));
 

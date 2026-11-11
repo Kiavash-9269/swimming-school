@@ -15,6 +15,8 @@ const NOTIFICATION_TYPES = {
   ATTENDANCE_ABSENT: "ATTENDANCE_ABSENT",
   /** Marketing SMS — registration discount invite for club/imported contacts */
   REGISTRATION_DISCOUNT: "REGISTRATION_DISCOUNT",
+  /** Free-text SMS an admin sends to one member, a group, or everyone */
+  ADMIN_MESSAGE: "ADMIN_MESSAGE",
 };
 
 const NOTIFICATION_CHANNELS = {

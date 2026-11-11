@@ -10,6 +10,7 @@ const CoursesPage = lazy(() => import("./pages/CoursesPage.jsx"));
 const ContactUsPage = lazy(() => import("./pages/ContactUsPage.jsx"));
 const RecordPage = lazy(() => import("./pages/RecordPage.jsx"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage.jsx"));
+const ClinicPage = lazy(() => import("./pages/ClinicPage.jsx"));
 const AuthPage = lazy(() => import("./pages/AuthPage.jsx"));
 const ErrorPage = lazy(() => import("./pages/ErrorPage.jsx"));
 const AppHomePage = lazy(() => import("./pages/AppHomePage.jsx"));
@@ -57,6 +58,11 @@ const AppParticipantsPage = lazy(() => import("./pages/app/AppParticipantsPage.j
 const AppParticipantNewPage = lazy(() => import("./pages/app/AppParticipantNewPage.jsx"));
 const AppParticipantDetailPage = lazy(() => import("./pages/app/AppParticipantDetailPage.jsx"));
 const AppParticipantEditPage = lazy(() => import("./pages/app/AppParticipantEditPage.jsx"));
+const AppRecordsPage = lazy(() => import("./pages/app/AppRecordsPage.jsx"));
+const AppDocumentsPage = lazy(() => import("./pages/app/AppDocumentsPage.jsx"));
+const AdminClinicPage = lazy(() => import("./pages/admin/AdminClinicPage.jsx"));
+const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage.jsx"));
+const AdminSmsPage = lazy(() => import("./pages/admin/AdminSmsPage.jsx"));
 
 const RootLayout = lazy(() => import("./layouts/RootLayout.jsx"));
 const AuthLayout = lazy(() => import("./layouts/AuthLayout.jsx"));
@@ -75,6 +81,7 @@ const route = createBrowserRouter([
       { path: "contact", element: <ContactUsPage /> },
       { path: "record", element: <RecordPage /> },
       { path: "gallery", element: <GalleryPage /> },
+      { path: "clinic", element: <ClinicPage /> },
     ],
   },
   {
@@ -109,6 +116,8 @@ const route = createBrowserRouter([
           { path: "participants/new", element: <AppParticipantNewPage /> },
           { path: "participants/:participantId/edit", element: <AppParticipantEditPage /> },
           { path: "participants/:participantId", element: <AppParticipantDetailPage /> },
+          { path: "records", element: <AppRecordsPage /> },
+          { path: "documents", element: <AppDocumentsPage /> },
         ],
       },
     ],
@@ -161,6 +170,9 @@ const route = createBrowserRouter([
           { path: "reports", element: <AdminReportsPage /> },
           { path: "attendance", element: <AdminAttendancePage /> },
           { path: "admins", element: <AdminAdminsPage /> },
+          { path: "clinic", element: <AdminClinicPage /> },
+          { path: "settings", element: <AdminSettingsPage /> },
+          { path: "sms", element: <AdminSmsPage /> },
         ],
       },
     ],

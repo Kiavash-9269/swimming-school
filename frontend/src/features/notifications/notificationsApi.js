@@ -56,6 +56,22 @@ export function listNotificationJobs({ signal } = {}) {
  * POST /api/notifications/promo-sms
  * audience: test | club_with_phone
  */
+/**
+ * POST /api/notifications/admin-sms
+ * audience: user (one phone) | users (ids) | clinic | all | class
+ */
+export function sendAdminSms(
+  { audience, message, phone, userIds, classId } = {},
+  { signal } = {},
+) {
+  return apiRequest("/notifications/admin-sms", {
+    method: "POST",
+    auth: true,
+    body: { audience, message, phone, userIds, classId },
+    signal,
+  });
+}
+
 export function sendPromoSms(
   { audience = "test", testPhone, message, campaignKey, sendNow = true } = {},
   { signal } = {},

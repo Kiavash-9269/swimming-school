@@ -44,17 +44,20 @@ export default function ProductAppLayout({ variant = "user" }) {
             <NavLink to="/app" end className={linkClass}>
               داشبورد
             </NavLink>
-            <NavLink to="/app/courses" className={linkClass}>
-              دوره‌ها
-            </NavLink>
             <NavLink to="/app/participants" className={linkClass}>
-              افراد ثبت‌شده
+              مشخصات
+            </NavLink>
+            <NavLink to="/app/documents" className={linkClass}>
+              مدارک
+            </NavLink>
+            <NavLink to="/app/records" className={linkClass}>
+              رکوردها
             </NavLink>
             <NavLink to="/app/enrollments" className={linkClass}>
-              ثبت‌نام‌های من
+              ثبت‌نام‌ها
             </NavLink>
-            <NavLink to="/instructor" className={linkClass}>
-              فضای مربی
+            <NavLink to="/app/courses" className={linkClass}>
+              دوره‌ها
             </NavLink>
           </nav>
 

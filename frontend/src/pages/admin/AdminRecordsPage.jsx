@@ -12,6 +12,7 @@ import { SectionLoader } from "../../components/Ui/Loading";
 import ErrorState from "../../components/Ui/ErrorState";
 import ForbiddenState from "../../components/Ui/ForbiddenState";
 import { useToast } from "../../components/feedback/useToast";
+import AdminStudentRecordsPanel from "../../features/records/components/AdminStudentRecordsPanel";
 
 function formatRecordTime(seconds) {
   const n = Number(seconds);
@@ -230,6 +231,8 @@ export default function AdminRecordsPage() {
           ) : null}
         </div>
       </section>
+
+      <AdminStudentRecordsPanel />
 
       <section className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 p-5">
         <button

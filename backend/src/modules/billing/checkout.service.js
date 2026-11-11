@@ -60,6 +60,17 @@ function toPublicPayment(doc) {
     // Safe ops flags only — never raw provider payloads/secrets
     reconciliationRequired: Boolean(meta.reconciliationRequired),
     reconciliationReason: meta.reconciliationReason || null,
+    // Manual (card-to-card) audit trail for the admin approval screen
+    cardToCard:
+      doc.provider === "card_to_card"
+        ? {
+            trackingCode: meta.trackingCode || "",
+            userNote: meta.userNote || "",
+            reportedAt: meta.reportedAt || null,
+            approvedAt: meta.approvedAt || null,
+            rejectReason: meta.rejectReason || "",
+          }
+        : null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -1142,9 +1153,218 @@ async function reconcilePayments({ limit = 50 } = {}) {
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * Card-to-card (manual) payments
+ * The family transfers money and ticks "I paid" in the panel; an admin
+ * approves it here, which runs the same activation path as a gateway.
+ * ------------------------------------------------------------------ */
+const CARD_TO_CARD_PROVIDER = "card_to_card";
+
+function toCardToCardPublic(payment) {
+  const meta = payment.metadata || {};
+  return {
+    id: String(payment._id),
+    enrollmentId: String(payment.enrollmentId),
+    participantId: payment.participantId ? String(payment.participantId) : null,
+    amount: payment.amount,
+    currency: payment.currency,
+    status: payment.status,
+    provider: payment.provider,
+    trackingCode: meta.trackingCode || "",
+    userNote: meta.userNote || "",
+    reportedAt: meta.reportedAt || null,
+    approvedAt: meta.approvedAt || null,
+    rejectReason: meta.rejectReason || "",
+    createdAt: payment.createdAt,
+    updatedAt: payment.updatedAt,
+  };
+}
+
+async function startCardToCardPayment({ enrollmentId, userId, trackingCode = "", note = "" }) {
+  const enrollment = await Enrollment.findById(enrollmentId);
+  if (!enrollment) {
+    throw new AppError("ثبت‌نام یافت نشد", { statusCode: 404, code: "ENROLLMENT_NOT_FOUND" });
+  }
+  if (String(enrollment.userId) !== String(userId)) {
+    throw new AppError("دسترسی مجاز نیست", { statusCode: 403, code: "FORBIDDEN" });
+  }
+
+  const payable = [ENROLLMENT_STATUSES.PENDING, ENROLLMENT_STATUSES.PAYMENT_PENDING];
+  if (!payable.includes(enrollment.status)) {
+    throw new AppError("این ثبت‌نام در وضعیت قابل پرداخت نیست", {
+      statusCode: 409,
+      code: "ENROLLMENT_NOT_PAYABLE",
+    });
+  }
+
+  const amount = Number(enrollment.finalAmount || enrollment.priceCharged || 0);
+  if (!(amount > 0)) {
+    throw new AppError("مبلغ این ثبت‌نام مشخص نیست", {
+      statusCode: 409,
+      code: "INVALID_AMOUNT",
+    });
+  }
+
+  const meta = {
+    mode: "CARD_TO_CARD",
+    trackingCode: String(trackingCode || "").slice(0, 60),
+    userNote: String(note || "").slice(0, 300),
+    reportedAt: new Date(),
+  };
+
+  let payment = await Payment.findOne({
+    enrollmentId: enrollment._id,
+    provider: CARD_TO_CARD_PROVIDER,
+    status: { $in: OPEN_PAYMENT_STATUSES },
+  });
+
+  if (payment) {
+    payment.metadata = { ...(payment.metadata || {}), ...meta };
+    payment.status = PAYMENT_STATUSES.PENDING;
+    payment.amount = amount;
+    payment.initiatedAt = payment.initiatedAt || new Date();
+    await payment.save();
+  } else {
+    payment = await Payment.create({
+      userId: enrollment.userId,
+      participantId: enrollment.participantId,
+      enrollmentId: enrollment._id,
+      classId: enrollment.classId,
+      reservationId: enrollment.reservationId || null,
+      amount,
+      currency: "IRR",
+      status: PAYMENT_STATUSES.PENDING,
+      provider: CARD_TO_CARD_PROVIDER,
+      idempotencyKey: `c2c_${String(enrollment._id)}_${Date.now()}`,
+      initiatedAt: new Date(),
+      metadata: meta,
+    });
+  }
+
+  if (String(enrollment.paymentId || "") !== String(payment._id)) {
+    await Enrollment.updateOne({ _id: enrollment._id }, { $set: { paymentId: payment._id } });
+  }
+
+  logEvent("CARD_TO_CARD_REPORTED", {
+    paymentId: String(payment._id),
+    enrollmentId: String(enrollment._id),
+    amount,
+  });
+
+  return toCardToCardPublic(payment);
+}
+
+async function approveCardToCardPayment({ paymentId, adminUserId = null }) {
+  const payment = await Payment.findById(paymentId);
+  if (!payment) {
+    throw new AppError("پرداخت یافت نشد", { statusCode: 404, code: "PAYMENT_NOT_FOUND" });
+  }
+  if (payment.provider !== CARD_TO_CARD_PROVIDER) {
+    throw new AppError("این پرداخت کارت‌به‌کارت نیست", {
+      statusCode: 400,
+      code: "PAYMENT_NOT_MANUAL",
+    });
+  }
+
+  const claimed = await Payment.findOneAndUpdate(
+    { _id: payment._id, status: { $in: OPEN_PAYMENT_STATUSES } },
+    {
+      $set: {
+        status: PAYMENT_STATUSES.SUCCESS,
+        verifiedAt: new Date(),
+        providerRef: payment.providerRef || `c2c_${String(payment._id).slice(-10)}`,
+        "metadata.approvedBy": adminUserId ? String(adminUserId) : "",
+        "metadata.approvedAt": new Date(),
+        "metadata.rejectReason": "",
+      },
+    },
+    { returnDocument: "after" },
+  );
+
+  if (!claimed) {
+    const again = await Payment.findById(payment._id);
+    const enrollment = again ? await Enrollment.findById(again.enrollmentId) : null;
+    if (again?.status === PAYMENT_STATUSES.SUCCESS && enrollment) {
+      if (
+        [ENROLLMENT_STATUSES.ACTIVE, ENROLLMENT_STATUSES.PENDING_COMPLIANCE].includes(
+          enrollment.status,
+        )
+      ) {
+        return {
+          payment: again,
+          enrollment,
+          alreadyProcessed: true,
+          cardToCard: toCardToCardPublic(again),
+        };
+      }
+      const recovered = await completeEnrollmentActivation(again, enrollment, { recovery: true });
+      return { ...recovered, cardToCard: toCardToCardPublic(recovered.payment) };
+    }
+    throw new AppError("وضعیت پرداخت قابل تأیید نیست", {
+      statusCode: 409,
+      code: "PAYMENT_FAILED",
+    });
+  }
+
+  const enrollment = await Enrollment.findById(claimed.enrollmentId);
+  if (!enrollment) {
+    throw new AppError("ثبت‌نام یافت نشد", { statusCode: 404, code: "ENROLLMENT_NOT_FOUND" });
+  }
+
+  const result = await completeEnrollmentActivation(claimed, enrollment, { recovery: false });
+  return { ...result, cardToCard: toCardToCardPublic(result.payment) };
+}
+
+async function rejectCardToCardPayment({ paymentId, adminUserId = null, reason = "" }) {
+  const payment = await Payment.findById(paymentId);
+  if (!payment) {
+    throw new AppError("پرداخت یافت نشد", { statusCode: 404, code: "PAYMENT_NOT_FOUND" });
+  }
+  if (payment.provider !== CARD_TO_CARD_PROVIDER) {
+    throw new AppError("این پرداخت کارت‌به‌کارت نیست", {
+      statusCode: 400,
+      code: "PAYMENT_NOT_MANUAL",
+    });
+  }
+  if (payment.status === PAYMENT_STATUSES.SUCCESS) {
+    throw new AppError("پرداخت تأییدشده را نمی‌توان رد کرد", {
+      statusCode: 409,
+      code: "PAYMENT_ALREADY_SUCCESS",
+    });
+  }
+
+  const reasonText = String(reason || "").slice(0, 200);
+  const updated = await Payment.findOneAndUpdate(
+    { _id: payment._id },
+    {
+      $set: {
+        status: PAYMENT_STATUSES.FAILED,
+        failedAt: new Date(),
+        failureCode: "CARD_TO_CARD_REJECTED",
+        failureReason: reasonText,
+        "metadata.rejectReason": reasonText,
+        "metadata.reviewedBy": adminUserId ? String(adminUserId) : "",
+      },
+    },
+    { returnDocument: "after" },
+  );
+
+  logEvent("CARD_TO_CARD_REJECTED", {
+    paymentId: String(payment._id),
+    enrollmentId: String(payment.enrollmentId),
+  });
+
+  return { payment: toCardToCardPublic(updated), status: PAYMENT_STATUSES.FAILED };
+}
+
 module.exports = {
   paymentProvider,
   toPublicPayment,
+  CARD_TO_CARD_PROVIDER,
+  toCardToCardPublic,
+  startCardToCardPayment,
+  approveCardToCardPayment,
+  rejectCardToCardPayment,
   releaseHeldSeatForEnrollment,
   failPaymentAndRelease,
   finalizeSuccessfulPayment,

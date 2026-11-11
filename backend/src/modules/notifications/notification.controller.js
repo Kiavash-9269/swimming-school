@@ -3,6 +3,8 @@ const { success } = require("../../utils/apiResponse");
 const { asyncHandler } = require("../../middleware/errorHandler");
 const notificationService = require("./notification.service");
 const { enqueueRegistrationDiscountSms, DEFAULT_TEST_PHONE } = require("./promoSms.service");
+const { queueAdminSms } = require("./adminSms.service");
+const { processNotificationBatch } = require("./notification.service");
 const { getSchedulerStatus } = require("../ops/scheduler");
 const { listJobLocks } = require("../ops/schedulerLock.model");
 const { runAllJobs, jobExpireReservations, jobExpirePayments, jobProcessNotifications } = require("../ops/jobs");
@@ -39,6 +41,24 @@ const promoSmsBody = z.object({
   /** Immediate provider send (test only). Club audience always queues. */
   sendNow: z.boolean().optional().default(true),
 });
+
+const adminSmsBody = z
+  .object({
+    message: z.string().trim().min(1).max(400),
+    audience: z.enum(["user", "users", "clinic", "all", "class"]),
+    phone: z.string().trim().regex(/^09\d{9}$/).optional(),
+    userIds: z.array(objectId).min(1).max(300).optional(),
+    classId: objectId.optional(),
+  })
+  .strict()
+  .refine((body) => (body.audience === "class" ? Boolean(body.classId) : true), {
+    message: "classId برای ارسال به یک کلاس لازم است",
+    path: ["classId"],
+  })
+  .refine((body) => (body.audience === "users" ? Boolean(body.userIds?.length) : true), {
+    message: "حداقل یک گیرنده انتخاب کنید",
+    path: ["userIds"],
+  });
 
 const listNotifications = asyncHandler(async (req, res) => {
   const data = await notificationService.listNotificationsAdmin(req.query);
@@ -98,10 +118,39 @@ const sendPromoSms = asyncHandler(async (req, res) => {
   return success(res, result, 201);
 });
 
+const sendAdminSms = asyncHandler(async (req, res) => {
+  const result = await queueAdminSms({
+    audience: req.body.audience,
+    phone: req.body.phone,
+    userIds: req.body.userIds,
+    classId: req.body.classId,
+    message: req.body.message,
+    actorId: req.user._id,
+  });
+
+  // Deliver a small batch of *this* message right away so a single SMS is not
+  // waiting for a scheduler tick; the rest stays queued for the worker.
+  const { notificationIds, ...rest } = result;
+  let deliveredNow = 0;
+  try {
+    const processed = await processNotificationBatch({
+      ids: notificationIds,
+      limit: Math.min(result.queued, 10),
+    });
+    deliveredNow = processed?.sent || 0;
+  } catch {
+    // Queue stays intact; the scheduler retries.
+  }
+
+  return success(res, { ...rest, deliveredNow }, 201);
+});
+
 module.exports = {
   listQuery,
   idParams,
   promoSmsBody,
+  adminSmsBody,
+  sendAdminSms,
   listNotifications,
   getNotification,
   retryNotification,
