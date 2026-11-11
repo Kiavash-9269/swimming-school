@@ -226,12 +226,13 @@ export async function apiUpload(
  */
 export async function apiDownloadBlob(
   path,
-  { method = "GET", auth = true, retry = true, signal, body } = {},
+  { method = "GET", auth = true, retry = true, signal, body, formData } = {},
 ) {
   try {
+    const isForm = formData instanceof FormData;
     const headers = buildHeaders({
       auth,
-      jsonBody: body !== undefined,
+      jsonBody: body !== undefined && !isForm,
       extra: { Accept: "*/*" },
     });
 
@@ -239,14 +240,14 @@ export async function apiDownloadBlob(
       method,
       headers,
       credentials: "include",
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: isForm ? formData : body !== undefined ? JSON.stringify(body) : undefined,
       signal,
     });
 
     if (response.status === 401 && shouldAttemptRefresh(path, auth, retry)) {
       const recovered = await handleUnauthorizedRetry();
       if (recovered.ok) {
-        return apiDownloadBlob(path, { method, auth, retry: false, signal, body });
+        return apiDownloadBlob(path, { method, auth, retry: false, signal, body, formData });
       }
     }
 
@@ -285,10 +286,25 @@ export async function apiDownloadBlob(
         ? decodeURIComponent(plainMatch[1].replace(/"/g, "").trim())
         : undefined;
 
+    const importSummaryHeader = response.headers.get("X-Access-Import-Summary") || "";
+    let importSummary;
+    if (importSummaryHeader) {
+      try {
+        const padded = importSummaryHeader.replace(/-/g, "+").replace(/_/g, "/");
+        const padLen = (4 - (padded.length % 4)) % 4;
+        const binary = atob(padded + "=".repeat(padLen));
+        const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+        importSummary = JSON.parse(new TextDecoder().decode(bytes));
+      } catch {
+        importSummary = undefined;
+      }
+    }
+
     return {
       blob,
       filename,
       contentType: contentType || blob.type || "application/octet-stream",
+      importSummary,
     };
   } catch (err) {
     throw normalizeApiError(err);

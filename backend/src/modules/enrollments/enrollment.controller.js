@@ -14,6 +14,7 @@ const attendanceService = require("./attendance.service");
 const { logEvent } = require("../../services/logging");
 const { sendWorkbook } = require("../reports/excel");
 const { sendMdb, wantsAccess } = require("../reports/access");
+const { convertAndImportAccess } = require("./participantImport.service");
 const { ENROLLMENT_STATUSES } = require("../courses/domain.constants");
 
 const { toPublicParticipant } = participantService;
@@ -40,7 +41,14 @@ const getParticipant = asyncHandler(async (req, res) => {
     role: req.user.role,
     participantId: req.params.participantId,
   });
-  return success(res, toPublicParticipant(participant, { includeEmergency: true, includeAge: true }));
+  return success(
+    res,
+    toPublicParticipant(participant, {
+      includeEmergency: true,
+      includeAge: true,
+      includeBiometrics: req.user.role === "ADMIN",
+    }),
+  );
 });
 
 const updateParticipant = asyncHandler(async (req, res) => {
@@ -484,6 +492,7 @@ const adminSearchParticipants = asyncHandler(async (req, res) => {
     classId: req.query.classId,
     registeredFrom: req.query.registeredFrom,
     registeredTo: req.query.registeredTo,
+    missingPhone: req.query.missingPhone,
     page: req.query.page,
     limit: req.query.limit,
   });
@@ -501,6 +510,7 @@ const adminExportParticipants = asyncHandler(async (req, res) => {
       classId: req.query.classId,
       registeredFrom: req.query.registeredFrom,
       registeredTo: req.query.registeredTo,
+      missingPhone: req.query.missingPhone,
     },
     { format: req.query.format },
   );
@@ -521,6 +531,42 @@ const adminCreateParticipant = asyncHandler(async (req, res) => {
     },
     201,
   );
+});
+
+/**
+ * ADMIN — upload Access (.mdb/.accdb) → Excel download.
+ * Query `import=true` (default) also upserts person-like rows into شاگردان,
+ * including fingerprint / face / card / leftover columns.
+ */
+const adminConvertAccessParticipants = asyncHandler(async (req, res) => {
+  if (!req.file?.buffer?.length) {
+    throw new AppError("فایل اکسس ارسال نشده است.", {
+      statusCode: 400,
+      code: "ACCESS_FILE_REQUIRED",
+    });
+  }
+  const importFlag = String(req.query.import ?? req.body?.import ?? "true").toLowerCase();
+  const importRows = importFlag !== "false" && importFlag !== "0";
+
+  const out = await convertAndImportAccess({
+    buffer: req.file.buffer,
+    originalName: req.file.originalname,
+    actorId: req.user._id,
+    importRows,
+  });
+
+  const summaryJson = JSON.stringify(out.summary || {});
+  res.setHeader(
+    "X-Access-Import-Summary",
+    Buffer.from(summaryJson, "utf8").toString("base64url"),
+  );
+  logEvent("ADMIN_ACCESS_TO_EXCEL", {
+    actorId: String(req.user._id),
+    importRows,
+    created: out.summary?.created,
+    updated: out.summary?.updated,
+  });
+  return sendWorkbook(res, { buffer: out.buffer, filename: out.filename });
 });
 
 const markAttendance = asyncHandler(async (req, res) => {
@@ -598,6 +644,7 @@ module.exports = {
   adminSearchUsers,
   adminSearchParticipants,
   adminCreateParticipant,
+  adminConvertAccessParticipants,
   adminExportParticipants,
   markAttendance,
   submitSessionAttendance,

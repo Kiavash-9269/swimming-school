@@ -152,10 +152,44 @@ export default function AdminParticipantDetailPage() {
               {participant.createdByAdmin ? " · افزوده‌شده توسط مدیر" : ""}
             </dd>
           </div>
+          <div>
+            <dt className="text-xs text-slate-500">کد خارجی / دستگاه</dt>
+            <dd className="font-mono text-xs">{participant.externalId || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">شماره کارت</dt>
+            <dd>{participant.cardNumber || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">اثر انگشت</dt>
+            <dd>
+              {participant.hasFingerprint
+                ? `ثبت‌شده${participant.fingerprint ? ` (${Number(participant.fingerprint.length).toLocaleString("fa-IR")} کاراکتر)` : ""}`
+                : "ندارد"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">چهره</dt>
+            <dd>
+              {participant.hasFaceData
+                ? `ثبت‌شده${participant.faceData ? ` (${Number(participant.faceData.length).toLocaleString("fa-IR")} کاراکتر)` : ""}`
+                : "ندارد"}
+            </dd>
+          </div>
           {participant.notes ? (
             <div className="sm:col-span-2">
               <dt className="text-xs text-slate-500">یادداشت</dt>
               <dd className="whitespace-pre-line">{participant.notes}</dd>
+            </div>
+          ) : null}
+          {participant.importedFields && typeof participant.importedFields === "object" ? (
+            <div className="sm:col-span-2">
+              <dt className="text-xs text-slate-500">سایر فیلدهای واردشده از اکسس</dt>
+              <dd className="mt-1 overflow-x-auto rounded-xl bg-slate-50 p-3 font-mono text-[11px] text-slate-700">
+                <pre className="whitespace-pre-wrap">
+                  {JSON.stringify(participant.importedFields, null, 2)}
+                </pre>
+              </dd>
             </div>
           ) : null}
         </dl>

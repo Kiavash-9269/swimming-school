@@ -31,6 +31,7 @@ export const NOTIFICATION_TYPE_LABELS = {
   CLASS_CANCELLED: "لغو کلاس",
   CLASS_RESCHEDULED: "تغییر زمان کلاس",
   ATTENDANCE_ABSENT: "غیبت",
+  REGISTRATION_DISCOUNT: "تخفیف ثبت‌نام (باشگاه)",
 };
 
 export const NOTIFICATION_TYPE_OPTIONS = Object.keys(NOTIFICATION_TYPE_LABELS);

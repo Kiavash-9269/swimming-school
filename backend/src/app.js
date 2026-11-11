@@ -47,6 +47,7 @@ function createApp() {
         return callback(null, false);
       },
       credentials: true,
+      exposedHeaders: ["Content-Disposition", "X-Access-Import-Summary"],
     }),
   );
 

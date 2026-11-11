@@ -63,6 +63,13 @@ const participantSchema = new mongoose.Schema(
     registeredAt: { type: Date, default: Date.now, index: true },
     createdByAdmin: { type: Boolean, default: false },
     notes: { type: String, trim: true, maxlength: 1000, default: "" },
+    // Biometrics / device IDs (e.g. from Access attendance DBs) — stored as text/base64.
+    fingerprint: { type: String, default: "", maxlength: 500000 },
+    faceData: { type: String, default: "", maxlength: 500000 },
+    cardNumber: { type: String, trim: true, maxlength: 64, default: "" },
+    externalId: { type: String, trim: true, maxlength: 120, default: "", index: true },
+    /** Leftover Access/Excel columns that are not mapped to first-class fields. */
+    importedFields: { type: mongoose.Schema.Types.Mixed, default: null },
     isActive: { type: Boolean, default: true, index: true },
     deactivatedAt: { type: Date, default: null },
   },
@@ -72,6 +79,7 @@ const participantSchema = new mongoose.Schema(
 participantSchema.index({ ownerUserId: 1, firstName: 1, lastName: 1, birthDate: 1 });
 participantSchema.index({ ownerUserId: 1, isActive: 1 });
 participantSchema.index({ lastName: 1, firstName: 1 });
+participantSchema.index({ cardNumber: 1 }, { sparse: true });
 
 const Participant = mongoose.model("Participant", participantSchema);
 

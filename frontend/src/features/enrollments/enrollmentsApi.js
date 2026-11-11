@@ -310,6 +310,7 @@ function adminParticipantQuery({
   classId,
   registeredFrom,
   registeredTo,
+  missingPhone,
 } = {}) {
   const params = new URLSearchParams();
   if (registeredFrom) params.set("registeredFrom", String(registeredFrom));
@@ -322,6 +323,7 @@ function adminParticipantQuery({
   if (ownerUserId) params.set("ownerUserId", String(ownerUserId));
   if (enrolled === true || enrolled === false) params.set("enrolled", String(enrolled));
   if (classId) params.set("classId", String(classId));
+  if (missingPhone === true || missingPhone === false) params.set("missingPhone", String(missingPhone));
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
@@ -341,6 +343,24 @@ export function exportAdminParticipants({ signal, format, ...filters } = {}) {
     method: "GET",
     auth: true,
     signal,
+  });
+}
+
+/**
+ * POST /enrollments/admin/participants/access-convert
+ * Upload Access (.mdb/.accdb) → Excel download. With import=true (default), also saves
+ * person rows into شاگردان including fingerprint / face / card / extra columns.
+ * @returns {{ blob, filename, importSummary? }}
+ */
+export function convertAccessParticipants(file, { importRows = true, signal } = {}) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const qs = `?import=${importRows ? "true" : "false"}`;
+  return apiDownloadBlob(`/enrollments/admin/participants/access-convert${qs}`, {
+    method: "POST",
+    auth: true,
+    signal,
+    formData,
   });
 }
 

@@ -71,6 +71,12 @@ const TEMPLATES = {
     fa: "شما در روز {{dayLabel}} ساعت {{timeLabel}} در کلاس «{{classTitle}}» غایب بودید.",
     en: "You were absent from class «{{classTitle}}» on {{dayLabel}} at {{timeLabel}}.",
   },
+  [NOTIFICATION_TYPES.REGISTRATION_DISCOUNT]: {
+    version: "v1",
+    // Avoid http(s) URLs — Niksms may reject messages containing links (LinkNotAllowed).
+    fa: "مدرسه شنا ایران استرالیا: عضو باشگاه هستید؛ برای ثبت‌نام آنلاین با تخفیف ویژه به سایت مدرسه مراجعه کنید.",
+    en: "Iran-Australia Swimming School: club members can register online with a special discount on our website.",
+  },
 };
 
 function applyVars(body, vars = {}) {

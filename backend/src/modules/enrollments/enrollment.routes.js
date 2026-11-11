@@ -3,6 +3,7 @@ const { authenticate, authorize } = require("../../middleware/authenticate");
 const { validate } = require("../../middleware/validate");
 const { createLimiter } = require("../../middleware/rateLimit");
 const { singleDocumentUpload } = require("../../middleware/upload");
+const { singleAccessUpload } = require("../../middleware/uploadAccess");
 const controller = require("./enrollment.controller");
 const {
   participantBody,
@@ -144,6 +145,14 @@ router.get(
   adminLimiter,
   validate(paginationQuery, "query"),
   controller.adminExportParticipants,
+);
+router.post(
+  "/admin/participants/access-convert",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  singleAccessUpload("file"),
+  controller.adminConvertAccessParticipants,
 );
 router.post(
   "/admin/participants",

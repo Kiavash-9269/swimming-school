@@ -19,6 +19,7 @@ import EmptyState from "../../components/Ui/EmptyState";
 import ForbiddenState from "../../components/Ui/ForbiddenState";
 import PersianDateField from "../../components/Ui/PersianDateField";
 import AdminParticipantCreatePanel from "../../features/participants/components/AdminParticipantCreatePanel";
+import AccessConvertPanel from "../../features/participants/components/AccessConvertPanel";
 
 const GENDER_OPTIONS = ["MALE", "FEMALE"];
 const PAGE_SIZE = 20;
@@ -50,9 +51,11 @@ export default function AdminParticipantsPage() {
   const showAll = searchParams.get("scope") === "all";
   const registeredFrom = searchParams.get("from") || "";
   const registeredTo = searchParams.get("to") || "";
+  const missingPhoneParam = searchParams.get("missingPhone") || "";
 
   const [qInput, setQInput] = useState(qParam);
   const [createOpen, setCreateOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const toast = useToast();
   const [items, setItems] = useState([]);
@@ -82,8 +85,19 @@ export default function AdminParticipantsPage() {
       classId: classId || undefined,
       registeredFrom: registeredFrom || undefined,
       registeredTo: registeredTo || undefined,
+      missingPhone:
+        missingPhoneParam === "true" ? true : missingPhoneParam === "false" ? false : undefined,
     };
-  }, [qParam, gender, isActiveParam, showAll, classId, registeredFrom, registeredTo]);
+  }, [
+    qParam,
+    gender,
+    isActiveParam,
+    showAll,
+    classId,
+    registeredFrom,
+    registeredTo,
+    missingPhoneParam,
+  ]);
 
   async function handleExport(format = "xlsx") {
     const access = format === "access";
@@ -188,7 +202,10 @@ export default function AdminParticipantsPage() {
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => setCreateOpen((v) => !v)}
+          onClick={() => {
+            setCreateOpen((v) => !v);
+            if (!createOpen) setAccessOpen(false);
+          }}
           className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
         >
           {createOpen ? "بستن فرم افزودن" : "+ افزودن شاگرد"}
@@ -211,10 +228,31 @@ export default function AdminParticipantsPage() {
         >
           خروجی اکسس
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAccessOpen((v) => !v);
+            if (!accessOpen) setCreateOpen(false);
+          }}
+          className="rounded-xl border border-cyan-700 bg-white px-4 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-50"
+          title="آپلود فایل اکسس و تبدیل به اکسل؛ ذخیره اثر انگشت و چهره در شاگردان"
+        >
+          {accessOpen ? "بستن تبدیل اکسس" : "تبدیل اکسس به اکسل"}
+        </button>
       </div>
 
       {createOpen ? (
         <AdminParticipantCreatePanel onCreated={handleCreated} onClose={() => setCreateOpen(false)} />
+      ) : null}
+
+      {accessOpen ? (
+        <AccessConvertPanel
+          onClose={() => setAccessOpen(false)}
+          onImported={() => {
+            toast.success("اطلاعات شاگردان از فایل اکسس ذخیره شد.");
+            handleCreated();
+          }}
+        />
       ) : null}
 
       <form
@@ -270,6 +308,18 @@ export default function AdminParticipantsPage() {
             <option value="">همه</option>
             <option value="true">فعال</option>
             <option value="false">غیرفعال</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="text-xs text-slate-500">موبایل</span>
+          <select
+            value={missingPhoneParam}
+            onChange={(e) => setFilter("missingPhone", e.target.value)}
+            className="mt-1 block rounded-xl border border-slate-200 px-3 py-2"
+          >
+            <option value="">همه</option>
+            <option value="true">بدون موبایل</option>
+            <option value="false">دارای موبایل</option>
           </select>
         </label>
         <div className="text-sm">

@@ -2,6 +2,7 @@ const { z } = require("zod");
 const { success } = require("../../utils/apiResponse");
 const { asyncHandler } = require("../../middleware/errorHandler");
 const notificationService = require("./notification.service");
+const { enqueueRegistrationDiscountSms, DEFAULT_TEST_PHONE } = require("./promoSms.service");
 const { getSchedulerStatus } = require("../ops/scheduler");
 const { listJobLocks } = require("../ops/schedulerLock.model");
 const { runAllJobs, jobExpireReservations, jobExpirePayments, jobProcessNotifications } = require("../ops/jobs");
@@ -23,6 +24,20 @@ const listQuery = z.object({
 
 const idParams = z.object({
   id: objectId,
+});
+
+const promoSmsBody = z.object({
+  audience: z.enum(["test", "club_with_phone"]),
+  testPhone: z
+    .string()
+    .trim()
+    .regex(/^09\d{9}$/)
+    .optional()
+    .default(DEFAULT_TEST_PHONE),
+  message: z.string().trim().max(400).optional(),
+  campaignKey: z.string().trim().max(64).optional(),
+  /** Immediate provider send (test only). Club audience always queues. */
+  sendNow: z.boolean().optional().default(true),
 });
 
 const listNotifications = asyncHandler(async (req, res) => {
@@ -71,9 +86,22 @@ const runProcessNotifications = asyncHandler(async (_req, res) => {
   return success(res, result);
 });
 
+const sendPromoSms = asyncHandler(async (req, res) => {
+  const result = await enqueueRegistrationDiscountSms({
+    audience: req.body.audience,
+    testPhone: req.body.testPhone,
+    message: req.body.message,
+    campaignKey: req.body.campaignKey,
+    sendNow: req.body.audience === "test" ? req.body.sendNow !== false : false,
+    actorId: req.user._id,
+  });
+  return success(res, result, 201);
+});
+
 module.exports = {
   listQuery,
   idParams,
+  promoSmsBody,
   listNotifications,
   getNotification,
   retryNotification,
@@ -82,4 +110,5 @@ module.exports = {
   runExpireReservations,
   runExpirePayments,
   runProcessNotifications,
+  sendPromoSms,
 };

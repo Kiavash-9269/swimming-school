@@ -26,7 +26,10 @@ const ACTIVE_HISTORY_BLOCKING = [
   ENROLLMENT_STATUSES.WAITLISTED,
 ];
 
-function toPublicParticipant(doc, { includeEmergency = false, includeAge = false, asOf = new Date() } = {}) {
+function toPublicParticipant(
+  doc,
+  { includeEmergency = false, includeAge = false, includeBiometrics = false, asOf = new Date() } = {},
+) {
   if (!doc) return null;
   const base = {
     id: String(doc._id),
@@ -43,11 +46,20 @@ function toPublicParticipant(doc, { includeEmergency = false, includeAge = false
     registeredAt: doc.registeredAt || doc.createdAt,
     createdByAdmin: Boolean(doc.createdByAdmin),
     notes: doc.notes || "",
+    cardNumber: doc.cardNumber || "",
+    externalId: doc.externalId || "",
+    hasFingerprint: Boolean(doc.fingerprint),
+    hasFaceData: Boolean(doc.faceData),
     isActive: doc.isActive,
     deactivatedAt: doc.deactivatedAt || null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
+  if (includeBiometrics) {
+    base.fingerprint = doc.fingerprint || "";
+    base.faceData = doc.faceData || "";
+    base.importedFields = doc.importedFields || null;
+  }
   if (includeAge) {
     try {
       base.age = ageFromBirthDate(doc.birthDate, asOf);
@@ -174,6 +186,11 @@ async function updateParticipant({ userId, role, participantId, data }) {
   if (role === "ADMIN") {
     if (data.registeredAt != null) participant.registeredAt = data.registeredAt;
     if (data.notes != null) participant.notes = data.notes;
+    if (data.fingerprint != null) participant.fingerprint = data.fingerprint;
+    if (data.faceData != null) participant.faceData = data.faceData;
+    if (data.cardNumber != null) participant.cardNumber = data.cardNumber;
+    if (data.externalId != null) participant.externalId = data.externalId;
+    if (data.importedFields !== undefined) participant.importedFields = data.importedFields;
   }
 
   await participant.save();
@@ -300,6 +317,10 @@ async function createParticipantByAdmin({ actorId, data }) {
     emergencyContact: data.emergencyContact || {},
     registeredAt: data.registeredAt || new Date(),
     notes: data.notes || "",
+    fingerprint: data.fingerprint || "",
+    faceData: data.faceData || "",
+    cardNumber: data.cardNumber || "",
+    externalId: data.externalId || "",
     createdByAdmin: true,
     isActive: true,
   });
@@ -361,6 +382,7 @@ async function buildAdminParticipantFilter({
   classId,
   registeredFrom,
   registeredTo,
+  missingPhone,
 } = {}) {
   const filter = {};
   const and = [];
@@ -374,6 +396,11 @@ async function buildAdminParticipantFilter({
   }
   if (gender) filter.gender = gender;
   if (isActive === true || isActive === false) filter.isActive = isActive;
+  if (missingPhone === true) {
+    and.push({ $or: [{ phone: "" }, { phone: null }, { phone: { $exists: false } }] });
+  } else if (missingPhone === false) {
+    and.push({ phone: { $regex: /^09\d{9}$/ } });
+  }
   if (q && String(q).trim()) {
     const term = String(q).trim().slice(0, 80);
     const ownerIds = /^09\d{9}$/.test(term) ? await User.distinct("_id", { phone: term }) : [];
@@ -466,6 +493,10 @@ const EXPORT_COLUMNS = [
   { header: "وضعیت پرونده", key: "isActive", width: 12 },
   { header: "تاریخ عضویت", key: "registeredAt", width: 13 },
   { header: "افزوده‌شده توسط مدیر", key: "createdByAdmin", width: 14 },
+  { header: "کد خارجی", key: "externalId", width: 14 },
+  { header: "شماره کارت", key: "cardNumber", width: 14 },
+  { header: "اثر انگشت", key: "hasFingerprint", width: 12 },
+  { header: "چهره", key: "hasFaceData", width: 10 },
   { header: "یادداشت", key: "notes", width: 35 },
 ];
 
@@ -515,6 +546,10 @@ async function exportParticipantsAdmin(filters = {}, { format } = {}) {
       isActive: p.isActive ? "فعال" : "غیرفعال",
       registeredAt: formatFaDate(p.registeredAt || p.createdAt),
       createdByAdmin: Boolean(p.createdByAdmin),
+      externalId: p.externalId || "",
+      cardNumber: p.cardNumber || "",
+      hasFingerprint: Boolean(p.fingerprint) ? "دارد" : "ندارد",
+      hasFaceData: Boolean(p.faceData) ? "دارد" : "ندارد",
       notes: p.notes || "",
     };
   });
@@ -537,6 +572,7 @@ module.exports = {
   getParticipantAuthorized,
   createParticipant,
   createParticipantByAdmin,
+  findOrCreateOwnerAccount,
   updateParticipant,
   deactivateParticipant,
   listOwnerParticipants,

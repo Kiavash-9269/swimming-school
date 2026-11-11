@@ -41,6 +41,8 @@ const participantBody = z
   })
   .strict();
 
+const biometricString = z.string().max(500000).optional();
+
 const participantUpdateBody = z
   .object({
     firstName: z.string().trim().min(2).max(80).optional(),
@@ -59,6 +61,10 @@ const participantUpdateBody = z
     emergencyContact: emergencyContactSchema.optional(),
     registeredAt: z.coerce.date().optional(),
     notes: z.string().trim().max(1000).optional(),
+    fingerprint: biometricString,
+    faceData: biometricString,
+    cardNumber: z.string().trim().max(64).optional(),
+    externalId: z.string().trim().max(120).optional(),
   })
   .strict();
 
@@ -84,6 +90,10 @@ const adminParticipantBody = z
     emergencyContact: emergencyContactSchema.optional(),
     registeredAt: z.coerce.date().optional(),
     notes: z.string().trim().max(1000).optional().default(""),
+    fingerprint: biometricString.default(""),
+    faceData: biometricString.default(""),
+    cardNumber: z.string().trim().max(64).optional().default(""),
+    externalId: z.string().trim().max(120).optional().default(""),
   })
   .strict();
 
@@ -213,6 +223,10 @@ const paginationQuery = z.object({
     .transform((v) => (v === undefined ? undefined : v === "true")),
   registeredFrom: z.coerce.date().optional(),
   registeredTo: z.coerce.date().optional(),
+  missingPhone: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
   format: z.enum(["xlsx", "access"]).optional(),
 });
 

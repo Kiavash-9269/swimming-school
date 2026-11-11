@@ -153,7 +153,15 @@ function parsePublicApiPayload(rawText) {
     nikIds = [id, ...nikIds.filter((n) => n !== id)];
   }
 
-  const status = data?.Status ?? parsed?.Status ?? "";
+  // Outer Status is authoritative (e.g. ForbiddenHours=4 while Data.Status may still be 1).
+  const outerStatus = parsed?.Status;
+  const innerStatus = data?.Status;
+  const outerFailed =
+    outerStatus != null &&
+    outerStatus !== "" &&
+    !SUCCESS_STATUSES.has(outerStatus) &&
+    !SUCCESS_STATUSES.has(String(outerStatus));
+  const status = outerFailed ? outerStatus : innerStatus ?? outerStatus ?? "";
 
   return {
     status,
@@ -161,6 +169,8 @@ function parsePublicApiPayload(rawText) {
     warningMessage: data?.WarningMessage || parsed?.WarningMessage || "",
     nikIds: nikIds.length ? nikIds : id || nikId ? [id || nikId] : [],
     raw: text.slice(0, 400),
+    outerStatus: outerStatus != null ? String(outerStatus) : "",
+    innerStatus: innerStatus != null ? String(innerStatus) : "",
   };
 }
 

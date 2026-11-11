@@ -51,3 +51,19 @@ export function listNotificationJobs({ signal } = {}) {
     signal,
   });
 }
+
+/**
+ * POST /api/notifications/promo-sms
+ * audience: test | club_with_phone
+ */
+export function sendPromoSms(
+  { audience = "test", testPhone, message, campaignKey, sendNow = true } = {},
+  { signal } = {},
+) {
+  return apiRequest("/notifications/promo-sms", {
+    method: "POST",
+    auth: true,
+    body: { audience, testPhone, message, campaignKey, sendNow },
+    signal,
+  });
+}

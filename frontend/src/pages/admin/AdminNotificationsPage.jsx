@@ -14,6 +14,7 @@ import {
   formatNotificationTime,
   userMessageFromNotificationError,
 } from "../../features/notifications/notificationLabels";
+import PromoSmsPanel from "../../features/notifications/components/PromoSmsPanel";
 import { StatusPill, AdminPageHeader } from "../../features/courses/components/AdminCourseUi";
 import { DetailSection, ActionBar, EntityCard } from "../../features/ops/OpsUi";
 import { SectionLoader } from "../../components/Ui/Loading";
@@ -108,6 +109,8 @@ export default function AdminNotificationsPage() {
         title="پیام‌ها"
         description="وضعیت ارسال پیامک و ایمیل. اگر پیامی نرسیده باشد، از صفحه همان پیام دوباره تلاش کنید."
       />
+
+      <PromoSmsPanel />
 
       <DetailSection title="پیدا کردن یک پیام" hint="وضعیت، کانال یا مناسبت را محدود کنید.">
         <div className="flex flex-wrap items-end gap-3">

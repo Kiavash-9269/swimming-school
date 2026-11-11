@@ -27,6 +27,10 @@ const EMPTY = {
   emergencyContact: { name: "", phone: "", relationship: "" },
   registeredAt: "",
   notes: "",
+  fingerprint: "",
+  faceData: "",
+  cardNumber: "",
+  externalId: "",
 };
 
 function toEnglishDigits(value) {
@@ -87,6 +91,10 @@ export default function AdminParticipantCreatePanel({ onCreated, onClose }) {
       body.guardianLastName = values.guardianLastName.trim();
     }
     if (values.registeredAt) body.registeredAt = values.registeredAt;
+    body.fingerprint = String(values.fingerprint || "").trim();
+    body.faceData = String(values.faceData || "").trim();
+    body.cardNumber = String(values.cardNumber || "").trim();
+    body.externalId = String(values.externalId || "").trim();
 
     setSubmitting(true);
     try {
@@ -232,6 +240,69 @@ export default function AdminParticipantCreatePanel({ onCreated, onClose }) {
             disabled={submitting}
             onChange={(next) => setValues((prev) => ({ ...prev, ...next }))}
           />
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded-xl border border-slate-200 p-4">
+        <legend className="px-1 text-sm font-medium text-slate-700">بیومتریک و دستگاه (اختیاری)</legend>
+        <p className="mb-3 text-xs text-slate-500">
+          اثر انگشت و چهره معمولاً از فایل اکسس وارد می‌شوند؛ اینجا هم می‌توانید دستی ثبت کنید.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass} htmlFor="externalId">
+              کد خارجی / دستگاه
+            </label>
+            <input
+              id="externalId"
+              className={inputClass}
+              value={values.externalId}
+              disabled={submitting}
+              onChange={(e) => set("externalId", e.target.value)}
+              maxLength={120}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="cardNumber">
+              شماره کارت
+            </label>
+            <input
+              id="cardNumber"
+              className={inputClass}
+              value={values.cardNumber}
+              disabled={submitting}
+              onChange={(e) => set("cardNumber", e.target.value)}
+              maxLength={64}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass} htmlFor="fingerprint">
+              اثر انگشت (قالب / کد)
+            </label>
+            <textarea
+              id="fingerprint"
+              rows={2}
+              className={inputClass}
+              value={values.fingerprint}
+              disabled={submitting}
+              onChange={(e) => set("fingerprint", e.target.value)}
+              placeholder="قالب اثر انگشت یا شناسه دستگاه"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass} htmlFor="faceData">
+              چهره (قالب / داده)
+            </label>
+            <textarea
+              id="faceData"
+              rows={2}
+              className={inputClass}
+              value={values.faceData}
+              disabled={submitting}
+              onChange={(e) => set("faceData", e.target.value)}
+              placeholder="قالب چهره یا دادهٔ دستگاه"
+            />
+          </div>
         </div>
       </fieldset>
 
