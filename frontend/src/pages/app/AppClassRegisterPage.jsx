@@ -54,6 +54,7 @@ const INITIAL_FORM = {
   sportsHistory: "",
   illnessHistory: "",
   termsAccepted: false,
+  insuranceConfirmed: false,
   medicalConfirmed: false,
   emergencyContact: { name: "", phone: "", relationship: "" },
 };
@@ -414,6 +415,7 @@ export default function AppClassRegisterPage() {
     const errs = validateParticipantForm(formValues, {
       requireMedical: true,
       requireTerms: true,
+      requireInsurance: true,
     });
     setFormErrors(errs);
     if (Object.keys(errs).length) return;

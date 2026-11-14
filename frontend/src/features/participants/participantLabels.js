@@ -52,7 +52,12 @@ export function userMessageFromParticipantError(err, fallback = "خطایی رخ
 /** Client-side mirror of Zod rules — backend remains authoritative. */
 export function validateParticipantForm(
   values,
-  { partial = false, requireMedical = false, requireTerms = false } = {},
+  {
+    partial = false,
+    requireMedical = false,
+    requireTerms = false,
+    requireInsurance = false,
+  } = {},
 ) {
   const errors = {};
   const require = (key, ok, msg) => {
@@ -93,6 +98,13 @@ export function validateParticipantForm(
   }
   if (requireTerms) {
     require("termsAccepted", values.termsAccepted === true, "پذیرش شرایط ثبت‌نام الزامی است.");
+  }
+  if (requireInsurance) {
+    require(
+      "insuranceConfirmed",
+      values.insuranceConfirmed === true,
+      "تأیید تهیه کارت بیمه ورزشی الزامی است.",
+    );
   }
   if (values.nationalCode != null) {
     const v = String(values.nationalCode || "").trim();
@@ -139,6 +151,7 @@ export function buildParticipantPayload(values) {
     sportsHistory: String(values.sportsHistory || "").trim(),
     illnessHistory: String(values.illnessHistory || "").trim(),
     termsAccepted: values.termsAccepted === true,
+    insuranceConfirmed: values.insuranceConfirmed === true,
     medicalConfirmed: values.medicalConfirmed === true,
     phone: String(values.phone || "").trim(),
     emergencyContact: {

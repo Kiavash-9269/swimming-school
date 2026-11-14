@@ -327,6 +327,22 @@ export default function ParticipantFormFields({
           <input
             type="checkbox"
             className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-600"
+            checked={values.insuranceConfirmed === true}
+            disabled={disabled}
+            onChange={(e) => set("insuranceConfirmed", e.target.checked)}
+          />
+          <span>
+            تأیید می‌کنم کارت بیمه ورزشی تهیه شده و به دفتر مدرسه شنا ارائه می‌شود.
+          </span>
+        </label>
+        {errors.insuranceConfirmed ? <p className={errClass}>{errors.insuranceConfirmed}</p> : null}
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <label className="flex items-start gap-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-600"
             checked={values.medicalConfirmed === true}
             disabled={disabled}
             onChange={(e) => set("medicalConfirmed", e.target.checked)}

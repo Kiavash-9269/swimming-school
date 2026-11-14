@@ -56,6 +56,7 @@ export default function AppParticipantEditPage() {
           sportsHistory: p.sportsHistory || "",
           illnessHistory: p.illnessHistory || "",
           termsAccepted: Boolean(p.termsAcceptedAt),
+          insuranceConfirmed: p.insuranceConfirmed === true,
           medicalConfirmed: p.medicalConfirmed === true,
           phone: p.phone || "",
           emergencyContact: {

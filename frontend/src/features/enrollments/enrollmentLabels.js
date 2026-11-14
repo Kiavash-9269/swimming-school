@@ -4,7 +4,7 @@ export const ELIGIBILITY_REASON_LABELS = {
   AGE_NOT_ALLOWED: "سن شرکت‌کننده با محدوده کلاس سازگار نیست.",
   GENDER_NOT_ALLOWED: "جنسیت شرکت‌کننده با محدودیت کلاس سازگار نیست.",
   PREREQUISITE_NOT_COMPLETED: "پیش‌نیاز دوره تکمیل نشده است.",
-  INSURANCE_REQUIRED: "بیمه تأییدشده برای این کلاس لازم است.",
+  INSURANCE_REQUIRED: "برای این کلاس تأیید تهیهٔ کارت بیمه ورزشی لازم است.",
   MEDICAL_APPROVAL_REQUIRED: "تأیید پزشکی برای این کلاس لازم است.",
 };
 

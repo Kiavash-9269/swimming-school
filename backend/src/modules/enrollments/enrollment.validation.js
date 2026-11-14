@@ -38,6 +38,7 @@ const profileFields = {
   sportsHistory: z.string().trim().max(300).optional().default(""),
   illnessHistory: z.string().trim().max(300).optional().default(""),
   termsAccepted: z.boolean().optional().default(false),
+  insuranceConfirmed: z.boolean().optional().default(false),
 };
 
 const optionalProfileFields = {
@@ -56,6 +57,7 @@ const optionalProfileFields = {
   sportsHistory: z.string().trim().max(300).optional(),
   illnessHistory: z.string().trim().max(300).optional(),
   termsAccepted: z.boolean().optional(),
+  insuranceConfirmed: z.boolean().optional(),
 };
 
 const participantBody = z

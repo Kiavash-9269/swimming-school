@@ -112,6 +112,8 @@ async function checkEligibility(
   }
 
   if (template.requiresInsurance) {
+    // A self-declared insurance tick replaces a blocking, admin-approved insurance record.
+    const insuranceAttested = participant.insuranceConfirmed === true;
     const insurance = await InsuranceRecord.findOne({
       participantId: participant._id,
       status: COMPLIANCE_STATUSES.APPROVED,
@@ -119,7 +121,7 @@ async function checkEligibility(
     const insuranceOk = isInsuranceValidForPeriod(insurance, { asOf, classStart: courseClass.startDate });
     const insuranceUploaded =
       acceptPendingUploads && (await hasPersistedUpload(InsuranceRecord, participant._id));
-    if (!insuranceOk && !insuranceUploaded) {
+    if (!insuranceAttested && !insuranceOk && !insuranceUploaded) {
       reasons.push("INSURANCE_REQUIRED");
     }
   }

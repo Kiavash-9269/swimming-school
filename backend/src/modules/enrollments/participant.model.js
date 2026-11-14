@@ -76,6 +76,9 @@ const participantSchema = new mongoose.Schema(
     illnessHistory: { type: String, trim: true, maxlength: 300, default: "" },
     // Registration-terms acceptance (school rules, waivers, refund policy).
     termsAcceptedAt: { type: Date, default: null },
+    // Self-declared sports-insurance card instead of a blocking insurance document.
+    insuranceConfirmed: { type: Boolean, default: false },
+    insuranceConfirmedAt: { type: Date, default: null },
     // User attestation instead of a mandatory medical file upload (ENAMAD-era flow).
     medicalConfirmed: { type: Boolean, default: false },
     medicalConfirmedAt: { type: Date, default: null },

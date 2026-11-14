@@ -142,6 +142,54 @@ export default function AdminParticipantDetailPage() {
             <dd>{participant.relation || "—"}</dd>
           </div>
           <div>
+            <dt className="text-xs text-slate-500">کد ملی</dt>
+            <dd className="font-mono text-xs">{participant.nationalCode || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">تلفن تماس</dt>
+            <dd>{participant.contactPhone || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">نام پدر</dt>
+            <dd>{participant.fatherName || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">شغل پدر</dt>
+            <dd>{participant.fatherOccupation || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">مدرسه / مهد</dt>
+            <dd>{participant.schoolName || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">طریقه آشنایی</dt>
+            <dd>{participant.referralSource || "—"}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs text-slate-500">آدرس</dt>
+            <dd className="whitespace-pre-line">{participant.address || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">سابقه بیماری</dt>
+            <dd className="whitespace-pre-line">{participant.illnessHistory || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">سابقه ورزشی</dt>
+            <dd className="whitespace-pre-line">{participant.sportsHistory || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">تأیید بیمه ورزشی</dt>
+            <dd>{participant.insuranceConfirmed ? "تأیید شده" : "تأیید نشده"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-500">پذیرش شرایط ثبت‌نام</dt>
+            <dd>
+              {participant.termsAcceptedAt
+                ? `پذیرفته شده · ${formatExpiryFa(participant.termsAcceptedAt)}`
+                : "پذیرفته نشده"}
+            </dd>
+          </div>
+          <div>
             <dt className="text-xs text-slate-500">مالک حساب</dt>
             <dd className="font-mono text-xs">{participant.ownerUserId || "—"}</dd>
           </div>

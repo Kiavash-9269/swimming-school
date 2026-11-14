@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createParticipant } from "../../features/participants/participantsApi";
 import ParticipantFormFields from "../../features/participants/components/ParticipantFormFields";
+import RegistrationTerms from "../../features/participants/components/RegistrationTerms";
 import {
   buildParticipantPayload,
   userMessageFromParticipantError,
@@ -27,6 +28,8 @@ const empty = {
   sportsHistory: "",
   illnessHistory: "",
   medicalConfirmed: false,
+  insuranceConfirmed: false,
+  termsAccepted: false,
   emergencyContact: { name: "", phone: "", relationship: "" },
 };
 
@@ -41,7 +44,7 @@ export default function AppParticipantNewPage() {
   async function onSubmit(e) {
     e.preventDefault();
     if (submitting) return;
-    const nextErrors = validateParticipantForm(values);
+    const nextErrors = validateParticipantForm(values, { requireTerms: true });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
@@ -76,6 +79,12 @@ export default function AppParticipantNewPage() {
           errors={errors}
           onChange={setValues}
           disabled={submitting}
+        />
+        <RegistrationTerms
+          accepted={values.termsAccepted === true}
+          error={errors.termsAccepted}
+          disabled={submitting}
+          onChange={(accepted) => setValues((prev) => ({ ...prev, termsAccepted: accepted }))}
         />
         {formError ? (
           <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">

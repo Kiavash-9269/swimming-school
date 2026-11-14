@@ -50,6 +50,8 @@ function toPublicParticipant(
     sportsHistory: doc.sportsHistory || "",
     illnessHistory: doc.illnessHistory || "",
     termsAcceptedAt: doc.termsAcceptedAt || null,
+    insuranceConfirmed: Boolean(doc.insuranceConfirmed),
+    insuranceConfirmedAt: doc.insuranceConfirmedAt || null,
     medicalConfirmed: Boolean(doc.medicalConfirmed),
     medicalConfirmedAt: doc.medicalConfirmedAt || null,
     registeredAt: doc.registeredAt || doc.createdAt,
@@ -147,6 +149,8 @@ async function createParticipant({ ownerUserId, data }) {
     sportsHistory: data.sportsHistory || "",
     illnessHistory: data.illnessHistory || "",
     termsAcceptedAt: data.termsAccepted ? new Date() : null,
+    insuranceConfirmed: Boolean(data.insuranceConfirmed),
+    insuranceConfirmedAt: data.insuranceConfirmed ? new Date() : null,
     medicalConfirmed: Boolean(data.medicalConfirmed),
     medicalConfirmedAt: data.medicalConfirmed ? new Date() : null,
     emergencyContact: data.emergencyContact || {},
@@ -199,6 +203,15 @@ async function updateParticipant({ userId, role, participantId, data }) {
   }
   if (data.termsAccepted === true && !participant.termsAcceptedAt) {
     participant.termsAcceptedAt = new Date();
+  }
+  if (data.insuranceConfirmed != null) {
+    const next = Boolean(data.insuranceConfirmed);
+    if (next && !participant.insuranceConfirmed) {
+      participant.insuranceConfirmedAt = new Date();
+    } else if (!next) {
+      participant.insuranceConfirmedAt = null;
+    }
+    participant.insuranceConfirmed = next;
   }
   if (data.medicalConfirmed != null) {
     const next = Boolean(data.medicalConfirmed);
@@ -354,6 +367,8 @@ async function createParticipantByAdmin({ actorId, data }) {
     sportsHistory: data.sportsHistory || "",
     illnessHistory: data.illnessHistory || "",
     termsAcceptedAt: data.termsAccepted ? new Date() : null,
+    insuranceConfirmed: Boolean(data.insuranceConfirmed),
+    insuranceConfirmedAt: data.insuranceConfirmed ? new Date() : null,
     medicalConfirmed: Boolean(data.medicalConfirmed),
     medicalConfirmedAt: data.medicalConfirmed ? new Date() : null,
     emergencyContact: data.emergencyContact || {},
