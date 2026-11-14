@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 import heroPoster from "../../assets/images/swimming-pictures-2aq7n1d6lib0rt2n.jpg";
 
 const HERO_ELEMENTS = [
@@ -169,7 +168,6 @@ export default function HomeHero() {
                 leading-7
                 md:leading-8
                 opacity-90
-                
                 text-right
               "
             >
@@ -179,14 +177,14 @@ export default function HomeHero() {
             </p>
           </div>
 
-          {/* Buttons */}
+          {/* Buttons — aligned right, below the text */}
           <div
             className={`
               flex flex-col
-              sm:flex-row-reverse
+              sm:flex-row
               gap-4
               justify-start
-              items-start
+              items-stretch
               transition-all duration-700 will-change-transform
               ${
                 isVisible(5)
