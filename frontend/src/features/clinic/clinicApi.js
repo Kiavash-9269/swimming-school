@@ -25,12 +25,37 @@ export function reportClinicPaid(registrationId, { trackingCode, note } = {}, { 
   });
 }
 
+/** ADMIN: every clinic program (with its registration counts). */
+export function listAdminClinics({ signal } = {}) {
+  return apiRequest("/clinic/admin/clinics", { method: "GET", auth: true, signal });
+}
+
+/** ADMIN: create a clinic. */
+export function createAdminClinic(body, { signal } = {}) {
+  return apiRequest("/clinic/admin/clinics", { method: "POST", auth: true, body, signal });
+}
+
+/** ADMIN: edit a clinic. */
+export function updateAdminClinic(clinicId, body, { signal } = {}) {
+  return apiRequest(`/clinic/admin/clinics/${clinicId}`, {
+    method: "PATCH",
+    auth: true,
+    body,
+    signal,
+  });
+}
+
+/** ADMIN: delete a clinic (its registrations are kept, detached). */
+export function deleteAdminClinic(clinicId, { signal } = {}) {
+  return apiRequest(`/clinic/admin/clinics/${clinicId}`, { method: "DELETE", auth: true, signal });
+}
+
 /** ADMIN: everyone who registered for the clinic, with review counts. */
 export function listAdminClinicRegistrations(
-  { status, paymentStatus, q, page = 1, limit = 100, signal } = {},
+  { status, paymentStatus, clinicId, q, page = 1, limit = 100, signal } = {},
 ) {
   const params = new URLSearchParams();
-  Object.entries({ status, paymentStatus, q, page, limit }).forEach(([key, value]) => {
+  Object.entries({ status, paymentStatus, clinicId, q, page, limit }).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
     params.set(key, String(value));
   });

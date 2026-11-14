@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../services/useAuth";
 import {
@@ -78,15 +78,83 @@ function CardBox({ cardToCard }) {
   );
 }
 
+function ClinicCard({ clinic, selected, onSelect }) {
+  return (
+    <section
+      className={`rounded-2xl border p-5 text-sm leading-8 ${
+        selected
+          ? "border-cyan-400/60 bg-cyan-400/10 text-white"
+          : "border-white/10 bg-white/5 text-white/80"
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-white">{clinic.title}</h2>
+          {clinic.subtitle ? (
+            <p className="text-sm text-cyan-200">{clinic.subtitle}</p>
+          ) : null}
+        </div>
+        <span className="rounded-xl bg-white/10 px-3 py-1 text-sm">
+          هزینه: <strong className="text-cyan-200">{formatToman(clinic.priceToman)}</strong>
+        </span>
+      </div>
+
+      {clinic.description ? <p className="mt-3">{clinic.description}</p> : null}
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {clinic.schedule ? <p>زمان: {clinic.schedule}</p> : null}
+        {clinic.location ? <p>محل: {clinic.location}</p> : null}
+        {clinic.startDate || clinic.endDate ? (
+          <p>بازه: {[clinic.startDate, clinic.endDate].filter(Boolean).join(" تا ")}</p>
+        ) : null}
+        <p>
+          ظرفیت باقی‌مانده:{" "}
+          {clinic.remaining == null
+            ? "نامحدود"
+            : `${Number(clinic.remaining).toLocaleString("fa-IR")} نفر`}
+        </p>
+        {clinic.phone ? (
+          <p dir="ltr" className="text-left sm:text-right">
+            تماس: {clinic.phone}
+          </p>
+        ) : null}
+      </div>
+
+      {clinic.notice ? (
+        <p className="mt-3 rounded-xl bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
+          {clinic.notice}
+        </p>
+      ) : null}
+
+      <div className="mt-4">
+        {clinic.enabled ? (
+          <button
+            type="button"
+            onClick={onSelect}
+            className="rounded-xl bg-cyan-500 px-5 py-2 text-sm font-bold text-slate-900 transition hover:bg-cyan-400"
+          >
+            {selected ? "در حال ثبت‌نام" : "ثبت‌نام در این کلینیک"}
+          </button>
+        ) : (
+          <span className="rounded-xl bg-white/10 px-4 py-2 text-xs text-white/70">
+            ثبت‌نام این کلینیک فعلاً بسته است.
+          </span>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /** Public clinic sign-up page (auth required to submit). */
 export default function ClinicPage() {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const toast = useToast();
 
   const [status, setStatus] = useState("loading");
-  const [info, setInfo] = useState(null);
+  const [clinics, setClinics] = useState([]);
   const [cardToCard, setCardToCard] = useState(null);
   const [registrations, setRegistrations] = useState([]);
+  const [selectedId, setSelectedId] = useState("");
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -104,7 +172,8 @@ export default function ClinicPage() {
         getClinicInfo({ signal }),
         getPublicSiteSettings({ signal }),
       ]);
-      setInfo(clinicInfo || null);
+      const list = Array.isArray(clinicInfo?.clinics) ? clinicInfo.clinics : [];
+      setClinics(list);
       setCardToCard(site?.cardToCard || null);
 
       if (isAuthenticated) {
@@ -132,12 +201,19 @@ export default function ClinicPage() {
     setPhone((v) => v || user.phone || "");
   }, [user]);
 
-  const clinic = info?.clinic;
+  const selectedClinic = useMemo(
+    () => clinics.find((row) => row.id === selectedId) || null,
+    [clinics, selectedId],
+  );
 
   async function submit(event) {
     event.preventDefault();
     if (busy) return;
     setFormError("");
+    if (!selectedClinic) {
+      setFormError("ابتدا کلینیکی را که می‌خواهید انتخاب کنید.");
+      return;
+    }
     if (!firstName.trim() || !lastName.trim()) {
       setFormError("نام و نام خانوادگی را کامل کنید.");
       return;
@@ -153,6 +229,7 @@ export default function ClinicPage() {
     setBusy(true);
     try {
       await registerClinic({
+        clinicId: selectedClinic.id,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: phone.trim(),
@@ -180,185 +257,181 @@ export default function ClinicPage() {
     }
   }
 
-  if (status === "loading") return <SectionLoader label="در حال بارگذاری کلینیک…" />;
+  if (status === "loading") return <SectionLoader label="در حال بارگذاری کلینیک‌ها…" />;
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#071826] px-4 py-10 text-white sm:px-6">
       <div className="mx-auto max-w-4xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <Link to="/" className="text-xs text-cyan-300 hover:underline">
-              ← بازگشت به صفحه اصلی
-            </Link>
-            <h1 className="mt-2 text-2xl font-bold md:text-3xl">
-              {clinic?.title || "کلینیک شنا"}
-            </h1>
-            {clinic?.subtitle ? (
-              <p className="mt-1 text-sm text-cyan-200">{clinic.subtitle}</p>
-            ) : null}
-          </div>
-          <div className="rounded-xl bg-white/5 px-4 py-2 text-sm">
-            هزینه: <strong className="text-cyan-200">{formatToman(clinic?.priceToman)}</strong>
-          </div>
+        <div>
+          <Link to="/" className="text-xs text-cyan-300 hover:underline">
+            ← بازگشت به صفحه اصلی
+          </Link>
+          <h1 className="mt-2 text-2xl font-bold md:text-3xl">کلینیک‌های شنا</h1>
+          <p className="mt-1 text-sm text-cyan-200">
+            جلسات تخصصی و متمرکز برای اصلاح تکنیک؛ کلینیک مناسب را انتخاب کنید.
+          </p>
         </div>
 
-        {/* Program details are always public; only registration depends on `enabled`. */}
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm leading-8 text-white/80">
-              <p>{clinic.description}</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {clinic.schedule ? <p>زمان: {clinic.schedule}</p> : null}
-                {clinic.location ? <p>محل: {clinic.location}</p> : null}
-                {clinic.startDate || clinic.endDate ? (
-                  <p>بازه: {[clinic.startDate, clinic.endDate].filter(Boolean).join(" تا ")}</p>
-                ) : null}
-                <p>
-                  ظرفیت باقی‌مانده:{" "}
-                  {info?.remaining == null
-                    ? "نامحدود"
-                    : `${Number(info.remaining).toLocaleString("fa-IR")} نفر`}
-                </p>
-              </div>
-            </section>
+        {clinics.length === 0 ? (
+          <p className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/75">
+            هنوز کلینیکی ثبت نشده است. برای اطلاع از زمان شروع با مدرسه تماس بگیرید.
+          </p>
+        ) : (
+          clinics.map((clinic) => (
+            <ClinicCard
+              key={clinic.id}
+              clinic={clinic}
+              selected={selectedId === clinic.id}
+              onSelect={() => {
+                setSelectedId(clinic.id);
+                setFormError("");
+              }}
+            />
+          ))
+        )}
 
-            {!clinic?.enabled ? (
-              <p className="rounded-2xl border border-amber-300/20 bg-amber-400/10 p-6 text-sm text-amber-100">
-                ثبت‌نام کلینیک در حال حاضر بسته است. برای اطلاع از زمان شروع با مدرسه تماس بگیرید.
-              </p>
-            ) : authLoading ? null : isAuthenticated ? (
-              <section className="rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
-                <h2 className="font-bold">فرم ثبت‌نام کلینیک</h2>
-                <form onSubmit={submit} className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <label className="text-sm">
-                    <span className="text-slate-600">نام</span>
-                    <input
-                      value={firstName}
-                      onChange={(event) => setFirstName(event.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-                      required
-                    />
-                  </label>
-                  <label className="text-sm">
-                    <span className="text-slate-600">نام خانوادگی</span>
-                    <input
-                      value={lastName}
-                      onChange={(event) => setLastName(event.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-                      required
-                    />
-                  </label>
-                  <label className="text-sm">
-                    <span className="text-slate-600">موبایل</span>
-                    <input
-                      value={phone}
-                      onChange={(event) => setPhone(event.target.value)}
-                      dir="ltr"
-                      placeholder="09xxxxxxxxx"
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-right"
-                      required
-                    />
-                  </label>
-                  <label className="text-sm">
-                    <span className="text-slate-600">تاریخ تولد</span>
-                    <div className="mt-1">
-                      <PersianDateField value={birthDate} onChange={setBirthDate} />
-                    </div>
-                  </label>
-                  <label className="text-sm">
-                    <span className="text-slate-600">جنسیت (اختیاری)</span>
-                    <select
-                      value={gender}
-                      onChange={(event) => setGender(event.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-                    >
-                      <option value="">انتخاب کنید</option>
-                      <option value="MALE">آقا</option>
-                      <option value="FEMALE">خانم</option>
-                    </select>
-                  </label>
-                  <label className="text-sm sm:col-span-2">
-                    <span className="text-slate-600">توضیح (اختیاری)</span>
-                    <textarea
-                      value={note}
-                      onChange={(event) => setNote(event.target.value)}
-                      rows={2}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-                    />
-                  </label>
-                  {formError ? (
-                    <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800 sm:col-span-2">
-                      {formError}
-                    </p>
-                  ) : null}
-                  <button
-                    type="submit"
-                    disabled={busy}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-cyan-600 disabled:opacity-60 sm:col-span-2"
-                  >
-                    {busy ? <ButtonSpinner /> : null}
-                    ثبت‌نام در کلینیک
-                  </button>
-                </form>
-              </section>
-            ) : (
-              <section className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-white/80">
-                برای ثبت‌نام در کلینیک ابتدا وارد حساب خود شوید.
-                <Link
-                  to="/auth?from=/clinic"
-                  className="mr-2 inline-flex rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-900"
-                >
-                  ورود / ثبت‌نام
-                </Link>
-              </section>
-            )}
-
-            {registrations.length ? (
-              <section className="space-y-3 rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
-                <h2 className="font-bold">ثبت‌نام‌های کلینیک من</h2>
-                {registrations.map((row) => (
-                  <div key={row.id} className="rounded-xl border border-slate-200 p-3 text-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium">
-                        {row.firstName} {row.lastName}
-                      </span>
-                      <span className="flex flex-wrap gap-2 text-xs">
-                        <span className="rounded-lg bg-slate-100 px-2 py-1">
-                          {STATUS_LABELS[row.status] || row.status}
-                        </span>
-                        <span className="rounded-lg bg-slate-100 px-2 py-1">
-                          {PAYMENT_LABELS[row.paymentStatus] || row.paymentStatus}
-                        </span>
-                      </span>
-                    </div>
-
-                    {row.paymentStatus !== "PAID" && row.status !== "CANCELLED" ? (
-                      <div className="mt-3 space-y-3">
-                        <CardBox cardToCard={cardToCard} />
-                        {row.paymentStatus === "AWAITING_REVIEW" ? (
-                          <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                            پرداخت شما ثبت شده و در انتظار تأیید مدیر است.
-                          </p>
-                        ) : (
-                          <label className="flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
-                            <input
-                              type="checkbox"
-                              onChange={(event) => {
-                                if (event.target.checked) reportPaid(row);
-                                event.target.checked = false;
-                              }}
-                              className="mt-0.5 h-4 w-4 rounded border-slate-400"
-                            />
-                            <span>
-                              مبلغ {formatToman(row.priceToman)} را کارت‌به‌کارت واریز کردم و تأیید
-                              می‌کنم.
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                    ) : null}
+        {selectedClinic?.enabled ? (
+          authLoading ? null : isAuthenticated ? (
+            <section className="rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
+              <h2 className="font-bold">فرم ثبت‌نام — {selectedClinic.title}</h2>
+              <form onSubmit={submit} className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="text-sm">
+                  <span className="text-slate-600">نام</span>
+                  <input
+                    value={firstName}
+                    onChange={(event) => setFirstName(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                    required
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="text-slate-600">نام خانوادگی</span>
+                  <input
+                    value={lastName}
+                    onChange={(event) => setLastName(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                    required
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="text-slate-600">موبایل</span>
+                  <input
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    dir="ltr"
+                    placeholder="09xxxxxxxxx"
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-right"
+                    required
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="text-slate-600">تاریخ تولد</span>
+                  <div className="mt-1">
+                    <PersianDateField value={birthDate} onChange={setBirthDate} />
                   </div>
-                ))}
-              </section>
-            ) : null}
+                </label>
+                <label className="text-sm">
+                  <span className="text-slate-600">جنسیت (اختیاری)</span>
+                  <select
+                    value={gender}
+                    onChange={(event) => setGender(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                  >
+                    <option value="">انتخاب کنید</option>
+                    <option value="MALE">آقا</option>
+                    <option value="FEMALE">خانم</option>
+                  </select>
+                </label>
+                <label className="text-sm sm:col-span-2">
+                  <span className="text-slate-600">توضیح (اختیاری)</span>
+                  <textarea
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    rows={2}
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                  />
+                </label>
+                {formError ? (
+                  <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800 sm:col-span-2">
+                    {formError}
+                  </p>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-cyan-600 disabled:opacity-60 sm:col-span-2"
+                >
+                  {busy ? <ButtonSpinner /> : null}
+                  ثبت‌نام در {selectedClinic.title}
+                </button>
+              </form>
+            </section>
+          ) : (
+            <section className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-white/80">
+              برای ثبت‌نام در کلینیک ابتدا وارد حساب خود شوید.
+              <Link
+                to="/auth?from=/clinic"
+                className="mr-2 inline-flex rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-900"
+              >
+                ورود / ثبت‌نام
+              </Link>
+            </section>
+          )
+        ) : null}
+
+        {registrations.length ? (
+          <section className="space-y-3 rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
+            <h2 className="font-bold">ثبت‌نام‌های کلینیک من</h2>
+            {registrations.map((row) => (
+              <div key={row.id} className="rounded-xl border border-slate-200 p-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">
+                    {row.firstName} {row.lastName}
+                    {row.clinicTitle ? (
+                      <span className="mr-2 rounded-lg bg-cyan-50 px-2 py-0.5 text-xs text-cyan-800">
+                        {row.clinicTitle}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="flex flex-wrap gap-2 text-xs">
+                    <span className="rounded-lg bg-slate-100 px-2 py-1">
+                      {STATUS_LABELS[row.status] || row.status}
+                    </span>
+                    <span className="rounded-lg bg-slate-100 px-2 py-1">
+                      {PAYMENT_LABELS[row.paymentStatus] || row.paymentStatus}
+                    </span>
+                  </span>
+                </div>
+
+                {row.paymentStatus !== "PAID" && row.status !== "CANCELLED" ? (
+                  <div className="mt-3 space-y-3">
+                    <CardBox cardToCard={cardToCard} />
+                    {row.paymentStatus === "AWAITING_REVIEW" ? (
+                      <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        پرداخت شما ثبت شده و در انتظار تأیید مدیر است.
+                      </p>
+                    ) : (
+                      <label className="flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
+                        <input
+                          type="checkbox"
+                          onChange={(event) => {
+                            if (event.target.checked) reportPaid(row);
+                            event.target.checked = false;
+                          }}
+                          className="mt-0.5 h-4 w-4 rounded border-slate-400"
+                        />
+                        <span>
+                          مبلغ {formatToman(row.priceToman)} را کارت‌به‌کارت واریز کردم و تأیید
+                          می‌کنم.
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </section>
+        ) : null}
       </div>
     </div>
   );

@@ -140,13 +140,69 @@ describe("Clinic, student records, admin SMS and card-to-card settings", () => {
     expect(after.body.slice(1, 4).toString("latin1")).toBe("PNG");
   });
 
+  test("admins create, edit and delete clinics", async () => {
+    await bootstrap();
+
+    const forbidden = await request(app)
+      .post("/api/clinic/admin/clinics")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ title: "کلینیک غیرمجاز" });
+    expect(forbidden.status).toBe(403);
+
+    const created = await request(app)
+      .post("/api/clinic/admin/clinics")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ title: "کلینیک الف", priceToman: 500000, enabled: true });
+    expect(created.status).toBe(201);
+    const clinicId = created.body.data.clinic.id;
+    expect(created.body.data.clinic.title).toBe("کلینیک الف");
+
+    const updated = await request(app)
+      .patch(`/api/clinic/admin/clinics/${clinicId}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ title: "کلینیک ب", capacity: 12, enabled: false });
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.clinic.title).toBe("کلینیک ب");
+    expect(updated.body.data.clinic.capacity).toBe(12);
+    expect(updated.body.data.clinic.enabled).toBe(false);
+
+    const adminList = await request(app)
+      .get("/api/clinic/admin/clinics")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(adminList.status).toBe(200);
+    expect(adminList.body.data.items).toHaveLength(1);
+
+    const publicList = await request(app).get("/api/clinic");
+    expect(publicList.status).toBe(200);
+    expect(publicList.body.data.clinics).toHaveLength(1);
+    expect(publicList.body.data.clinics[0].title).toBe("کلینیک ب");
+
+    const removed = await request(app)
+      .delete(`/api/clinic/admin/clinics/${clinicId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(removed.status).toBe(200);
+    expect(removed.body.data.deleted).toBe(true);
+
+    const after = await request(app)
+      .get("/api/clinic/admin/clinics")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(after.body.data.items).toHaveLength(0);
+  });
+
   test("clinic registration, tick, admin review and isolation", async () => {
     await bootstrap();
+
+    const closed = await request(app)
+      .post("/api/clinic/admin/clinics")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ title: "کلینیک بسته", enabled: false });
+    expect(closed.status).toBe(201);
 
     const disabled = await request(app)
       .post("/api/clinic/register")
       .set("Authorization", `Bearer ${userToken}`)
       .send({
+        clinicId: closed.body.data.clinic.id,
         firstName: "سارا",
         lastName: "احمدی",
         phone: "09121110002",
@@ -155,15 +211,18 @@ describe("Clinic, student records, admin SMS and card-to-card settings", () => {
     expect(disabled.status).toBe(400);
     expect(disabled.body.error.code).toBe("CLINIC_DISABLED");
 
-    await request(app)
-      .put("/api/site/admin/clinic")
+    const open = await request(app)
+      .post("/api/clinic/admin/clinics")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ enabled: true, priceToman: 1500000, capacity: 5, title: "کلینیک شنا" });
+    expect(open.status).toBe(201);
+    const clinicId = open.body.data.clinic.id;
 
     const created = await request(app)
       .post("/api/clinic/register")
       .set("Authorization", `Bearer ${userToken}`)
       .send({
+        clinicId,
         firstName: "سارا",
         lastName: "احمدی",
         phone: "09121110002",
@@ -177,6 +236,7 @@ describe("Clinic, student records, admin SMS and card-to-card settings", () => {
       .post("/api/clinic/register")
       .set("Authorization", `Bearer ${userToken}`)
       .send({
+        clinicId,
         firstName: "سارا",
         lastName: "احمدی",
         phone: "09121110002",
@@ -293,15 +353,17 @@ describe("Clinic, student records, admin SMS and card-to-card settings", () => {
   test("admin sends a single SMS and a clinic group SMS", async () => {
     await bootstrap();
 
-    await request(app)
-      .put("/api/site/admin/clinic")
+    const clinic = await request(app)
+      .post("/api/clinic/admin/clinics")
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ enabled: true, priceToman: 1000000 });
+      .send({ enabled: true, priceToman: 1000000, title: "کلینیک پیامکی" });
+    expect(clinic.status).toBe(201);
 
     await request(app)
       .post("/api/clinic/register")
       .set("Authorization", `Bearer ${userToken}`)
       .send({
+        clinicId: clinic.body.data.clinic.id,
         firstName: "سارا",
         lastName: "احمدی",
         phone: "09121110002",

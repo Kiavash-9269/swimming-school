@@ -54,6 +54,14 @@ const clinicRegistrationSchema = new mongoose.Schema(
     reviewedAt: { type: Date, default: null },
     adminNote: { type: String, trim: true, maxlength: 500, default: "" },
 
+    /** The clinic this registration belongs to (null for legacy rows). */
+    clinicId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Clinic",
+      default: null,
+      index: true,
+    },
+
     /** Snapshot of the program price at registration time. */
     priceToman: { type: Number, min: 0, default: 0 },
     clinicTitle: { type: String, trim: true, maxlength: 120, default: "" },

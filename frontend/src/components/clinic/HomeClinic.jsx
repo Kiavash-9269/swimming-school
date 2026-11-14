@@ -20,8 +20,9 @@ export default function HomeClinic() {
     return () => ac.abort();
   }, []);
 
-  const clinic = info?.clinic;
-  if (!clinic?.title && !clinic?.description) return null;
+  const clinics = Array.isArray(info?.clinics) ? info.clinics : [];
+  const clinic = clinics.find((row) => row.enabled) || clinics[0];
+  if (!clinic) return null;
 
   return (
     <section className="relative bg-[#071826] px-4 py-12 text-white sm:px-6 md:py-16" dir="rtl">
@@ -46,9 +47,9 @@ export default function HomeClinic() {
                 <div className="rounded-xl bg-white/5 px-3 py-2">
                   <dt className="text-xs text-white/50">ظرفیت باقی‌مانده</dt>
                   <dd className="mt-1 font-bold text-cyan-200">
-                    {info?.remaining == null
+                    {clinic.remaining == null
                       ? "نامحدود"
-                      : `${Number(info.remaining).toLocaleString("fa-IR")} نفر`}
+                      : `${Number(clinic.remaining).toLocaleString("fa-IR")} نفر`}
                   </dd>
                 </div>
                 {clinic.startDate || clinic.endDate ? (

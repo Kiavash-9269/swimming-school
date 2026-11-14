@@ -35,6 +35,39 @@ router.get(
   validate(controller.adminListQuery, "query"),
   controller.listAdmin,
 );
+router.get(
+  "/admin/clinics",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  controller.listAdminClinics,
+);
+router.post(
+  "/admin/clinics",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  validate(controller.clinicCreateBody),
+  controller.createClinic,
+);
+router.patch(
+  "/admin/clinics/:id",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  validate(controller.idParams, "params"),
+  validate(controller.clinicUpdateBody),
+  controller.updateClinic,
+);
+router.delete(
+  "/admin/clinics/:id",
+  authenticate,
+  authorize("ADMIN"),
+  adminLimiter,
+  validate(controller.idParams, "params"),
+  controller.deleteClinic,
+);
+
 router.patch(
   "/admin/:id",
   authenticate,

@@ -1,11 +1,26 @@
 const { AppError } = require("../../utils/AppError");
 const { ageFromBirthDate, assertValidBirthDate } = require("../../utils/age");
-const settings = require("../site/siteSetting.service");
+const { Clinic } = require("./clinic.model");
 const {
   ClinicRegistration,
   CLINIC_STATUSES,
   CLINIC_PAYMENT_STATUSES,
 } = require("./clinicRegistration.model");
+
+const CLINIC_FIELDS = [
+  "title",
+  "subtitle",
+  "description",
+  "priceToman",
+  "startDate",
+  "endDate",
+  "schedule",
+  "location",
+  "capacity",
+  "phone",
+  "notice",
+  "enabled",
+];
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -20,10 +35,45 @@ function ageOf(birthDate) {
   }
 }
 
+function pickClinicFields(body = {}) {
+  const out = {};
+  for (const field of CLINIC_FIELDS) {
+    if (body[field] !== undefined) out[field] = body[field];
+  }
+  return out;
+}
+
+function toClinic(doc, { registered = 0, confirmed = 0 } = {}) {
+  const row = doc.toObject ? doc.toObject() : doc;
+  const capacity = Number(row.capacity || 0);
+  const taken = Number(registered || 0);
+  return {
+    id: String(row._id),
+    title: row.title || "",
+    subtitle: row.subtitle || "",
+    description: row.description || "",
+    priceToman: Number(row.priceToman || 0),
+    startDate: row.startDate || "",
+    endDate: row.endDate || "",
+    schedule: row.schedule || "",
+    location: row.location || "",
+    capacity,
+    phone: row.phone || "",
+    notice: row.notice || "",
+    enabled: Boolean(row.enabled),
+    registered: taken,
+    confirmed: Number(confirmed || 0),
+    remaining: capacity > 0 ? Math.max(0, capacity - taken) : null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
 function toPublic(doc) {
   const row = doc.toObject ? doc.toObject() : doc;
   return {
     id: String(row._id),
+    clinicId: row.clinicId ? String(row.clinicId) : null,
     firstName: row.firstName || "",
     lastName: row.lastName || "",
     phone: row.phone || "",
@@ -44,21 +94,102 @@ function toPublic(doc) {
   };
 }
 
-async function getPublicInfo() {
-  const clinic = settings.publicClinic(await settings.getClinic());
+async function withCounts(doc) {
   const [registered, confirmed] = await Promise.all([
-    ClinicRegistration.countDocuments({ status: { $ne: CLINIC_STATUSES.CANCELLED } }),
-    ClinicRegistration.countDocuments({ status: CLINIC_STATUSES.CONFIRMED }),
+    ClinicRegistration.countDocuments({
+      clinicId: doc._id,
+      status: { $ne: CLINIC_STATUSES.CANCELLED },
+    }),
+    ClinicRegistration.countDocuments({
+      clinicId: doc._id,
+      status: CLINIC_STATUSES.CONFIRMED,
+    }),
   ]);
-  const remaining =
-    clinic.capacity > 0 ? Math.max(0, clinic.capacity - registered) : null;
-  return { clinic, registered, confirmed, remaining };
+  return toClinic(doc, { registered, confirmed });
 }
 
-async function register({ userId, firstName, lastName, phone, birthDate, gender = null, note = "" }) {
-  const clinic = settings.publicClinic(await settings.getClinic());
+/** Every clinic, newest first, with its registration counts. */
+async function listClinics() {
+  const docs = await Clinic.find({}).sort({ createdAt: -1 });
+  return Promise.all(docs.map(withCounts));
+}
+
+/** Public page: clinics are always listed; `enabled` only controls registration. */
+async function getPublicInfo() {
+  const clinics = await listClinics();
+  return {
+    clinics,
+    registered: clinics.reduce((sum, row) => sum + Number(row.registered || 0), 0),
+    confirmed: clinics.reduce((sum, row) => sum + Number(row.confirmed || 0), 0),
+  };
+}
+
+async function createClinic({ body = {}, actorId = null }) {
+  const fields = pickClinicFields(body);
+  if (!fields.title) {
+    throw new AppError("عنوان کلینیک الزامی است", {
+      statusCode: 400,
+      code: "CLINIC_TITLE_REQUIRED",
+    });
+  }
+  const doc = await Clinic.create({ ...fields, createdBy: actorId || null });
+  return withCounts(doc);
+}
+
+async function updateClinic({ clinicId, patch = {} }) {
+  const doc = await Clinic.findById(clinicId);
+  if (!doc) {
+    throw new AppError("کلینیک یافت نشد", { statusCode: 404, code: "CLINIC_NOT_FOUND" });
+  }
+  Object.assign(doc, pickClinicFields(patch));
+  await doc.save();
+  return withCounts(doc);
+}
+
+/**
+ * Deleting a clinic keeps its registrations as records: they are detached
+ * (clinicId = null) but keep the title/price snapshot.
+ */
+async function deleteClinic({ clinicId }) {
+  const doc = await Clinic.findById(clinicId);
+  if (!doc) {
+    throw new AppError("کلینیک یافت نشد", { statusCode: 404, code: "CLINIC_NOT_FOUND" });
+  }
+  const detached = await ClinicRegistration.updateMany(
+    { clinicId: doc._id },
+    { $set: { clinicId: null } },
+  );
+  await doc.deleteOne();
+  return {
+    deleted: true,
+    id: String(clinicId),
+    detachedRegistrations: detached.modifiedCount || 0,
+  };
+}
+
+async function register({
+  clinicId,
+  userId,
+  firstName,
+  lastName,
+  phone,
+  birthDate,
+  gender = null,
+  note = "",
+}) {
+  if (!clinicId) {
+    throw new AppError("کلینیک را انتخاب کنید", {
+      statusCode: 400,
+      code: "CLINIC_REQUIRED",
+    });
+  }
+
+  const clinic = await Clinic.findById(clinicId);
+  if (!clinic) {
+    throw new AppError("کلینیک یافت نشد", { statusCode: 404, code: "CLINIC_NOT_FOUND" });
+  }
   if (!clinic.enabled) {
-    throw new AppError("ثبت‌نام کلینیک در حال حاضر فعال نیست", {
+    throw new AppError("ثبت‌نام این کلینیک در حال حاضر بسته است", {
       statusCode: 400,
       code: "CLINIC_DISABLED",
     });
@@ -73,11 +204,12 @@ async function register({ userId, firstName, lastName, phone, birthDate, gender 
     });
   }
 
-  if (clinic.capacity > 0) {
+  if (Number(clinic.capacity) > 0) {
     const taken = await ClinicRegistration.countDocuments({
+      clinicId: clinic._id,
       status: { $ne: CLINIC_STATUSES.CANCELLED },
     });
-    if (taken >= clinic.capacity) {
+    if (taken >= Number(clinic.capacity)) {
       throw new AppError("ظرفیت کلینیک تکمیل شده است", {
         statusCode: 409,
         code: "CLINIC_FULL",
@@ -86,6 +218,7 @@ async function register({ userId, firstName, lastName, phone, birthDate, gender 
   }
 
   const duplicate = await ClinicRegistration.findOne({
+    clinicId: clinic._id,
     userId,
     phone,
     firstName,
@@ -100,6 +233,7 @@ async function register({ userId, firstName, lastName, phone, birthDate, gender 
   }
 
   const doc = await ClinicRegistration.create({
+    clinicId: clinic._id,
     userId,
     firstName,
     lastName,
@@ -107,7 +241,7 @@ async function register({ userId, firstName, lastName, phone, birthDate, gender 
     birthDate,
     gender: gender || null,
     note,
-    priceToman: clinic.priceToman,
+    priceToman: Number(clinic.priceToman || 0),
     clinicTitle: clinic.title,
   });
 
@@ -151,10 +285,11 @@ async function reportPaid({ registrationId, userId, trackingCode = "", note = ""
   return { registration: toPublic(doc), alreadyPaid: false };
 }
 
-async function listAdmin({ status, paymentStatus, q, limit = 50, page = 1 }) {
+async function listAdmin({ status, paymentStatus, clinicId, q, limit = 50, page = 1 }) {
   const filter = {};
   if (status) filter.status = status;
   if (paymentStatus) filter.paymentStatus = paymentStatus;
+  if (clinicId) filter.clinicId = clinicId;
   if (q) {
     const rx = new RegExp(escapeRegex(q), "i");
     filter.$or = [{ firstName: rx }, { lastName: rx }, { phone: rx }, { trackingCode: rx }];
@@ -224,7 +359,12 @@ async function smsTargets() {
 }
 
 module.exports = {
+  CLINIC_FIELDS,
+  listClinics,
   getPublicInfo,
+  createClinic,
+  updateClinic,
+  deleteClinic,
   register,
   listMine,
   reportPaid,
