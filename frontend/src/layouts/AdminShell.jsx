@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Bell,
   CalendarDays,
@@ -181,18 +181,11 @@ export default function AdminShell({ user, logout, children }) {
           </div>
         </header>
 
-        <AnimatePresence mode="wait">
-          <motion.main
-            key={pathname}
-            className="admin-page"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {children}
-          </motion.main>
-        </AnimatePresence>
+        {/* Route content mounts immediately (no exit gate) so a throttled tab or a
+            slow device can never show an empty admin page. */}
+        <main key={pathname} className="admin-page step-in">
+          {children}
+        </main>
       </div>
     </div>
   );

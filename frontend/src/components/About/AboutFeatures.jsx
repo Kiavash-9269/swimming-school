@@ -1,6 +1,6 @@
 // src/components/AboutUs.jsx
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
@@ -190,15 +190,11 @@ export default function AboutUs() {
 
             {/* SLIDE CONTENT */}
             <div className="overflow-hidden rounded-2xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentLeaderIndex}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.5 }}
-                  className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6 md:p-8"
-                >
+              {/* No exit gate between team slides: the chosen leader always renders. */}
+              <div
+                key={currentLeaderIndex}
+                className="step-in bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6 md:p-8"
+              >
                   <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
                     {/* PHOTO */}
                     <div className="flex-shrink-0">
@@ -233,8 +229,7 @@ export default function AboutUs() {
                       </p>
                     </div>
                   </div>
-                </motion.div>
-              </AnimatePresence>
+              </div>
             </div>
 
             {/* DOTS */}

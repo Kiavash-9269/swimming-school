@@ -377,25 +377,25 @@ export default function AuthCard() {
         </button>
       )}
 
-      {/* No exit/enter animation around the step form: a throttled background tab
-          or a slow device must never block the next step from rendering. */}
+      {/* Steps swap without an exit animation: the next step must render even when
+          animation frames are throttled. `step-in` only nudges the new content. */}
       <form
         key={step}
+        className="step-in w-full flex flex-col items-center"
         onSubmit={
-            step === STEPS.PHONE
-              ? handlePhoneContinue
-              : step === STEPS.LOGIN_PASSWORD
-                ? handleLogin
-                : step === STEPS.REGISTER_OTP
-                  ? handleVerifyRegisterOtp
-                  : step === STEPS.REGISTER_PROFILE
-                    ? handleRegister
-                    : step === STEPS.RESET_OTP
-                      ? handleVerifyResetOtp
-                      : handleResetPassword
-          }
-          className="w-full flex flex-col items-center"
-        >
+          step === STEPS.PHONE
+            ? handlePhoneContinue
+            : step === STEPS.LOGIN_PASSWORD
+              ? handleLogin
+              : step === STEPS.REGISTER_OTP
+                ? handleVerifyRegisterOtp
+                : step === STEPS.REGISTER_PROFILE
+                  ? handleRegister
+                  : step === STEPS.RESET_OTP
+                    ? handleVerifyResetOtp
+                    : handleResetPassword
+        }
+      >
           <h2 className="text-2xl font-bold mb-2 text-sky-900">{title}</h2>
           <p className="text-xs text-sky-700/80 mb-4 text-center px-4">
             مدرسه شنا ایران استرالیا

@@ -31,6 +31,28 @@ html {
   height: 100%;
 }
 
+/* Content-first transition for view/step swaps: the element is fully visible at
+   rest (no opacity change), so a throttled background tab or a slow device never
+   leaves the next screen invisible while an animation waits for a frame. */
+@keyframes step-in {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.step-in {
+  animation: step-in 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-in {
+    animation: none;
+  }
+}
+
 @font-face {
   font-family: "yekan";
   font-style: normal;
