@@ -21,7 +21,7 @@ export default function HomeClinic() {
   }, []);
 
   const clinic = info?.clinic;
-  if (!clinic?.enabled) return null;
+  if (!clinic?.title && !clinic?.description) return null;
 
   return (
     <section className="relative bg-[#071826] px-4 py-12 text-white sm:px-6 md:py-16" dir="rtl">
@@ -80,14 +80,20 @@ export default function HomeClinic() {
               ) : null}
 
               <div className="flex flex-wrap items-center gap-3 pt-1">
-                <Link
-                  to="/clinic"
-                  className="rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-cyan-400"
-                >
-                  ثبت‌نام در کلینیک
-                </Link>
+                {clinic.enabled ? (
+                  <Link
+                    to="/clinic"
+                    className="rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-cyan-400"
+                  >
+                    ثبت‌نام در کلینیک
+                  </Link>
+                ) : (
+                  <span className="rounded-xl bg-white/10 px-5 py-2.5 text-sm font-bold text-white/80">
+                    ثبت‌نام فعلاً بسته است
+                  </span>
+                )}
                 <span className="text-xs text-white/60">
-                  پرداخت به صورت کارت‌به‌کارت و با تأیید مدیر انجام می‌شود.
+                  {clinic.title ? "جزئیات و شرایط را در صفحه کلینیک ببینید." : null}
                 </span>
               </div>
             </div>

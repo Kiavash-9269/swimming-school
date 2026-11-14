@@ -202,13 +202,8 @@ export default function ClinicPage() {
           </div>
         </div>
 
-        {!clinic?.enabled ? (
-          <p className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/75">
-            ثبت‌نام کلینیک در حال حاضر فعال نیست. برای اطلاع از زمان شروع با مدرسه تماس بگیرید.
-          </p>
-        ) : (
-          <>
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm leading-8 text-white/80">
+        {/* Program details are always public; only registration depends on `enabled`. */}
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm leading-8 text-white/80">
               <p>{clinic.description}</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {clinic.schedule ? <p>زمان: {clinic.schedule}</p> : null}
@@ -225,7 +220,11 @@ export default function ClinicPage() {
               </div>
             </section>
 
-            {authLoading ? null : isAuthenticated ? (
+            {!clinic?.enabled ? (
+              <p className="rounded-2xl border border-amber-300/20 bg-amber-400/10 p-6 text-sm text-amber-100">
+                ثبت‌نام کلینیک در حال حاضر بسته است. برای اطلاع از زمان شروع با مدرسه تماس بگیرید.
+              </p>
+            ) : authLoading ? null : isAuthenticated ? (
               <section className="rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
                 <h2 className="font-bold">فرم ثبت‌نام کلینیک</h2>
                 <form onSubmit={submit} className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -360,8 +359,6 @@ export default function ClinicPage() {
                 ))}
               </section>
             ) : null}
-          </>
-        )}
       </div>
     </div>
   );
