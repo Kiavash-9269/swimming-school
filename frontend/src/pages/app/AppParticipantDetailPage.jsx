@@ -151,6 +151,38 @@ export default function AppParticipantDetailPage() {
             <dd>{participant.fatherOccupation || "—"}</dd>
           </div>
           <div>
+            <dt className="text-xs text-slate-400">نام پدر</dt>
+            <dd>{participant.fatherName || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">کد ملی</dt>
+            <dd>{participant.nationalCode || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">تلفن تماس</dt>
+            <dd>{participant.contactPhone || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">مدرسه / مهد</dt>
+            <dd>{participant.schoolName || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">طریقه آشنایی</dt>
+            <dd>{participant.referralSource || "—"}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs text-slate-400">آدرس</dt>
+            <dd>{participant.address || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">سابقه بیماری</dt>
+            <dd>{participant.illnessHistory || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">سابقه ورزشی</dt>
+            <dd>{participant.sportsHistory || "—"}</dd>
+          </div>
+          <div>
             <dt className="text-xs text-slate-400">تأییدیه سلامت</dt>
             <dd>{participant.medicalConfirmed ? "تأیید شده" : "تأیید نشده"}</dd>
           </div>

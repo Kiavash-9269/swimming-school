@@ -148,6 +148,135 @@ export default function ParticipantFormFields({
         </div>
       </div>
 
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+        <p className="text-sm font-medium text-slate-700">اطلاعات ثبت‌نام</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass} htmlFor="nationalCode">
+              کد ملی
+            </label>
+            <input
+              id="nationalCode"
+              className={inputClass}
+              value={values.nationalCode || ""}
+              disabled={disabled}
+              onChange={(e) => set("nationalCode", e.target.value.replace(/[^\d]/g, "").slice(0, 10))}
+              placeholder="۱۰ رقم"
+              inputMode="numeric"
+              maxLength={10}
+            />
+            {errors.nationalCode ? <p className={errClass}>{errors.nationalCode}</p> : null}
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="contactPhone">
+              تلفن تماس
+            </label>
+            <input
+              id="contactPhone"
+              className={inputClass}
+              value={values.contactPhone || ""}
+              disabled={disabled}
+              onChange={(e) => set("contactPhone", e.target.value.replace(/[^\d+]/g, "").slice(0, 15))}
+              placeholder="مثلاً ۰۹۱۲۰۰۰۰۰۰۰ یا ۰۲۱…"
+              inputMode="tel"
+            />
+            {errors.contactPhone ? <p className={errClass}>{errors.contactPhone}</p> : null}
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="fatherName">
+              نام پدر
+            </label>
+            <input
+              id="fatherName"
+              className={inputClass}
+              value={values.fatherName || ""}
+              disabled={disabled}
+              onChange={(e) => set("fatherName", e.target.value)}
+              maxLength={80}
+            />
+            {errors.fatherName ? <p className={errClass}>{errors.fatherName}</p> : null}
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="schoolName">
+              نام مدرسه / مهد
+            </label>
+            <input
+              id="schoolName"
+              className={inputClass}
+              value={values.schoolName || ""}
+              disabled={disabled}
+              onChange={(e) => set("schoolName", e.target.value)}
+              placeholder="مثلاً دبستان شهید احمدی"
+              maxLength={120}
+            />
+            {errors.schoolName ? <p className={errClass}>{errors.schoolName}</p> : null}
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="referralSource">
+              طریقه آشنایی
+            </label>
+            <input
+              id="referralSource"
+              className={inputClass}
+              value={values.referralSource || ""}
+              disabled={disabled}
+              onChange={(e) => set("referralSource", e.target.value)}
+              placeholder="اینستاگرام، معرفی دوستان، سایت…"
+              maxLength={120}
+            />
+            {errors.referralSource ? <p className={errClass}>{errors.referralSource}</p> : null}
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="illnessHistory">
+              سابقه بیماری
+            </label>
+            <input
+              id="illnessHistory"
+              className={inputClass}
+              value={values.illnessHistory || ""}
+              disabled={disabled}
+              onChange={(e) => set("illnessHistory", e.target.value)}
+              placeholder="در صورت نداشتن، خالی بگذارید"
+              maxLength={300}
+            />
+            {errors.illnessHistory ? <p className={errClass}>{errors.illnessHistory}</p> : null}
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass} htmlFor="sportsHistory">
+              سابقه ورزشی
+            </label>
+            <textarea
+              id="sportsHistory"
+              className={`${inputClass} min-h-[80px]`}
+              value={values.sportsHistory || ""}
+              disabled={disabled}
+              onChange={(e) => set("sportsHistory", e.target.value)}
+              placeholder="سابقه شنا یا سایر رشته‌های ورزشی"
+              maxLength={300}
+            />
+            {errors.sportsHistory ? <p className={errClass}>{errors.sportsHistory}</p> : null}
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="address">
+              آدرس
+            </label>
+            <textarea
+              id="address"
+              className={`${inputClass} min-h-[80px]`}
+              value={values.address || ""}
+              disabled={disabled}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="آدرس محل سکونت"
+              maxLength={300}
+            />
+            {errors.address ? <p className={errClass}>{errors.address}</p> : null}
+          </div>
+        </div>
+      </div>
+
       <fieldset className="rounded-xl border border-slate-200 p-4">
         <legend className="px-1 text-sm font-medium text-slate-700">تماس اضطراری (اختیاری)</legend>
         <div className="mt-2 grid gap-4 sm:grid-cols-3">

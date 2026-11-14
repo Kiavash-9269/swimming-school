@@ -41,6 +41,15 @@ function toPublicParticipant(
     relation: doc.relation,
     phone: doc.phone || "",
     fatherOccupation: doc.fatherOccupation || "",
+    fatherName: doc.fatherName || "",
+    nationalCode: doc.nationalCode || "",
+    contactPhone: doc.contactPhone || "",
+    schoolName: doc.schoolName || "",
+    referralSource: doc.referralSource || "",
+    address: doc.address || "",
+    sportsHistory: doc.sportsHistory || "",
+    illnessHistory: doc.illnessHistory || "",
+    termsAcceptedAt: doc.termsAcceptedAt || null,
     medicalConfirmed: Boolean(doc.medicalConfirmed),
     medicalConfirmedAt: doc.medicalConfirmedAt || null,
     registeredAt: doc.registeredAt || doc.createdAt,
@@ -129,6 +138,15 @@ async function createParticipant({ ownerUserId, data }) {
     relation: data.relation,
     phone: data.phone || "",
     fatherOccupation: data.fatherOccupation || "",
+    fatherName: data.fatherName || "",
+    nationalCode: data.nationalCode || "",
+    contactPhone: data.contactPhone || "",
+    schoolName: data.schoolName || "",
+    referralSource: data.referralSource || "",
+    address: data.address || "",
+    sportsHistory: data.sportsHistory || "",
+    illnessHistory: data.illnessHistory || "",
+    termsAcceptedAt: data.termsAccepted ? new Date() : null,
     medicalConfirmed: Boolean(data.medicalConfirmed),
     medicalConfirmedAt: data.medicalConfirmed ? new Date() : null,
     emergencyContact: data.emergencyContact || {},
@@ -166,7 +184,22 @@ async function updateParticipant({ userId, role, participantId, data }) {
   if (data.gender != null) participant.gender = data.gender;
   if (data.relation != null) participant.relation = data.relation;
   if (data.phone != null) participant.phone = data.phone;
-  if (data.fatherOccupation != null) participant.fatherOccupation = data.fatherOccupation;
+  for (const field of [
+    "fatherOccupation",
+    "fatherName",
+    "nationalCode",
+    "contactPhone",
+    "schoolName",
+    "referralSource",
+    "address",
+    "sportsHistory",
+    "illnessHistory",
+  ]) {
+    if (data[field] != null) participant[field] = data[field];
+  }
+  if (data.termsAccepted === true && !participant.termsAcceptedAt) {
+    participant.termsAcceptedAt = new Date();
+  }
   if (data.medicalConfirmed != null) {
     const next = Boolean(data.medicalConfirmed);
     if (next && !participant.medicalConfirmed) {
@@ -312,6 +345,15 @@ async function createParticipantByAdmin({ actorId, data }) {
     relation: data.relation,
     phone: data.phone || (isSelf ? data.accountPhone : ""),
     fatherOccupation: data.fatherOccupation || "",
+    fatherName: data.fatherName || "",
+    nationalCode: data.nationalCode || "",
+    contactPhone: data.contactPhone || "",
+    schoolName: data.schoolName || "",
+    referralSource: data.referralSource || "",
+    address: data.address || "",
+    sportsHistory: data.sportsHistory || "",
+    illnessHistory: data.illnessHistory || "",
+    termsAcceptedAt: data.termsAccepted ? new Date() : null,
     medicalConfirmed: Boolean(data.medicalConfirmed),
     medicalConfirmedAt: data.medicalConfirmed ? new Date() : null,
     emergencyContact: data.emergencyContact || {},

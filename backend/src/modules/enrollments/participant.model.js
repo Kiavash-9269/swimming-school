@@ -55,6 +55,27 @@ const participantSchema = new mongoose.Schema(
       },
     },
     fatherOccupation: { type: String, trim: true, maxlength: 80, default: "" },
+    fatherName: { type: String, trim: true, maxlength: 80, default: "" },
+    nationalCode: {
+      type: String,
+      trim: true,
+      maxlength: 10,
+      default: "",
+      validate: {
+        validator(v) {
+          return !v || /^\d{10}$/.test(v);
+        },
+        message: "Invalid Iranian national code",
+      },
+    },
+    contactPhone: { type: String, trim: true, maxlength: 20, default: "" },
+    schoolName: { type: String, trim: true, maxlength: 120, default: "" },
+    referralSource: { type: String, trim: true, maxlength: 120, default: "" },
+    address: { type: String, trim: true, maxlength: 300, default: "" },
+    sportsHistory: { type: String, trim: true, maxlength: 300, default: "" },
+    illnessHistory: { type: String, trim: true, maxlength: 300, default: "" },
+    // Registration-terms acceptance (school rules, waivers, refund policy).
+    termsAcceptedAt: { type: Date, default: null },
     // User attestation instead of a mandatory medical file upload (ENAMAD-era flow).
     medicalConfirmed: { type: Boolean, default: false },
     medicalConfirmedAt: { type: Date, default: null },

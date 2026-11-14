@@ -21,6 +21,43 @@ const emergencyContactSchema = z
   })
   .strict();
 
+const profileFields = {
+  fatherOccupation: z.string().trim().max(80).optional().default(""),
+  fatherName: z.string().trim().max(80).optional().default(""),
+  nationalCode: z
+    .string()
+    .trim()
+    .max(10)
+    .optional()
+    .default("")
+    .refine((v) => !v || /^\d{10}$/.test(v), "Invalid Iranian national code"),
+  contactPhone: z.string().trim().max(20).optional().default(""),
+  schoolName: z.string().trim().max(120).optional().default(""),
+  referralSource: z.string().trim().max(120).optional().default(""),
+  address: z.string().trim().max(300).optional().default(""),
+  sportsHistory: z.string().trim().max(300).optional().default(""),
+  illnessHistory: z.string().trim().max(300).optional().default(""),
+  termsAccepted: z.boolean().optional().default(false),
+};
+
+const optionalProfileFields = {
+  fatherOccupation: z.string().trim().max(80).optional(),
+  fatherName: z.string().trim().max(80).optional(),
+  nationalCode: z
+    .string()
+    .trim()
+    .max(10)
+    .optional()
+    .refine((v) => !v || /^\d{10}$/.test(v), "Invalid Iranian national code"),
+  contactPhone: z.string().trim().max(20).optional(),
+  schoolName: z.string().trim().max(120).optional(),
+  referralSource: z.string().trim().max(120).optional(),
+  address: z.string().trim().max(300).optional(),
+  sportsHistory: z.string().trim().max(300).optional(),
+  illnessHistory: z.string().trim().max(300).optional(),
+  termsAccepted: z.boolean().optional(),
+};
+
 const participantBody = z
   .object({
     firstName: z.string().trim().min(2).max(80),
@@ -28,7 +65,7 @@ const participantBody = z
     birthDate: z.coerce.date(),
     gender: z.enum([GENDERS.MALE, GENDERS.FEMALE]),
     relation: z.enum(Object.values(PARTICIPANT_RELATIONS)).optional().default(PARTICIPANT_RELATIONS.SELF),
-    fatherOccupation: z.string().trim().max(80).optional().default(""),
+    ...profileFields,
     medicalConfirmed: z.boolean().optional().default(false),
     phone: z
       .string()
@@ -50,7 +87,7 @@ const participantUpdateBody = z
     birthDate: z.coerce.date().optional(),
     gender: z.enum([GENDERS.MALE, GENDERS.FEMALE]).optional(),
     relation: z.enum(Object.values(PARTICIPANT_RELATIONS)).optional(),
-    fatherOccupation: z.string().trim().max(80).optional(),
+    ...optionalProfileFields,
     medicalConfirmed: z.boolean().optional(),
     phone: z
       .string()
@@ -78,7 +115,7 @@ const adminParticipantBody = z
     birthDate: z.coerce.date(),
     gender: z.enum([GENDERS.MALE, GENDERS.FEMALE]),
     relation: z.enum(Object.values(PARTICIPANT_RELATIONS)).optional().default(PARTICIPANT_RELATIONS.SELF),
-    fatherOccupation: z.string().trim().max(80).optional().default(""),
+    ...profileFields,
     medicalConfirmed: z.boolean().optional().default(false),
     phone: z
       .string()

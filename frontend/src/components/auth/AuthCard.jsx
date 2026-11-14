@@ -73,6 +73,29 @@ export default function AuthCard() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [otpExpiresAt, setOtpExpiresAt] = useState(null);
+  const [otpTotalSeconds, setOtpTotalSeconds] = useState(0);
+  const [otpResendAt, setOtpResendAt] = useState(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [resending, setResending] = useState(false);
+
+  const startOtpTimers = (result) => {
+    const expires = Number(result?.expiresInSeconds) > 0 ? Number(result.expiresInSeconds) : 120;
+    const cooldownRaw =
+      Number(result?.cooldownSeconds) > 0 ? Number(result.cooldownSeconds) : 60;
+    const cooldown = Math.min(cooldownRaw, expires);
+    const now = Date.now();
+    setOtpTotalSeconds(expires);
+    setOtpExpiresAt(now + expires * 1000);
+    setOtpResendAt(now + cooldown * 1000);
+    setNowMs(now);
+  };
+
+  const clearOtpTimers = () => {
+    setOtpExpiresAt(null);
+    setOtpResendAt(null);
+    setOtpTotalSeconds(0);
+  };
 
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -84,6 +107,30 @@ export default function AuthCard() {
       setIntent("login");
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!otpExpiresAt) return undefined;
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [otpExpiresAt]);
+
+  const otpSecondsLeft = otpExpiresAt
+    ? Math.max(0, Math.ceil((otpExpiresAt - nowMs) / 1000))
+    : null;
+  const otpExpired = otpSecondsLeft === 0;
+  const resendSecondsLeft = otpResendAt
+    ? Math.max(0, Math.ceil((otpResendAt - nowMs) / 1000))
+    : 0;
+  const otpProgress =
+    otpSecondsLeft != null && otpTotalSeconds > 0
+      ? Math.max(0, Math.min(100, Math.round((otpSecondsLeft / otpTotalSeconds) * 100)))
+      : 100;
+  const formatSeconds = (totalSeconds) => {
+    const safe = Math.max(0, Math.round(Number(totalSeconds) || 0));
+    const minutes = Math.floor(safe / 60);
+    const rest = safe - minutes * 60;
+    return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
+  };
 
   const title = useMemo(() => {
     switch (step) {
@@ -129,6 +176,7 @@ export default function AuthCard() {
         const result = await authApi.sendPasswordOtp(normalized);
         // No existence leak via `eligible` — always continue to OTP step.
         setInfo(result.message || "اگر حسابی با این شماره وجود داشته باشد، کد بازیابی ارسال می‌شود");
+        startOtpTimers(result);
         setStep(STEPS.RESET_OTP);
         return;
       }
@@ -142,7 +190,8 @@ export default function AuthCard() {
         return;
       }
 
-      await authApi.sendRegisterOtp(normalized);
+      const otpResult = await authApi.sendRegisterOtp(normalized);
+      startOtpTimers(otpResult);
       setIntent("register");
       setInfo("کد تأیید ارسال شد");
       setStep(STEPS.REGISTER_OTP);
@@ -280,9 +329,30 @@ export default function AuthCard() {
     }
   };
 
+  const handleResendOtp = async () => {
+    if (resending || resendSecondsLeft > 0) return;
+    setError("");
+    setInfo("");
+    setResending(true);
+    try {
+      const result =
+        intent === "reset"
+          ? await authApi.sendPasswordOtp(phone)
+          : await authApi.sendRegisterOtp(phone);
+      setOtp("");
+      setInfo("کد تأیید جدید ارسال شد.");
+      startOtpTimers(result);
+    } catch (err) {
+      setError(err.message || "ارسال مجدد کد ناموفق بود");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const goToPhoneStep = (nextIntent = "login") => {
     setIntent(nextIntent);
     setStep(STEPS.PHONE);
+    clearOtpTimers();
     resetFormSecrets();
   };
 
@@ -455,12 +525,54 @@ export default function AuthCard() {
                   autoFocus
                 />
               </div>
+
+              {otpSecondsLeft != null ? (
+                <div className="w-3/4 mb-3">
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-sky-900/80">
+                    <span>
+                      {otpExpired ? "اعتبار کد تمام شد" : "زمان باقیماندهٔ کد"}
+                    </span>
+                    <span
+                      className={`font-mono tabular-nums ${
+                        otpExpired ? "text-rose-600" : "text-sky-800"
+                      }`}
+                      dir="ltr"
+                    >
+                      {formatSeconds(otpSecondsLeft)}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/70">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        otpExpired
+                          ? "bg-rose-400"
+                          : "bg-gradient-to-r from-sky-400 to-blue-500"
+                      }`}
+                      style={{ width: `${otpProgress}%` }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
               <button
                 type="submit"
-                className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-3 w-3/4 disabled:opacity-50"
-                disabled={isLoading}
+                className="bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-105 transition-transform text-white font-semibold px-8 py-2 rounded-lg shadow-lg mb-2 w-3/4 disabled:opacity-50"
+                disabled={isLoading || otpExpired}
               >
                 {isLoading ? "در حال تأیید..." : "تأیید کد"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resending || resendSecondsLeft > 0 || isLoading}
+                className="text-sm font-medium text-blue-700 disabled:text-slate-400"
+              >
+                {resending
+                  ? "در حال ارسال مجدد…"
+                  : resendSecondsLeft > 0
+                    ? `ارسال مجدد کد تا ${formatSeconds(resendSecondsLeft)}`
+                    : "ارسال مجدد کد"}
               </button>
             </>
           )}

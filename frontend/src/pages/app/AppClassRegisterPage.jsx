@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { createParticipant, updateParticipant } from "../../features/participants/participantsApi";
 import ParticipantFormFields from "../../features/participants/components/ParticipantFormFields";
+import RegistrationTerms from "../../features/participants/components/RegistrationTerms";
 import {
   buildParticipantPayload,
   validateParticipantForm,
@@ -44,6 +45,15 @@ const INITIAL_FORM = {
   relation: "SELF",
   fatherOccupation: "",
   phone: "",
+  fatherName: "",
+  nationalCode: "",
+  contactPhone: "",
+  schoolName: "",
+  referralSource: "",
+  address: "",
+  sportsHistory: "",
+  illnessHistory: "",
+  termsAccepted: false,
   medicalConfirmed: false,
   emergencyContact: { name: "", phone: "", relationship: "" },
 };
@@ -401,7 +411,10 @@ export default function AppClassRegisterPage() {
   async function handleParticipantSubmit(e) {
     e.preventDefault();
     if (formSubmitting) return;
-    const errs = validateParticipantForm(formValues, { requireMedical: true });
+    const errs = validateParticipantForm(formValues, {
+      requireMedical: true,
+      requireTerms: true,
+    });
     setFormErrors(errs);
     if (Object.keys(errs).length) return;
 
@@ -738,6 +751,14 @@ export default function AppClassRegisterPage() {
                   errors={formErrors}
                   onChange={setFormValues}
                   disabled={formSubmitting}
+                />
+                <RegistrationTerms
+                  accepted={formValues.termsAccepted === true}
+                  error={formErrors.termsAccepted}
+                  disabled={formSubmitting}
+                  onChange={(accepted) =>
+                    setFormValues((prev) => ({ ...prev, termsAccepted: accepted }))
+                  }
                 />
                 {formError ? (
                   <p

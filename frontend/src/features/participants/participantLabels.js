@@ -50,7 +50,10 @@ export function userMessageFromParticipantError(err, fallback = "خطایی رخ
 }
 
 /** Client-side mirror of Zod rules — backend remains authoritative. */
-export function validateParticipantForm(values, { partial = false, requireMedical = false } = {}) {
+export function validateParticipantForm(
+  values,
+  { partial = false, requireMedical = false, requireTerms = false } = {},
+) {
   const errors = {};
   const require = (key, ok, msg) => {
     if (!ok) errors[key] = msg;
@@ -88,6 +91,27 @@ export function validateParticipantForm(values, { partial = false, requireMedica
   if (requireMedical) {
     require("medicalConfirmed", values.medicalConfirmed === true, "تأییدیه پزشکی الزامی است.");
   }
+  if (requireTerms) {
+    require("termsAccepted", values.termsAccepted === true, "پذیرش شرایط ثبت‌نام الزامی است.");
+  }
+  if (values.nationalCode != null) {
+    const v = String(values.nationalCode || "").trim();
+    require("nationalCode", !v || /^\d{10}$/.test(v), "کد ملی باید ۱۰ رقم باشد.");
+  }
+  if (values.contactPhone != null) {
+    const v = String(values.contactPhone || "").trim();
+    require("contactPhone", !v || /^\d{8,15}$/.test(v), "تلفن تماس معتبر نیست.");
+  }
+  const maxText = (key, max, message) => {
+    if (values[key] == null) return;
+    require(key, String(values[key] || "").trim().length <= max, message);
+  };
+  maxText("fatherName", 80, "نام پدر حداکثر ۸۰ کاراکتر باشد.");
+  maxText("schoolName", 120, "نام مدرسه/مهد حداکثر ۱۲۰ کاراکتر باشد.");
+  maxText("referralSource", 120, "طریقه آشنایی حداکثر ۱۲۰ کاراکتر باشد.");
+  maxText("address", 300, "آدرس حداکثر ۳۰۰ کاراکتر باشد.");
+  maxText("sportsHistory", 300, "سابقه ورزشی حداکثر ۳۰۰ کاراکتر باشد.");
+  maxText("illnessHistory", 300, "سابقه بیماری حداکثر ۳۰۰ کاراکتر باشد.");
   if (values.emergencyContact?.phone != null) {
     require(
       "emergencyPhone",
@@ -106,6 +130,15 @@ export function buildParticipantPayload(values) {
     gender: values.gender,
     relation: values.relation || "SELF",
     fatherOccupation: String(values.fatherOccupation || "").trim(),
+    fatherName: String(values.fatherName || "").trim(),
+    nationalCode: String(values.nationalCode || "").trim(),
+    contactPhone: String(values.contactPhone || "").trim(),
+    schoolName: String(values.schoolName || "").trim(),
+    referralSource: String(values.referralSource || "").trim(),
+    address: String(values.address || "").trim(),
+    sportsHistory: String(values.sportsHistory || "").trim(),
+    illnessHistory: String(values.illnessHistory || "").trim(),
+    termsAccepted: values.termsAccepted === true,
     medicalConfirmed: values.medicalConfirmed === true,
     phone: String(values.phone || "").trim(),
     emergencyContact: {

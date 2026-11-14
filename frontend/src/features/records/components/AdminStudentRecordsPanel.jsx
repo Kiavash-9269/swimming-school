@@ -69,13 +69,17 @@ export default function AdminStudentRecordsPanel() {
   }, [loadRecords]);
 
   useEffect(() => {
-    if (!studentQuery.trim()) {
-      setStudents([]);
+    // Keep the picked student visible instead of re-opening the search list.
+    if (
+      participant &&
+      studentQuery === `${participant.firstName} ${participant.lastName}`
+    ) {
       return undefined;
     }
     const ac = new AbortController();
     const timer = window.setTimeout(() => {
-      searchRecordParticipants({ q: studentQuery.trim(), limit: 10, signal: ac.signal })
+      const query = studentQuery.trim();
+      searchRecordParticipants({ ...(query ? { q: query } : {}), limit: 15, signal: ac.signal })
         .then((data) => setStudents(Array.isArray(data?.items) ? data.items : []))
         .catch(() => setStudents([]));
     }, 300);
@@ -83,7 +87,7 @@ export default function AdminStudentRecordsPanel() {
       window.clearTimeout(timer);
       ac.abort();
     };
-  }, [studentQuery]);
+  }, [studentQuery, participant]);
 
   const timeSeconds = useMemo(() => {
     const m = Number(minutes || 0);
@@ -164,6 +168,9 @@ export default function AdminStudentRecordsPanel() {
             placeholder="جستجوی نام یا فامیل شاگرد…"
             className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
           />
+          <p className="mt-1 text-[11px] text-slate-400">
+            با خالی‌گذاشتن کادر، فهرست شناگران فعال نمایش داده می‌شود.
+          </p>
           {students.length ? (
             <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1">
               {students.map((student) => (

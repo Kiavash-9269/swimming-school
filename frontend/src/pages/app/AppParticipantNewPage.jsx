@@ -17,6 +17,16 @@ const empty = {
   gender: "",
   relation: "SELF",
   phone: "",
+  fatherOccupation: "",
+  fatherName: "",
+  nationalCode: "",
+  contactPhone: "",
+  schoolName: "",
+  referralSource: "",
+  address: "",
+  sportsHistory: "",
+  illnessHistory: "",
+  medicalConfirmed: false,
   emergencyContact: { name: "", phone: "", relationship: "" },
 };
 
