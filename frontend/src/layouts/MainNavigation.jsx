@@ -15,6 +15,7 @@ export default function EnhancedNavbar() {
     { href: "/", label: "صفحه اصلی", icon: HomeIcon },
     { href: "/about", label: "درباره ما", icon: UsersIcon },
     { href: "/courses", label: "دوره‌ها", icon: AcademicCapIcon },
+    { href: "/clinic", label: "کلینیک", icon: ClinicIcon },
     { href: "/gallery", label: "گالری", icon: PhotoIcon },
     { href: "/contact", label: "تماس با ما", icon: PhoneIcon },
     { href: "/record", label: "رکوردها", icon: TrophyIcon },
@@ -339,6 +340,15 @@ const PhotoIcon = () => (
 const PhoneIcon = () => (
   <Icon>
     <path d="M22 16.9V21a1 1 0 01-1 1A19 19 0 013 5a1 1 0 011-1h4" />
+  </Icon>
+);
+
+// Clinic icon (medical cross in a shield)
+const ClinicIcon = () => (
+  <Icon>
+    <path d="M12 3l7 3v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z" />
+    <path d="M12 9v6" />
+    <path d="M9 12h6" />
   </Icon>
 );
 
