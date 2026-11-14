@@ -16,51 +16,18 @@ const cardToCardBody = z
   })
   .strict();
 
-const clinicBody = z
-  .object({
-    enabled: z.boolean().optional(),
-    title: z.string().trim().max(120).optional(),
-    subtitle: z.string().trim().max(160).optional(),
-    description: z.string().trim().max(1500).optional(),
-    priceToman: z.coerce.number().int().min(0).max(500000000).optional(),
-    startDate: z.string().trim().max(60).optional(),
-    endDate: z.string().trim().max(60).optional(),
-    schedule: z.string().trim().max(200).optional(),
-    location: z.string().trim().max(200).optional(),
-    capacity: z.coerce.number().int().min(0).max(10000).optional(),
-    phone: z.string().trim().max(20).optional(),
-    notice: z.string().trim().max(600).optional(),
-  })
-  .strict();
-
 const getPublicSettings = asyncHandler(async (_req, res) => {
-  const [cardToCard, clinic] = await Promise.all([
-    settings.getCardToCard(),
-    settings.getClinic(),
-  ]);
-  return success(res, {
-    cardToCard: settings.publicCardToCard(cardToCard),
-    clinic: settings.publicClinic(clinic),
-  });
+  const cardToCard = await settings.getCardToCard();
+  return success(res, { cardToCard: settings.publicCardToCard(cardToCard) });
 });
 
 const getAdminSettings = asyncHandler(async (_req, res) => {
-  const [cardToCard, clinic] = await Promise.all([
-    settings.getCardToCard(),
-    settings.getClinic(),
-  ]);
-  return success(res, { cardToCard, clinic });
+  const cardToCard = await settings.getCardToCard();
+  return success(res, { cardToCard });
 });
 
 const putCardToCard = asyncHandler(async (req, res) => {
   const value = await settings.updateValue(settings.SETTING_KEYS.CARD_TO_CARD, req.body, {
-    actorId: req.user._id,
-  });
-  return success(res, value);
-});
-
-const putClinic = asyncHandler(async (req, res) => {
-  const value = await settings.updateValue(settings.SETTING_KEYS.CLINIC, req.body, {
     actorId: req.user._id,
   });
   return success(res, value);
@@ -94,10 +61,8 @@ const getPaymentQr = asyncHandler(async (req, res) => {
 
 module.exports = {
   cardToCardBody,
-  clinicBody,
   getPublicSettings,
   getAdminSettings,
   putCardToCard,
-  putClinic,
   getPaymentQr,
 };

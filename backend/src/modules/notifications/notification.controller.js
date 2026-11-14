@@ -49,6 +49,8 @@ const adminSmsBody = z
     phone: z.string().trim().regex(/^09\d{9}$/).optional(),
     userIds: z.array(objectId).min(1).max(300).optional(),
     classId: objectId.optional(),
+    /** audience=clinic: only this clinic, or every clinic when omitted. */
+    clinicId: objectId.optional(),
   })
   .strict()
   .refine((body) => (body.audience === "class" ? Boolean(body.classId) : true), {
@@ -124,6 +126,7 @@ const sendAdminSms = asyncHandler(async (req, res) => {
     phone: req.body.phone,
     userIds: req.body.userIds,
     classId: req.body.classId,
+    clinicId: req.body.clinicId,
     message: req.body.message,
     actorId: req.user._id,
   });

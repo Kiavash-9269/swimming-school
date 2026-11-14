@@ -6,7 +6,7 @@ import { useToast } from "../../components/feedback/useToast";
 
 const AUDIENCES = [
   { value: "user", label: "یک نفر (با شماره موبایل)" },
-  { value: "clinic", label: "همه ثبت‌نام‌کنندگان کلینیک" },
+  { value: "clinic", label: "ثبت‌نام‌کنندگان همهٔ کلینیک‌ها" },
   { value: "all", label: "همه کاربران سایت" },
 ];
 

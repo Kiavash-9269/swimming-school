@@ -100,6 +100,7 @@ export default function AdminClinicPage() {
   const [filter, setFilter] = useState({ status: "", paymentStatus: "", clinicId: "", q: "" });
 
   const [smsMessage, setSmsMessage] = useState("");
+  const [smsClinicId, setSmsClinicId] = useState("");
   const [smsBusy, setSmsBusy] = useState(false);
   const [smsResult, setSmsResult] = useState(null);
 
@@ -234,7 +235,11 @@ export default function AdminClinicPage() {
     setSmsBusy(true);
     setSmsResult(null);
     try {
-      const result = await sendAdminSms({ audience: "clinic", message });
+      const result = await sendAdminSms({
+        audience: "clinic",
+        message,
+        clinicId: smsClinicId || undefined,
+      });
       setSmsResult(result);
       setSmsMessage("");
       toast.success(`پیامک برای ${Number(result?.queued || 0).toLocaleString("fa-IR")} نفر صف شد.`);
@@ -608,6 +613,21 @@ export default function AdminClinicPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="font-bold text-slate-900">پیامک به ثبت‌نام‌کنندگان کلینیک</h2>
         <form onSubmit={sendClinicSms} className="mt-3 space-y-3">
+          <label className="block text-sm">
+            <span className="text-xs text-slate-500">کلینیک</span>
+            <select
+              value={smsClinicId}
+              onChange={(event) => setSmsClinicId(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:w-80"
+            >
+              <option value="">همهٔ کلینیک‌ها</option>
+              {clinics.map((clinic) => (
+                <option key={clinic.id} value={clinic.id}>
+                  {clinic.title} ({Number(clinic.registered || 0).toLocaleString("fa-IR")} نفر)
+                </option>
+              ))}
+            </select>
+          </label>
           <textarea
             value={smsMessage}
             onChange={(event) => setSmsMessage(event.target.value)}
@@ -625,7 +645,7 @@ export default function AdminClinicPage() {
               {smsBusy ? "در حال ارسال…" : "ارسال به همه ثبت‌نام‌کنندگان"}
             </button>
             <span className="text-xs text-slate-500">
-              {Number(counts.total || 0).toLocaleString("fa-IR")} گیرنده
+              {Number(counts.total || 0).toLocaleString("fa-IR")} گیرنده در همهٔ کلینیک‌ها
             </span>
           </div>
           {smsResult ? (

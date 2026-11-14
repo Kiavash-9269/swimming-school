@@ -82,39 +82,38 @@ describe("Clinic, student records, admin SMS and card-to-card settings", () => {
     participantId = String(participant._id);
   }
 
-  test("public settings are readable and clinic starts disabled", async () => {
+  test("public site settings expose card-to-card only", async () => {
     await bootstrap();
     const res = await request(app).get("/api/site/public");
     expect(res.status).toBe(200);
-    expect(res.body.data.clinic.enabled).toBe(false);
     expect(res.body.data.cardToCard).toHaveProperty("cardNumber");
+    // Clinics are their own resource now: no legacy clinic block in site settings.
+    expect(res.body.data.clinic).toBeUndefined();
   });
 
-  test("only admins can change clinic and card settings", async () => {
+  test("only admins can change card settings and the legacy clinic endpoint is gone", async () => {
     await bootstrap();
 
     const userRes = await request(app)
-      .put("/api/site/admin/clinic")
+      .put("/api/site/admin/card-to-card")
       .set("Authorization", `Bearer ${userToken}`)
       .send({ enabled: true });
     expect(userRes.status).toBe(403);
 
     const adminRes = await request(app)
-      .put("/api/site/admin/clinic")
+      .put("/api/site/admin/card-to-card")
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({
-        enabled: true,
-        title: "کلینیک مهر",
-        priceToman: 1200000,
-        startDate: "۱۴۰۵/۰۹/۰۱",
-        capacity: 10,
-      });
+      .send({ enabled: true, cardNumber: "6037-1111-2222-3333", cardHolder: "مدرسه شنا" });
     expect(adminRes.status).toBe(200);
-    expect(adminRes.body.data.priceToman).toBe(1200000);
 
     const publicRes = await request(app).get("/api/site/public");
-    expect(publicRes.body.data.clinic.enabled).toBe(true);
-    expect(publicRes.body.data.clinic.title).toBe("کلینیک مهر");
+    expect(publicRes.body.data.cardToCard.cardNumber).toBe("6037-1111-2222-3333");
+
+    const legacy = await request(app)
+      .put("/api/site/admin/clinic")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ enabled: true, title: "کلینیک قدیمی" });
+    expect(legacy.status).toBe(404);
   });
 
   test("payment QR is 404 until a card number is saved, then a real PNG", async () => {
@@ -390,8 +389,33 @@ describe("Clinic, student records, admin SMS and card-to-card settings", () => {
     expect(clinicSms.status).toBe(201);
     expect(clinicSms.body.data.queued).toBe(1);
 
+    const openClinicId = clinic.body.data.clinic.id;
+    const targeted = await request(app)
+      .post("/api/notifications/admin-sms")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ audience: "clinic", clinicId: openClinicId, message: "فقط ثبت‌نام‌کنندگان یک کلینیک." });
+    expect(targeted.status).toBe(201);
+    expect(targeted.body.data.queued).toBe(1);
+
+    const emptyClinic = await request(app)
+      .post("/api/clinic/admin/clinics")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ title: "کلینیک بدون ثبت‌نام", enabled: true });
+    expect(emptyClinic.status).toBe(201);
+
+    const emptyTarget = await request(app)
+      .post("/api/notifications/admin-sms")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        audience: "clinic",
+        clinicId: emptyClinic.body.data.clinic.id,
+        message: "گیرنده‌ای برای این کلینیک نیست.",
+      });
+    expect(emptyTarget.status).toBe(404);
+    expect(emptyTarget.body.error.code).toBe("SMS_NO_RECIPIENTS");
+
     const queued = await Notification.find({ type: NOTIFICATION_TYPES.ADMIN_MESSAGE }).lean();
-    expect(queued.length).toBe(2);
+    expect(queued.length).toBe(3);
     expect(
       queued.every((doc) => [NOTIFICATION_STATUSES.SENT, NOTIFICATION_STATUSES.PENDING].includes(doc.status)),
     ).toBe(true);

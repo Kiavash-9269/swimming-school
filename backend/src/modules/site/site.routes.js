@@ -19,13 +19,4 @@ router.put(
   validate(controller.cardToCardBody),
   controller.putCardToCard,
 );
-router.put(
-  "/admin/clinic",
-  authenticate,
-  authorize("ADMIN"),
-  adminLimiter,
-  validate(controller.clinicBody),
-  controller.putClinic,
-);
-
 module.exports = router;

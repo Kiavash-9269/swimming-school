@@ -21,11 +21,6 @@ export function updateCardToCardSettings(body, { signal } = {}) {
   });
 }
 
-/** ADMIN: update the clinic program (price, dates, capacity, description). */
-export function updateClinicSettings(body, { signal } = {}) {
-  return apiRequest("/site/admin/clinic", { method: "PUT", auth: true, body, signal });
-}
-
 /** URL of the scannable payment QR image (PNG). */
 export function paymentQrUrl(cacheBust = "") {
   return `${appConfig.apiBaseUrl}/site/payment-qr.png${

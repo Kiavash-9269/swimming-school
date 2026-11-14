@@ -58,16 +58,16 @@ export function listNotificationJobs({ signal } = {}) {
  */
 /**
  * POST /api/notifications/admin-sms
- * audience: user (one phone) | users (ids) | clinic | all | class
+ * audience: user (one phone) | users (ids) | clinic (all or one clinicId) | all | class
  */
 export function sendAdminSms(
-  { audience, message, phone, userIds, classId } = {},
+  { audience, message, phone, userIds, classId, clinicId } = {},
   { signal } = {},
 ) {
   return apiRequest("/notifications/admin-sms", {
     method: "POST",
     auth: true,
-    body: { audience, message, phone, userIds, classId },
+    body: { audience, message, phone, userIds, classId, clinicId },
     signal,
   });
 }

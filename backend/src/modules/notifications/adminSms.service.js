@@ -25,7 +25,7 @@ const ACTIVE_ENROLLMENT_STATUSES = [
  * Resolve who receives the message.
  * Returns `{ targets: [{ userId, phone }], skipped }` — one entry per recipient.
  */
-async function resolveTargets({ audience, phone, userIds = [], classId }) {
+async function resolveTargets({ audience, phone, userIds = [], classId, clinicId }) {
   if (audience === "user") {
     const user = phone
       ? await User.findOne({ phone, isActive: true }).lean()
@@ -48,9 +48,10 @@ async function resolveTargets({ audience, phone, userIds = [], classId }) {
   }
 
   if (audience === "clinic") {
-    const docs = await ClinicRegistration.find({ status: { $ne: "CANCELLED" } })
-      .select("userId phone")
-      .lean();
+    // No clinicId means every clinic; otherwise only that clinic's registrations.
+    const filter = { status: { $ne: "CANCELLED" } };
+    if (clinicId) filter.clinicId = clinicId;
+    const docs = await ClinicRegistration.find(filter).select("userId phone").lean();
     const unique = new Map();
     for (const doc of docs) {
       if (!doc.phone) continue;
@@ -86,13 +87,13 @@ async function resolveTargets({ audience, phone, userIds = [], classId }) {
  * Queue the message for every valid recipient.
  * Delivery happens through the existing notification worker (retries + delivery log).
  */
-async function queueAdminSms({ audience, phone, userIds, classId, message, actorId = null }) {
+async function queueAdminSms({ audience, phone, userIds, classId, clinicId, message, actorId = null }) {
   const body = String(message || "").trim();
   if (!body) {
     throw new AppError("متن پیام خالی است", { statusCode: 400, code: "VALIDATION_ERROR" });
   }
 
-  const { targets, skipped } = await resolveTargets({ audience, phone, userIds, classId });
+  const { targets, skipped } = await resolveTargets({ audience, phone, userIds, classId, clinicId });
   const valid = targets.filter((t) => PHONE_RE.test(t.phone || ""));
   const invalid = targets.length - valid.length;
 
