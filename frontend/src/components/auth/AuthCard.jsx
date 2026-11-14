@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import {
   FaLock,
@@ -356,12 +355,6 @@ export default function AuthCard() {
     resetFormSecrets();
   };
 
-  const fadeVariant = {
-    hidden: { opacity: 0, y: 8 },
-    visible: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -8 },
-  };
-
   return (
     <div className="relative w-full max-w-md min-h-[520px] mx-4 sm:mx-0 bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-xl border border-white/30 shadow-2xl rounded-2xl flex justify-center items-center overflow-hidden p-4 sm:p-6">
       <button
@@ -384,15 +377,11 @@ export default function AuthCard() {
         </button>
       )}
 
-      <AnimatePresence mode="wait">
-        <motion.form
-          key={step}
-          variants={fadeVariant}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{ duration: 0.25 }}
-          onSubmit={
+      {/* No exit/enter animation around the step form: a throttled background tab
+          or a slow device must never block the next step from rendering. */}
+      <form
+        key={step}
+        onSubmit={
             step === STEPS.PHONE
               ? handlePhoneContinue
               : step === STEPS.LOGIN_PASSWORD
@@ -680,8 +669,7 @@ export default function AuthCard() {
               </button>
             </>
           )}
-        </motion.form>
-      </AnimatePresence>
+      </form>
 
       <div className="absolute -z-10">
         <div className="absolute w-24 h-24 bg-sky-300/40 rounded-full blur-2xl top-0 left-0 animate-pulse" />
