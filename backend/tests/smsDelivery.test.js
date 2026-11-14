@@ -203,6 +203,47 @@ describe("SMS provider integration", () => {
       expect(body.get("message")).toContain("12345");
     });
 
+    test("treats the wrapper Status 4 as success when Data.Status says sent", async () => {
+      // Real v2 response: {"Data":{"Status":1,...},"Status":4} — must not be read
+      // as ForbiddenHours, otherwise every delivered OTP reports a false error.
+      mockRestOk(1, "555002");
+      const provider = new NiksmsProvider({
+        username: "panel-user",
+        password: "panel-pass",
+        sender: "blacklist",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+      const result = await provider.send({
+        phone: "09120001111",
+        code: "12345",
+        purpose: "REGISTER",
+      });
+      expect(result.delivered).toBe(true);
+      expect(result.providerStatus).toBe("1");
+    });
+
+    test("maps a panel-level Status 4 (no Data) to the allowed-hours error", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ Status: 4 }),
+      });
+      const provider = new NiksmsProvider({
+        username: "panel-user",
+        password: "panel-pass",
+        sender: "blacklist",
+        timeoutMs: 5000,
+        otpTtlSeconds: 120,
+      });
+      await expect(
+        provider.send({ phone: "09120001118", code: "12345", purpose: "REGISTER" }),
+      ).rejects.toMatchObject({
+        message: "ارسال در این ساعت مجاز نیست",
+        details: { providerStatus: "4" },
+      });
+    });
+
     test("accepts Warning status as delivered", async () => {
       mockRestOk("Warning", "777");
       const provider = new NiksmsProvider({

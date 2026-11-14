@@ -153,15 +153,15 @@ function parsePublicApiPayload(rawText) {
     nikIds = [id, ...nikIds.filter((n) => n !== id)];
   }
 
-  // Outer Status is authoritative (e.g. ForbiddenHours=4 while Data.Status may still be 1).
+  // Data.Status is the real per-message result. The v2 wrapper always returns
+  // Status: 4 (ForbiddenHours) — even for sends that are accepted, debit credit
+  // and deliver — so only fall back to the outer Status when Data has no result
+  // (e.g. a panel-level rejection such as the allowed-hours block).
+  const hasWrapper = data != null && data !== parsed;
   const outerStatus = parsed?.Status;
-  const innerStatus = data?.Status;
-  const outerFailed =
-    outerStatus != null &&
-    outerStatus !== "" &&
-    !SUCCESS_STATUSES.has(outerStatus) &&
-    !SUCCESS_STATUSES.has(String(outerStatus));
-  const status = outerFailed ? outerStatus : innerStatus ?? outerStatus ?? "";
+  const innerStatus = hasWrapper ? data?.Status : undefined;
+  const status =
+    innerStatus != null && innerStatus !== "" ? innerStatus : outerStatus ?? "";
 
   return {
     status,
@@ -302,6 +302,7 @@ class NiksmsProvider {
         purpose,
         messageId,
         providerStatus: String(result.status),
+        outerStatus: result.outerStatus,
         transport: result.transport || "rest",
       });
 
