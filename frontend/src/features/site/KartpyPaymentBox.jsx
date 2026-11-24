@@ -1,11 +1,33 @@
-import kartpyQr from "../../assets/images/kartpy-qr.webp";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 
 /**
  * Kartpy card-to-card payment page: a scannable QR plus the payable link.
- * Shared by the family payment box and the public clinic page.
+ * The QR is generated from the configured link, so editing the link in the
+ * admin settings always produces a matching code.
  */
 export default function KartpyPaymentBox({ paymentLink, tone = "light" }) {
   const link = String(paymentLink || "").trim();
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!link) {
+      setQrDataUrl("");
+      return undefined;
+    }
+    QRCode.toDataURL(link, { width: 480, margin: 1, errorCorrectionLevel: "M" })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrDataUrl("");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [link]);
+
   if (!link) return null;
   const isDark = tone === "dark";
 
@@ -40,19 +62,20 @@ export default function KartpyPaymentBox({ paymentLink, tone = "light" }) {
           {link}
         </a>
       </div>
-      <figure className="justify-self-center text-center">
-        <img
-          src={kartpyQr}
-          alt="کد QR پرداخت کارت به کارت کارت‌پی"
-          className="h-32 w-32 rounded-xl border border-emerald-200 bg-white p-1.5"
-          loading="lazy"
-        />
-        <figcaption
-          className={`mt-1 text-[11px] ${isDark ? "text-white/60" : "text-slate-500"}`}
-        >
-          برای پرداخت اسکن کنید
-        </figcaption>
-      </figure>
+      {qrDataUrl ? (
+        <figure className="justify-self-center text-center">
+          <img
+            src={qrDataUrl}
+            alt="کد QR پرداخت کارت به کارت کارت‌پی"
+            className="h-32 w-32 rounded-xl border border-emerald-200 bg-white p-1.5"
+          />
+          <figcaption
+            className={`mt-1 text-[11px] ${isDark ? "text-white/60" : "text-slate-500"}`}
+          >
+            برای پرداخت اسکن کنید
+          </figcaption>
+        </figure>
+      ) : null}
     </div>
   );
 }
