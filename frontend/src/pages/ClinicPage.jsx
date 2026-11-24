@@ -18,6 +18,7 @@ import {
   reportClinicPaid,
 } from "../features/clinic/clinicApi";
 import { getPublicSiteSettings, paymentQrUrl } from "../features/site/siteApi";
+import KartpyPaymentBox from "../features/site/KartpyPaymentBox";
 import PersianDateField from "../components/Ui/PersianDateField";
 import { SectionLoader, ButtonSpinner } from "../components/Ui/Loading";
 import { useToast } from "../components/feedback/useToast";
@@ -43,17 +44,35 @@ function formatToman(value) {
 
 function CardBox({ cardToCard }) {
   const toast = useToast();
-  if (!cardToCard?.enabled || !cardToCard?.cardNumber) {
+  const enabled = Boolean(cardToCard?.enabled);
+  const digits = String(cardToCard?.cardNumber || "").replace(/[^\d]/g, "");
+  const hasCard = enabled && digits.length >= 16;
+  const paymentLink = enabled ? String(cardToCard?.paymentLink || "").trim() : "";
+
+  if (!hasCard && !paymentLink) {
     return (
       <p className="rounded-xl bg-amber-400/10 border border-amber-400/20 px-3 py-2 text-sm text-amber-200">
         اطلاعات کارت هنوز ثبت نشده است؛ با پشتیبانی تماس بگیرید.
       </p>
     );
   }
-  const digits = String(cardToCard.cardNumber).replace(/[^\d]/g, "");
+
+  if (!hasCard) {
+    return (
+      <div className="space-y-2">
+        <KartpyPaymentBox paymentLink={paymentLink} tone="dark" />
+        {cardToCard?.instructions ? (
+          <p className="text-xs leading-6 text-white/60">{cardToCard.instructions}</p>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-3 rounded-2xl border border-cyan-400/20 bg-white/10 backdrop-blur-sm p-4 sm:grid-cols-[1fr_auto]">
-      <div className="space-y-1 text-sm">
+    <div className="space-y-3">
+      <KartpyPaymentBox paymentLink={paymentLink} tone="dark" />
+      <div className="grid gap-3 rounded-2xl border border-cyan-400/20 bg-white/10 backdrop-blur-sm p-4 sm:grid-cols-[1fr_auto]">
+        <div className="space-y-1 text-sm">
         <p className="flex items-center gap-1.5 text-xs text-white/50">
           <CreditCard className="w-3.5 h-3.5" />
           شماره کارت
@@ -76,17 +95,16 @@ function CardBox({ cardToCard }) {
         >
           کپی شماره کارت
         </button>
-        {cardToCard.instructions ? (
-          <p className="text-xs leading-6 text-white/60">{cardToCard.instructions}</p>
-        ) : null}
-      </div>
-      {digits.length >= 16 ? (
+          {cardToCard.instructions ? (
+            <p className="text-xs leading-6 text-white/60">{cardToCard.instructions}</p>
+          ) : null}
+        </div>
         <img
           src={paymentQrUrl(digits.slice(-4))}
           alt="کد QR پرداخت"
           className="h-28 w-28 justify-self-center rounded-xl border border-white/20 bg-white p-1.5"
         />
-      ) : null}
+      </div>
     </div>
   );
 }

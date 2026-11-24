@@ -4,6 +4,7 @@ import {
   paymentQrUrl,
   updateCardToCardSettings,
 } from "../../features/site/siteApi";
+import KartpyPaymentBox from "../../features/site/KartpyPaymentBox";
 import {
   confirmCardToCardPayment,
   listAdminPayments,
@@ -22,6 +23,7 @@ const EMPTY_CARD = {
   bankName: "",
   iban: "",
   instructions: "",
+  paymentLink: "",
 };
 
 function formatDateFa(value) {
@@ -87,6 +89,7 @@ export default function AdminSettingsPage() {
         bankName: card.bankName,
         iban: card.iban,
         instructions: card.instructions,
+        paymentLink: card.paymentLink,
       });
       setCard({ ...EMPTY_CARD, ...(saved || {}) });
       toast.success("اطلاعات کارت ذخیره شد.");
@@ -192,6 +195,18 @@ export default function AdminSettingsPage() {
               />
             </label>
             <label className="text-sm sm:col-span-2">
+              <span className="text-xs text-slate-500">
+                لینک پرداخت کارت‌پی (اختیاری) — با کد QR زیر در پنل خانواده نمایش داده می‌شود
+              </span>
+              <input
+                value={card.paymentLink}
+                onChange={(event) => setCard({ ...card, paymentLink: event.target.value })}
+                dir="ltr"
+                placeholder="https://kartpy.ir/360160"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs"
+              />
+            </label>
+            <label className="text-sm sm:col-span-2">
               <span className="text-xs text-slate-500">توضیح برای خانواده‌ها</span>
               <textarea
                 value={card.instructions}
@@ -212,7 +227,10 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
-          <figure className="justify-self-center rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+          <figure className="justify-self-center space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+            {card.paymentLink ? (
+              <KartpyPaymentBox paymentLink={card.paymentLink} />
+            ) : null}
             {digits.length >= 16 ? (
               <>
                 <img

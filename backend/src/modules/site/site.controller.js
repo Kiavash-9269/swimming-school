@@ -13,6 +13,12 @@ const cardToCardBody = z
     bankName: z.string().trim().max(80).optional(),
     iban: z.string().trim().max(40).optional(),
     instructions: z.string().trim().max(600).optional(),
+    paymentLink: z
+      .string()
+      .trim()
+      .max(300)
+      .optional()
+      .refine((v) => !v || /^https?:\/\/\S+$/i.test(v), "paymentLink must be an http(s) URL"),
   })
   .strict();
 

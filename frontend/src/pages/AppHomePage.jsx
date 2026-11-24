@@ -7,6 +7,7 @@ import { listParticipants } from "../features/participants/participantsApi";
 import { getMyRecords, STROKE_LABELS } from "../features/records/recordsApi";
 import { getMyClinicRegistrations, reportClinicPaid } from "../features/clinic/clinicApi";
 import { getPublicSiteSettings, paymentQrUrl } from "../features/site/siteApi";
+import KartpyPaymentBox from "../features/site/KartpyPaymentBox";
 import { startCardToCardPayment } from "../features/payments/paymentsApi";
 import { ENROLLMENT_STATUS_LABELS } from "../features/enrollments/enrollmentLabels";
 import { SectionLoader } from "../components/Ui/Loading";
@@ -41,20 +42,37 @@ function formatDateFa(value) {
   }
 }
 
-/** Card details + scannable QR, shared by class payments and the clinic. */
+/**
+ * Payment options: the kartpy card-to-card page (QR + link) and, when a card
+ * number is configured, the raw card details with the scannable QR.
+ */
 function CardTransferBox({ cardToCard }) {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
 
-  if (!cardToCard?.enabled || !cardToCard?.cardNumber) {
+  const enabled = Boolean(cardToCard?.enabled);
+  const digits = String(cardToCard?.cardNumber || "").replace(/[^\d]/g, "");
+  const hasCard = enabled && digits.length >= 16;
+  const paymentLink = enabled ? String(cardToCard?.paymentLink || "").trim() : "";
+
+  if (!hasCard && !paymentLink) {
     return (
       <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
-        شماره کارت هنوز توسط مدیر ثبت نشده است. لطفاً با پشتیبانی تماس بگیرید.
+        اطلاعات پرداخت هنوز توسط مدیر ثبت نشده است. لطفاً با پشتیبانی تماس بگیرید.
       </p>
     );
   }
 
-  const digits = String(cardToCard.cardNumber).replace(/[^\d]/g, "");
+  if (!hasCard) {
+    return (
+      <div className="space-y-2">
+        <KartpyPaymentBox paymentLink={paymentLink} />
+        {cardToCard?.instructions ? (
+          <p className="text-xs leading-6 text-slate-600">{cardToCard.instructions}</p>
+        ) : null}
+      </div>
+    );
+  }
 
   async function copyCard() {
     try {
@@ -68,31 +86,35 @@ function CardTransferBox({ cardToCard }) {
   }
 
   return (
-    <div className="grid gap-4 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 sm:grid-cols-[1fr_auto]">
-      <div className="space-y-2">
-        <div>
-          <p className="text-xs text-slate-500">شماره کارت برای واریز</p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span dir="ltr" className="font-mono text-lg font-bold tracking-wider text-slate-900">
-              {cardToCard.cardNumber}
-            </span>
-            <button
-              type="button"
-              onClick={copyCard}
-              className="rounded-lg border border-cyan-300 bg-white px-2.5 py-1 text-xs text-cyan-800 hover:bg-cyan-100"
-            >
-              {copied ? "کپی شد" : "کپی"}
-            </button>
+    <div className="space-y-3">
+      <KartpyPaymentBox paymentLink={paymentLink} />
+      <div className="grid gap-4 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 sm:grid-cols-[1fr_auto]">
+        <div className="space-y-2">
+          <div>
+            <p className="text-xs text-slate-500">شماره کارت برای واریز</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <span
+                dir="ltr"
+                className="font-mono text-lg font-bold tracking-wider text-slate-900"
+              >
+                {cardToCard.cardNumber}
+              </span>
+              <button
+                type="button"
+                onClick={copyCard}
+                className="rounded-lg border border-cyan-300 bg-white px-2.5 py-1 text-xs text-cyan-800 hover:bg-cyan-100"
+              >
+                {copied ? "کپی شد" : "کپی"}
+              </button>
+            </div>
           </div>
+          <p className="text-sm text-slate-700">
+            {[cardToCard.cardHolder, cardToCard.bankName].filter(Boolean).join(" · ") || "—"}
+          </p>
+          {cardToCard.instructions ? (
+            <p className="text-xs leading-6 text-slate-600">{cardToCard.instructions}</p>
+          ) : null}
         </div>
-        <p className="text-sm text-slate-700">
-          {[cardToCard.cardHolder, cardToCard.bankName].filter(Boolean).join(" · ") || "—"}
-        </p>
-        {cardToCard.instructions ? (
-          <p className="text-xs leading-6 text-slate-600">{cardToCard.instructions}</p>
-        ) : null}
-      </div>
-      {digits.length >= 16 ? (
         <figure className="justify-self-center text-center">
           <img
             src={paymentQrUrl(digits.slice(-4))}
@@ -104,7 +126,7 @@ function CardTransferBox({ cardToCard }) {
             برای پرداخت اسکن کنید
           </figcaption>
         </figure>
-      ) : null}
+      </div>
     </div>
   );
 }

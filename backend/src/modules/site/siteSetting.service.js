@@ -11,6 +11,7 @@ const CARD_TO_CARD_FIELDS = [
   "bankName",
   "iban",
   "instructions",
+  "paymentLink",
 ];
 
 const DEFAULTS = {
@@ -20,6 +21,7 @@ const DEFAULTS = {
     cardHolder: "",
     bankName: "",
     iban: "",
+    paymentLink: "",
     instructions:
       "مبلغ را به شماره کارت زیر واریز کنید، سپس در پنل تیک «پرداخت را انجام دادم» را بزنید تا مدیر تأیید کند.",
   },
@@ -58,6 +60,7 @@ function publicCardToCard(value) {
     cardHolder: v.cardHolder || "",
     bankName: v.bankName || "",
     iban: v.iban || "",
+    paymentLink: v.paymentLink || "",
     instructions: v.instructions || "",
   };
 }
